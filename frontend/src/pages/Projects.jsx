@@ -6,6 +6,7 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { Input } from '../components/Input'
 import { Modal } from '../components/Modal'
+import { useToast } from '../components/ToastProvider'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -25,6 +26,7 @@ function statusTone(status) {
 
 export function ProjectsPage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
 
@@ -83,6 +85,7 @@ export function ProjectsPage() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['projects'] })
       setOpen(false)
+      toast.success('Saved', editing ? 'Project updated successfully.' : 'Project created successfully.')
       setEditing(null)
       reset({ clientId: '', name: '', description: '', status: 'DRAFT' })
     },
@@ -246,4 +249,3 @@ export function ProjectsPage() {
     </div>
   )
 }
-

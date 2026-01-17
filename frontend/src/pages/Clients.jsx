@@ -5,6 +5,8 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { Input } from '../components/Input'
 import { Modal } from '../components/Modal'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { useToast } from '../components/ToastProvider'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -18,8 +20,10 @@ const schema = z.object({
 
 export function ClientsPage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState('')
 
   const q = useQuery({
     queryKey: ['clients'],
@@ -61,6 +65,7 @@ export function ClientsPage() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['clients'] })
       setOpen(false)
+      toast.success('Saved', editing ? 'Client updated successfully.' : 'Client created successfully.')
       setEditing(null)
       reset({ name: '', email: '', phone: '', address: '' })
     },
@@ -72,6 +77,7 @@ export function ClientsPage() {
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['clients'] })
+      toast.success('Deleted', 'Client deleted successfully.')
     },
   })
 
@@ -148,7 +154,7 @@ export function ClientsPage() {
                       <Button
                         variant="danger"
                         size="sm"
-                        onClick={() => deleteMutation.mutate(c.id)}
+                        onClick={() => setConfirmDeleteId(c.id)}
                         disabled={deleteMutation.isPending}
                       >
                         Delete
@@ -213,7 +219,21 @@ export function ClientsPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Delete client?"
+        message="This will permanently delete the client. Projects linked to this client may fail to load."
+        confirmLabel={deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+        danger
+        onClose={() => setConfirmDeleteId('')}
+        onConfirm={() => {
+          deleteMutation.mutate(confirmDeleteId, {
+            onSettled: () => setConfirmDeleteId(''),
+            onError: () => toast.error('Delete failed', 'Unable to delete client.'),
+          })
+        }}
+      />
     </div>
   )
 }
-

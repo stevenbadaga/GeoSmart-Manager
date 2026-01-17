@@ -6,6 +6,7 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { Input } from '../components/Input'
 import { Modal } from '../components/Modal'
+import { useToast } from '../components/ToastProvider'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -23,6 +24,7 @@ function tone(role) {
 
 export function AdminUsersPage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
 
   const usersQuery = useQuery({
@@ -43,14 +45,18 @@ export function AdminUsersPage() {
       await qc.invalidateQueries({ queryKey: ['users'] })
       form.reset()
       setOpen(false)
+      toast.success('User created', 'New user created successfully.')
     },
+    onError: (e) => toast.error('Create failed', e?.response?.data?.message || 'Unable to create user.'),
   })
 
   const statusMutation = useMutation({
     mutationFn: async ({ id, enabled }) => (await api.patch(`/api/users/${id}/status`, { enabled })).data,
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['users'] })
+      toast.success('Updated', 'User status updated.')
     },
+    onError: (e) => toast.error('Update failed', e?.response?.data?.message || 'Unable to update user.'),
   })
 
   return (
@@ -163,4 +169,3 @@ export function AdminUsersPage() {
     </div>
   )
 }
-

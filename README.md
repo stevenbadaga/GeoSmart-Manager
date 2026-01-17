@@ -41,10 +41,11 @@ npm.cmd run dev
 ## Demo flow (for prototype)
 1. Create a Client
 2. Create a Project
-3. In Map Workspace: upload a cadastral GeoJSON file
-4. Run AI Subdivision
-5. Run Compliance Check
-6. Generate a PDF report and download it
+3. (Optional) In Workflow: create/assign tasks
+4. In Map Workspace: upload a cadastral GeoJSON file
+5. Run AI Subdivision
+6. Run Compliance Check
+7. Generate a PDF report and download it
 
 Sample GeoJSON you can upload:
 - `sample-data/kigali-sample-boundary.geojson`

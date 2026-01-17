@@ -5,6 +5,7 @@ import { ProjectProvider } from './projects/ProjectContext'
 import { RequireAuth } from './routes/RequireAuth'
 import { RequireAdmin } from './routes/RequireAdmin'
 import { AppShell } from './components/AppShell'
+import { ToastProvider } from './components/ToastProvider'
 import { LoginPage } from './pages/Login'
 import { DashboardPage } from './pages/Dashboard'
 import { ClientsPage } from './pages/Clients'
@@ -27,110 +28,112 @@ function AuthedShell({ children }) {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ProjectProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
+      <ToastProvider>
+        <AuthProvider>
+          <ProjectProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
 
-              <Route element={<RequireAuth />}>
-                <Route
-                  path="/"
-                  element={
-                    <AuthedShell>
-                      <DashboardPage />
-                    </AuthedShell>
-                  }
-                />
-                <Route
-                  path="/clients"
-                  element={
-                    <AuthedShell>
-                      <ClientsPage />
-                    </AuthedShell>
-                  }
-                />
-                <Route
-                  path="/projects"
-                  element={
-                    <AuthedShell>
-                      <ProjectsPage />
-                    </AuthedShell>
-                  }
-                />
-                <Route
-                  path="/workflow"
-                  element={
-                    <AuthedShell>
-                      <WorkflowPage />
-                    </AuthedShell>
-                  }
-                />
-                <Route
-                  path="/workspace"
-                  element={
-                    <AuthedShell>
-                      <MapWorkspacePage />
-                    </AuthedShell>
-                  }
-                />
-                <Route
-                  path="/subdivision"
-                  element={
-                    <AuthedShell>
-                      <SubdivisionPage />
-                    </AuthedShell>
-                  }
-                />
-                <Route
-                  path="/compliance"
-                  element={
-                    <AuthedShell>
-                      <CompliancePage />
-                    </AuthedShell>
-                  }
-                />
-                <Route
-                  path="/reports"
-                  element={
-                    <AuthedShell>
-                      <ReportsPage />
-                    </AuthedShell>
-                  }
-                />
-
-                <Route element={<RequireAdmin />}>
+                <Route element={<RequireAuth />}>
                   <Route
-                    path="/admin/users"
+                    path="/"
                     element={
                       <AuthedShell>
-                        <AdminUsersPage />
+                        <DashboardPage />
                       </AuthedShell>
                     }
                   />
                   <Route
-                    path="/admin/audit"
+                    path="/clients"
                     element={
                       <AuthedShell>
-                        <AdminAuditPage />
+                        <ClientsPage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
+                    path="/projects"
+                    element={
+                      <AuthedShell>
+                        <ProjectsPage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
+                    path="/workflow"
+                    element={
+                      <AuthedShell>
+                        <WorkflowPage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
+                    path="/workspace"
+                    element={
+                      <AuthedShell>
+                        <MapWorkspacePage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
+                    path="/subdivision"
+                    element={
+                      <AuthedShell>
+                        <SubdivisionPage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
+                    path="/compliance"
+                    element={
+                      <AuthedShell>
+                        <CompliancePage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
+                    path="/reports"
+                    element={
+                      <AuthedShell>
+                        <ReportsPage />
+                      </AuthedShell>
+                    }
+                  />
+
+                  <Route element={<RequireAdmin />}>
+                    <Route
+                      path="/admin/users"
+                      element={
+                        <AuthedShell>
+                          <AdminUsersPage />
+                        </AuthedShell>
+                      }
+                    />
+                    <Route
+                      path="/admin/audit"
+                      element={
+                        <AuthedShell>
+                          <AdminAuditPage />
+                        </AuthedShell>
+                      }
+                    />
+                  </Route>
+
+                  <Route
+                    path="*"
+                    element={
+                      <AuthedShell>
+                        <NotFoundPage />
                       </AuthedShell>
                     }
                   />
                 </Route>
-
-                <Route
-                  path="*"
-                  element={
-                    <AuthedShell>
-                      <NotFoundPage />
-                    </AuthedShell>
-                  }
-                />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </ProjectProvider>
-      </AuthProvider>
+              </Routes>
+            </BrowserRouter>
+          </ProjectProvider>
+        </AuthProvider>
+      </ToastProvider>
     </QueryClientProvider>
   )
 }

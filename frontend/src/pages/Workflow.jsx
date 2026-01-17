@@ -7,6 +7,8 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { Input } from '../components/Input'
 import { Modal } from '../components/Modal'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { useToast } from '../components/ToastProvider'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -46,8 +48,10 @@ function isoToDateInput(iso) {
 export function WorkflowPage() {
   const qc = useQueryClient()
   const { projectId } = useProject()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState('')
 
   const usersQuery = useQuery({
     queryKey: ['assignable-users'],
@@ -97,9 +101,11 @@ export function WorkflowPage() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['tasks', projectId] })
       setOpen(false)
+      toast.success('Saved', editing ? 'Task updated successfully.' : 'Task created successfully.')
       setEditing(null)
       form.reset({ title: '', description: '', status: 'TODO', assignedToUserId: '', dueDate: '' })
     },
+    onError: (e) => toast.error('Save failed', e?.response?.data?.message || 'Unable to save task.'),
   })
 
   const deleteMutation = useMutation({
@@ -108,7 +114,9 @@ export function WorkflowPage() {
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['tasks', projectId] })
+      toast.success('Deleted', 'Task deleted successfully.')
     },
+    onError: (e) => toast.error('Delete failed', e?.response?.data?.message || 'Unable to delete task.'),
   })
 
   function openCreate() {
@@ -200,7 +208,7 @@ export function WorkflowPage() {
                       <Button
                         variant="danger"
                         size="sm"
-                        onClick={() => deleteMutation.mutate(t.id)}
+                        onClick={() => setConfirmDeleteId(t.id)}
                         disabled={deleteMutation.isPending}
                       >
                         Delete
@@ -293,7 +301,18 @@ export function WorkflowPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Delete task?"
+        message="This will permanently delete the task."
+        confirmLabel={deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+        danger
+        onClose={() => setConfirmDeleteId('')}
+        onConfirm={() => {
+          deleteMutation.mutate(confirmDeleteId, { onSettled: () => setConfirmDeleteId('') })
+        }}
+      />
     </div>
   )
 }
-

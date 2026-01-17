@@ -5,6 +5,7 @@ import { useProject } from '../projects/ProjectContext'
 import { Badge } from '../components/Badge'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { useToast } from '../components/ToastProvider'
 
 function tone(type) {
   if (type === 'SUBDIVISION_SUMMARY') return 'blue'
@@ -26,6 +27,7 @@ async function downloadBlob(url, filename) {
 
 export function ReportsPage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const { projectId } = useProject()
   const [type, setType] = useState('SUBDIVISION_SUMMARY')
   const [runId, setRunId] = useState('')
@@ -56,7 +58,9 @@ export function ReportsPage() {
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['reports', projectId] })
+      toast.success('Report generated', 'PDF report created successfully.')
     },
+    onError: (e) => toast.error('Report failed', e?.response?.data?.message || 'Unable to generate report.'),
   })
 
   if (!projectId) {
@@ -178,4 +182,3 @@ export function ReportsPage() {
     </div>
   )
 }
-

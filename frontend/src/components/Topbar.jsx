@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Menu, LogOut } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../api/http'
@@ -15,7 +15,7 @@ export function Topbar({ onMenu }) {
     queryFn: async () => (await api.get('/api/projects')).data,
   })
 
-  const projects = projectsQuery.data || []
+  const projects = useMemo(() => projectsQuery.data ?? [], [projectsQuery.data])
 
   useEffect(() => {
     if (!projectId && projects.length > 0) {
@@ -56,4 +56,3 @@ export function Topbar({ onMenu }) {
     </div>
   )
 }
-

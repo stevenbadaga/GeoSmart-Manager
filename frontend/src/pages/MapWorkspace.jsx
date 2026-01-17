@@ -1,14 +1,48 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet'
+import { useMap } from 'react-leaflet'
+import L from 'leaflet'
 import { api } from '../api/http'
 import { useProject } from '../projects/ProjectContext'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { Input } from '../components/Input'
 import { Badge } from '../components/Badge'
+import { useToast } from '../components/ToastProvider'
 
 const KIGALI_CENTER = [-1.944, 30.061] // lat, lon
+
+function FitToGeoJson({ data }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!data) return
+    try {
+      const layer = L.geoJSON(data)
+      const bounds = layer.getBounds()
+      if (bounds?.isValid()) {
+        map.fitBounds(bounds, { padding: [24, 24] })
+      }
+    } catch {
+      // ignore
+    }
+  }, [data, map])
+
+  return null
+}
+
+async function downloadBlob(url, filename) {
+  const res = await api.get(url, { responseType: 'blob' })
+  const blobUrl = window.URL.createObjectURL(res.data)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(blobUrl)
+}
 
 function DatasetRow({ active, d, onSelect }) {
   return (
@@ -33,12 +67,15 @@ function DatasetRow({ active, d, onSelect }) {
 
 export function MapWorkspacePage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const { projectId } = useProject()
 
   const [datasetId, setDatasetId] = useState('')
   const [uploadName, setUploadName] = useState('')
   const [uploadType, setUploadType] = useState('CADASTRAL')
   const [uploadFile, setUploadFile] = useState(null)
+  const [showDataset, setShowDataset] = useState(true)
+  const [showSubdivision, setShowSubdivision] = useState(true)
 
   const datasetsQuery = useQuery({
     enabled: !!projectId,
@@ -46,7 +83,7 @@ export function MapWorkspacePage() {
     queryFn: async () => (await api.get(`/api/projects/${projectId}/datasets`)).data,
   })
 
-  const datasets = datasetsQuery.data || []
+  const datasets = useMemo(() => datasetsQuery.data ?? [], [datasetsQuery.data])
 
   const selectedDatasetId = useMemo(() => {
     if (!projectId) return ''
@@ -103,7 +140,9 @@ export function MapWorkspacePage() {
       setDatasetId(saved.id)
       setUploadFile(null)
       setUploadName('')
+      toast.success('Uploaded', 'Dataset uploaded successfully.')
     },
+    onError: () => toast.error('Upload failed', 'Unable to upload dataset.'),
   })
 
   if (!projectId) {
@@ -190,14 +229,76 @@ export function MapWorkspacePage() {
         </div>
 
         <div className="lg:col-span-2">
+          <Card className="mb-4 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-4">
+                <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    checked={showDataset}
+                    onChange={(e) => setShowDataset(e.target.checked)}
+                  />
+                  Dataset
+                </label>
+                <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    checked={showSubdivision}
+                    onChange={(e) => setShowSubdivision(e.target.checked)}
+                  />
+                  Subdivision (latest)
+                </label>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!selectedDatasetId}
+                  onClick={async () => {
+                    try {
+                      const d = datasets.find((x) => x.id === selectedDatasetId)
+                      await downloadBlob(`/api/datasets/${selectedDatasetId}/download`, d?.originalFilename || 'dataset.geojson')
+                      toast.success('Downloaded', 'Dataset downloaded.')
+                    } catch {
+                      toast.error('Download failed', 'Unable to download dataset.')
+                    }
+                  }}
+                >
+                  Download dataset
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!latestRunId}
+                  onClick={async () => {
+                    try {
+                      await downloadBlob(`/api/subdivisions/${latestRunId}/download`, `subdivision-${latestRunId.slice(0, 8)}.geojson`)
+                      toast.success('Downloaded', 'Subdivision downloaded.')
+                    } catch {
+                      toast.error('Download failed', 'Unable to download subdivision.')
+                    }
+                  }}
+                >
+                  Download subdivision
+                </Button>
+              </div>
+            </div>
+          </Card>
+
           <Card className="h-[70vh] overflow-hidden sm:h-[75vh]">
             <MapContainer center={KIGALI_CENTER} zoom={12} className="h-full w-full">
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-              {datasetGeoJsonQuery.data ? <GeoJSON data={datasetGeoJsonQuery.data} style={{ color: '#0f172a' }} /> : null}
-              {subdivisionGeojson ? <GeoJSON data={subdivisionGeojson} style={{ color: '#4f46e5' }} /> : null}
+              <FitToGeoJson data={datasetGeoJsonQuery.data || subdivisionGeojson} />
+              {showDataset && datasetGeoJsonQuery.data ? (
+                <GeoJSON data={datasetGeoJsonQuery.data} style={{ color: '#0f172a' }} />
+              ) : null}
+              {showSubdivision && subdivisionGeojson ? <GeoJSON data={subdivisionGeojson} style={{ color: '#4f46e5' }} /> : null}
             </MapContainer>
           </Card>
 
@@ -209,4 +310,3 @@ export function MapWorkspacePage() {
     </div>
   )
 }
-

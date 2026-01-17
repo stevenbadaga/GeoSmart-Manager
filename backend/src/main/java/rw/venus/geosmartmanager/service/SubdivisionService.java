@@ -109,6 +109,20 @@ public class SubdivisionService {
         return new SubdivisionDtos.RunDetailDto(toDto(run), geojson);
     }
 
+    public Path getResultFile(UUID runId) {
+        SubdivisionRunEntity run = subdivisionRunRepository.findById(runId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Subdivision run not found"));
+        if (run.getResultPath() == null || run.getResultPath().isBlank()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "RUN_NOT_READY", "Subdivision run has no result yet");
+        }
+
+        Path path = storageService.getRoot().resolve(run.getResultPath()).normalize();
+        if (!Files.exists(path)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "RESULT_NOT_FOUND", "Subdivision result file not found");
+        }
+        return path;
+    }
+
     private Optional<DatasetEntity> pickDataset(UUID projectId) {
         return datasetRepository.findByProjectId(projectId).stream()
                 .sorted(Comparator.comparing(DatasetEntity::getUploadedAt).reversed())
@@ -134,4 +148,3 @@ public class SubdivisionService {
         );
     }
 }
-

@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet'
+import { useMap } from 'react-leaflet'
+import L from 'leaflet'
 import { api } from '../api/http'
 import { useProject } from '../projects/ProjectContext'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { Input } from '../components/Input'
 import { Badge } from '../components/Badge'
+import { useToast } from '../components/ToastProvider'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -18,6 +21,37 @@ const schema = z.object({
   minParcelArea: z.coerce.number().min(1),
 })
 
+function FitToGeoJson({ data }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (!data) return
+    try {
+      const layer = L.geoJSON(data)
+      const bounds = layer.getBounds()
+      if (bounds?.isValid()) {
+        map.fitBounds(bounds, { padding: [24, 24] })
+      }
+    } catch {
+      // ignore
+    }
+  }, [data, map])
+
+  return null
+}
+
+async function downloadBlob(url, filename) {
+  const res = await api.get(url, { responseType: 'blob' })
+  const blobUrl = window.URL.createObjectURL(res.data)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(blobUrl)
+}
+
 function statusTone(status) {
   if (status === 'COMPLETED') return 'green'
   if (status === 'FAILED') return 'red'
@@ -27,6 +61,7 @@ function statusTone(status) {
 
 export function SubdivisionPage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const { projectId } = useProject()
   const [runId, setRunId] = useState('')
 
@@ -36,7 +71,7 @@ export function SubdivisionPage() {
     queryFn: async () => (await api.get(`/api/projects/${projectId}/subdivisions`)).data,
   })
 
-  const runs = runsQuery.data || []
+  const runs = useMemo(() => runsQuery.data ?? [], [runsQuery.data])
   const selectedRunId = useMemo(() => runId || runs[0]?.id || '', [runId, runs])
 
   const runDetailQuery = useQuery({
@@ -67,7 +102,10 @@ export function SubdivisionPage() {
     onSuccess: async (saved) => {
       await qc.invalidateQueries({ queryKey: ['subdivision-runs', projectId] })
       setRunId(saved.id)
+      toast.success('Subdivision complete', 'Subdivision run created successfully.')
     },
+    onError: (e) =>
+      toast.error('Subdivision failed', e?.response?.data?.message || 'Make sure you uploaded a cadastral GeoJSON first.'),
   })
 
   if (!projectId) {
@@ -156,11 +194,29 @@ export function SubdivisionPage() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
+              <FitToGeoJson data={resultGeojson} />
               {resultGeojson ? <GeoJSON data={resultGeojson} style={{ color: '#4f46e5' }} /> : null}
             </MapContainer>
           </Card>
           <Card className="mt-4 p-5">
-            <div className="text-sm font-semibold text-slate-900">Result</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-slate-900">Result</div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!selectedRunId}
+                onClick={async () => {
+                  try {
+                    await downloadBlob(`/api/subdivisions/${selectedRunId}/download`, `subdivision-${selectedRunId.slice(0, 8)}.geojson`)
+                    toast.success('Downloaded', 'Subdivision GeoJSON downloaded.')
+                  } catch {
+                    toast.error('Download failed', 'Unable to download subdivision.')
+                  }
+                }}
+              >
+                Download GeoJSON
+              </Button>
+            </div>
             <div className="mt-2 text-sm text-slate-700">
               {runDetailQuery.isLoading ? 'Loading…' : null}
               {!runDetailQuery.isLoading && !resultGeojson ? 'No result yet.' : null}
@@ -193,4 +249,3 @@ export function SubdivisionPage() {
     </div>
   )
 }
-

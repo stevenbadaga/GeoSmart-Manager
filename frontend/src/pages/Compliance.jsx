@@ -5,6 +5,7 @@ import { useProject } from '../projects/ProjectContext'
 import { Badge } from '../components/Badge'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
+import { useToast } from '../components/ToastProvider'
 
 function tone(status) {
   if (status === 'PASSED') return 'green'
@@ -24,6 +25,7 @@ function parseIssues(issuesJson) {
 
 export function CompliancePage() {
   const qc = useQueryClient()
+  const toast = useToast()
   const { projectId } = useProject()
   const [runId, setRunId] = useState('')
 
@@ -39,7 +41,7 @@ export function CompliancePage() {
     queryFn: async () => (await api.get(`/api/projects/${projectId}/compliance`)).data,
   })
 
-  const runs = runsQuery.data || []
+  const runs = useMemo(() => runsQuery.data ?? [], [runsQuery.data])
   const selectedRunId = useMemo(() => runId || runs[0]?.id || '', [runId, runs])
 
   const checkMutation = useMutation({
@@ -52,7 +54,9 @@ export function CompliancePage() {
     },
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ['compliance', projectId] })
+      toast.success('Compliance checked', 'Compliance check saved.')
     },
+    onError: (e) => toast.error('Compliance failed', e?.response?.data?.message || 'Unable to run compliance check.'),
   })
 
   if (!projectId) {
@@ -165,4 +169,3 @@ export function CompliancePage() {
     </div>
   )
 }
-
