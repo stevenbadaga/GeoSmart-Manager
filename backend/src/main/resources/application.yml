@@ -1,0 +1,45 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: geosmart-manager
+  datasource:
+    url: jdbc:h2:file:./data/geosmart;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  jwt:
+    issuer: geosmart-manager
+    secret: ${GEOSMART_JWT_SECRET:change-me-in-prod-change-me-in-prod-change-me-in-prod}
+    expiration-minutes: 240
+  cors:
+    allowed-origins: ${GEOSMART_ALLOWED_ORIGINS:http://localhost:5173}
+  storage:
+    root: ${GEOSMART_STORAGE_ROOT:./storage}
+  bootstrap:
+    admin:
+      username: ${GEOSMART_ADMIN_USERNAME:admin}
+      email: ${GEOSMART_ADMIN_EMAIL:admin@geosmart.local}
+      password: ${GEOSMART_ADMIN_PASSWORD:Admin123!}
+

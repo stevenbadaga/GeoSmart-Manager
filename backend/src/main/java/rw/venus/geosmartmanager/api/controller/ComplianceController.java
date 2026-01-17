@@ -1,0 +1,37 @@
+package rw.venus.geosmartmanager.api.controller;
+
+import rw.venus.geosmartmanager.api.dto.ComplianceDtos;
+import rw.venus.geosmartmanager.service.ComplianceService;
+import rw.venus.geosmartmanager.service.CurrentUserService;
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/projects/{projectId}/compliance")
+public class ComplianceController {
+    private final ComplianceService complianceService;
+    private final CurrentUserService currentUserService;
+
+    public ComplianceController(ComplianceService complianceService, CurrentUserService currentUserService) {
+        this.complianceService = complianceService;
+        this.currentUserService = currentUserService;
+    }
+
+    @PostMapping("/check")
+    public ComplianceDtos.ComplianceDto check(@PathVariable UUID projectId, @Valid @RequestBody ComplianceDtos.CheckRequest req) {
+        return complianceService.check(currentUserService.requireCurrentUser(), projectId, req);
+    }
+
+    @GetMapping
+    public List<ComplianceDtos.ComplianceDto> list(@PathVariable UUID projectId) {
+        return complianceService.list(projectId);
+    }
+}
+
