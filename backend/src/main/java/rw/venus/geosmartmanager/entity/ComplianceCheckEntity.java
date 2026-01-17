@@ -35,7 +35,7 @@ public class ComplianceCheckEntity {
     @Column(nullable = false, length = 32)
     private ComplianceStatus status = ComplianceStatus.PASSED;
 
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "text")
     private String issuesJson;
 
     @CreationTimestamp
@@ -86,4 +86,3 @@ public class ComplianceCheckEntity {
         return checkedAt;
     }
 }
-

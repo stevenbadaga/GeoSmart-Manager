@@ -2,9 +2,11 @@ package rw.venus.geosmartmanager.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import rw.venus.geosmartmanager.api.dto.ComplianceDtos;
 import rw.venus.geosmartmanager.domain.ComplianceStatus;
 import rw.venus.geosmartmanager.domain.RunStatus;
+import rw.venus.geosmartmanager.entity.ComplianceConfigEntity;
 import rw.venus.geosmartmanager.entity.ComplianceCheckEntity;
 import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.entity.SubdivisionRunEntity;
@@ -17,8 +19,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,6 +32,7 @@ public class ComplianceService {
     private final ProjectRepository projectRepository;
     private final SubdivisionRunRepository subdivisionRunRepository;
     private final ComplianceCheckRepository complianceCheckRepository;
+    private final ComplianceConfigService complianceConfigService;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
     private final AuditService auditService;
@@ -36,6 +41,7 @@ public class ComplianceService {
             ProjectRepository projectRepository,
             SubdivisionRunRepository subdivisionRunRepository,
             ComplianceCheckRepository complianceCheckRepository,
+            ComplianceConfigService complianceConfigService,
             StorageService storageService,
             ObjectMapper objectMapper,
             AuditService auditService
@@ -43,6 +49,7 @@ public class ComplianceService {
         this.projectRepository = projectRepository;
         this.subdivisionRunRepository = subdivisionRunRepository;
         this.complianceCheckRepository = complianceCheckRepository;
+        this.complianceConfigService = complianceConfigService;
         this.storageService = storageService;
         this.objectMapper = objectMapper;
         this.auditService = auditService;
@@ -61,6 +68,8 @@ public class ComplianceService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "RUN_NOT_READY", "Subdivision run is not completed");
         }
 
+        ComplianceConfigEntity config = complianceConfigService.getOrCreate(projectId);
+
         JsonNode root;
         try {
             String geojson = Files.readString(storageService.getRoot().resolve(run.getResultPath()).normalize());
@@ -70,33 +79,91 @@ public class ComplianceService {
         }
 
         List<Map<String, Object>> issues = new ArrayList<>();
+        boolean hasError = false;
+
         JsonNode features = root.path("features");
         if (features.isArray()) {
+            Integer expectedCount = config.getExpectedParcelCount();
+            if (expectedCount != null && features.size() != expectedCount) {
+                issues.add(Map.of(
+                        "rule", "PARCEL_COUNT",
+                        "severity", "WARNING",
+                        "message", "Parcel count does not match expected count",
+                        "expected", expectedCount,
+                        "actual", features.size()
+                ));
+            }
+
+            Set<Integer> parcelNos = new HashSet<>();
             int idx = 0;
             for (JsonNode feature : features) {
                 idx++;
-                double areaSqm = feature.path("properties").path("areaSqm").asDouble(Double.NaN);
-                if (!Double.isFinite(areaSqm) || areaSqm <= 0) {
+                int parcelNo = feature.path("properties").path("parcelNo").asInt(idx);
+
+                if (feature.path("properties").path("parcelNo").isMissingNode()) {
                     issues.add(Map.of(
-                            "type", "AREA_MISSING",
-                            "message", "Parcel area is missing/invalid",
+                            "rule", "PARCEL_NO",
+                            "severity", "WARNING",
+                            "message", "Parcel number is missing; using index instead",
                             "parcelIndex", idx
+                    ));
+                }
+
+                if (!parcelNos.add(parcelNo)) {
+                    hasError = true;
+                    issues.add(Map.of(
+                            "rule", "DUPLICATE_PARCEL_NO",
+                            "severity", "ERROR",
+                            "message", "Duplicate parcel number detected",
+                            "parcelNo", parcelNo
+                    ));
+                }
+
+                double areaSqm = computeAreaSqm(feature.path("geometry"));
+                if (!Double.isFinite(areaSqm) || areaSqm <= 0) {
+                    hasError = true;
+                    issues.add(Map.of(
+                            "rule", "AREA",
+                            "severity", "ERROR",
+                            "message", "Unable to compute parcel area",
+                            "parcelNo", parcelNo
                     ));
                     continue;
                 }
-                if (areaSqm < run.getMinParcelArea()) {
+
+                if (areaSqm < config.getMinParcelArea()) {
+                    hasError = true;
                     issues.add(Map.of(
-                            "type", "MIN_AREA_VIOLATION",
+                            "rule", "MIN_AREA",
+                            "severity", "ERROR",
                             "message", "Parcel area below minimum",
-                            "parcelIndex", idx,
+                            "parcelNo", parcelNo,
                             "areaSqm", areaSqm,
-                            "minAreaSqm", run.getMinParcelArea()
+                            "minAreaSqm", config.getMinParcelArea()
+                    ));
+                }
+
+                if (config.getMaxParcelArea() != null && areaSqm > config.getMaxParcelArea()) {
+                    issues.add(Map.of(
+                            "rule", "MAX_AREA",
+                            "severity", "WARNING",
+                            "message", "Parcel area above maximum",
+                            "parcelNo", parcelNo,
+                            "areaSqm", areaSqm,
+                            "maxAreaSqm", config.getMaxParcelArea()
                     ));
                 }
             }
         }
 
-        ComplianceStatus status = issues.isEmpty() ? ComplianceStatus.PASSED : ComplianceStatus.FAILED;
+        ComplianceStatus status;
+        if (issues.isEmpty()) {
+            status = ComplianceStatus.PASSED;
+        } else if (hasError) {
+            status = ComplianceStatus.FAILED;
+        } else {
+            status = ComplianceStatus.WARNINGS;
+        }
         ComplianceCheckEntity check = new ComplianceCheckEntity();
         check.setProject(project);
         check.setSubdivisionRun(run);
@@ -139,5 +206,66 @@ public class ComplianceService {
             return "[]";
         }
     }
-}
 
+    private double computeAreaSqm(JsonNode geometry) {
+        if (geometry == null || !geometry.isObject()) {
+            return Double.NaN;
+        }
+
+        String type = geometry.path("type").asText("");
+        JsonNode coords = geometry.path("coordinates");
+        if (!coords.isArray()) {
+            return Double.NaN;
+        }
+
+        ArrayNode ring = null;
+        if ("Polygon".equals(type)) {
+            JsonNode ringNode = coords.path(0);
+            if (ringNode.isArray()) {
+                ring = (ArrayNode) ringNode;
+            }
+        } else if ("MultiPolygon".equals(type)) {
+            JsonNode ringNode = coords.path(0).path(0);
+            if (ringNode.isArray()) {
+                ring = (ArrayNode) ringNode;
+            }
+        }
+
+        if (ring == null || ring.size() < 4) {
+            return Double.NaN;
+        }
+
+        double midLat = 0;
+        int count = 0;
+        for (JsonNode pt : ring) {
+            if (pt.isArray() && pt.size() >= 2) {
+                midLat += pt.path(1).asDouble(0);
+                count++;
+            }
+        }
+        if (count == 0) {
+            return Double.NaN;
+        }
+        midLat /= count;
+
+        double metersPerDegLat = 111_320.0;
+        double metersPerDegLon = 111_320.0 * Math.cos(Math.toRadians(midLat));
+
+        // Shoelace formula on equirectangular projected coords.
+        double sum = 0;
+        for (int i = 0; i < ring.size() - 1; i++) {
+            JsonNode a = ring.get(i);
+            JsonNode b = ring.get(i + 1);
+            if (!a.isArray() || !b.isArray() || a.size() < 2 || b.size() < 2) {
+                continue;
+            }
+            double ax = a.path(0).asDouble(0) * metersPerDegLon;
+            double ay = a.path(1).asDouble(0) * metersPerDegLat;
+            double bx = b.path(0).asDouble(0) * metersPerDegLon;
+            double by = b.path(1).asDouble(0) * metersPerDegLat;
+            sum += (ax * by) - (bx * ay);
+        }
+
+        return Math.abs(sum) / 2.0;
+    }
+}

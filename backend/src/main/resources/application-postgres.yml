@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: ${GEOSMART_DB_URL:jdbc:postgresql://localhost:5432/geosmart}
+    driver-class-name: org.postgresql.Driver
+    username: ${GEOSMART_DB_USERNAME:geosmart}
+    password: ${GEOSMART_DB_PASSWORD:geosmart}
+  h2:
+    console:
+      enabled: false
+

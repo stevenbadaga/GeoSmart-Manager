@@ -9,10 +9,15 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
   h2:
     console:
       enabled: true
@@ -42,4 +47,3 @@ app:
       username: ${GEOSMART_ADMIN_USERNAME:admin}
       email: ${GEOSMART_ADMIN_EMAIL:admin@geosmart.local}
       password: ${GEOSMART_ADMIN_PASSWORD:Admin123!}
-

@@ -13,6 +13,24 @@ import { useToast } from '../components/ToastProvider'
 
 const KIGALI_CENTER = [-1.944, 30.061] // lat, lon
 
+function withFeatureIds(featureCollection, prefix) {
+  if (!featureCollection || featureCollection.type !== 'FeatureCollection' || !Array.isArray(featureCollection.features)) {
+    return null
+  }
+
+  return {
+    ...featureCollection,
+    features: featureCollection.features.map((f, idx) => {
+      const id = f?.id ?? `${prefix}-${idx + 1}`
+      return {
+        ...f,
+        id,
+        properties: { ...(f?.properties || {}), __id: id },
+      }
+    }),
+  }
+}
+
 function FitToGeoJson({ data }) {
   const map = useMap()
 
@@ -70,12 +88,16 @@ export function MapWorkspacePage() {
   const toast = useToast()
   const { projectId } = useProject()
 
+  const [map, setMap] = useState(null)
   const [datasetId, setDatasetId] = useState('')
   const [uploadName, setUploadName] = useState('')
   const [uploadType, setUploadType] = useState('CADASTRAL')
   const [uploadFile, setUploadFile] = useState(null)
   const [showDataset, setShowDataset] = useState(true)
   const [showSubdivision, setShowSubdivision] = useState(true)
+  const [basemap, setBasemap] = useState('osm')
+  const [activeTable, setActiveTable] = useState('subdivision')
+  const [selected, setSelected] = useState(null)
 
   const datasetsQuery = useQuery({
     enabled: !!projectId,
@@ -100,6 +122,8 @@ export function MapWorkspacePage() {
     },
   })
 
+  const datasetGeojsonWithIds = useMemo(() => withFeatureIds(datasetGeoJsonQuery.data, 'dataset'), [datasetGeoJsonQuery.data])
+
   const runsQuery = useQuery({
     enabled: !!projectId,
     queryKey: ['subdivision-runs', projectId],
@@ -123,6 +147,79 @@ export function MapWorkspacePage() {
       return null
     }
   }, [runDetailQuery.data])
+
+  const subdivisionGeojsonWithIds = useMemo(
+    () => withFeatureIds(subdivisionGeojson, 'parcel'),
+    [subdivisionGeojson],
+  )
+
+  const datasetFeatures = useMemo(() => datasetGeojsonWithIds?.features ?? [], [datasetGeojsonWithIds])
+  const subdivisionFeatures = useMemo(() => subdivisionGeojsonWithIds?.features ?? [], [subdivisionGeojsonWithIds])
+
+  const resolvedTable = useMemo(() => {
+    if (activeTable === 'dataset') {
+      if (datasetFeatures.length > 0) return 'dataset'
+      if (subdivisionFeatures.length > 0) return 'subdivision'
+      return 'dataset'
+    }
+
+    if (subdivisionFeatures.length > 0) return 'subdivision'
+    if (datasetFeatures.length > 0) return 'dataset'
+    return 'subdivision'
+  }, [activeTable, datasetFeatures.length, subdivisionFeatures.length])
+
+  function zoomToFeature(feature) {
+    if (!map || !feature) return
+    try {
+      const layer = L.geoJSON(feature)
+      const bounds = layer.getBounds()
+      if (bounds?.isValid()) {
+        map.fitBounds(bounds, { padding: [24, 24] })
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const datasetStyle = (feature) => {
+    const isSelected = selected?.layer === 'dataset' && feature?.id === selected?.id
+    return {
+      color: '#0f172a',
+      weight: isSelected ? 4 : 2,
+      fillColor: '#0f172a',
+      fillOpacity: isSelected ? 0.18 : 0.06,
+    }
+  }
+
+  const subdivisionStyle = (feature) => {
+    const isSelected = selected?.layer === 'subdivision' && feature?.id === selected?.id
+    return {
+      color: '#4f46e5',
+      weight: isSelected ? 4 : 2,
+      fillColor: '#4f46e5',
+      fillOpacity: isSelected ? 0.2 : 0.08,
+    }
+  }
+
+  const onDatasetEach = (feature, layer) => {
+    layer.on({
+      click: () => {
+        setSelected({ layer: 'dataset', id: feature?.id })
+        setActiveTable('dataset')
+        zoomToFeature(feature)
+      },
+    })
+  }
+
+  const onSubdivisionEach = (feature, layer) => {
+    layer.on({
+      click: () => {
+        setSelected({ layer: 'subdivision', id: feature?.id })
+        setActiveTable('subdivision')
+        zoomToFeature(feature)
+      },
+    })
+  }
 
   const uploadMutation = useMutation({
     mutationFn: async () => {
@@ -232,6 +329,17 @@ export function MapWorkspacePage() {
           <Card className="mb-4 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-slate-700">Basemap</span>
+                  <select
+                    className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    value={basemap}
+                    onChange={(e) => setBasemap(e.target.value)}
+                  >
+                    <option value="osm">OSM</option>
+                    <option value="satellite">Satellite</option>
+                  </select>
+                </div>
                 <label className="inline-flex items-center gap-2 text-sm text-slate-700">
                   <input
                     type="checkbox"
@@ -289,22 +397,152 @@ export function MapWorkspacePage() {
           </Card>
 
           <Card className="h-[70vh] overflow-hidden sm:h-[75vh]">
-            <MapContainer center={KIGALI_CENTER} zoom={12} className="h-full w-full">
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <FitToGeoJson data={datasetGeoJsonQuery.data || subdivisionGeojson} />
-              {showDataset && datasetGeoJsonQuery.data ? (
-                <GeoJSON data={datasetGeoJsonQuery.data} style={{ color: '#0f172a' }} />
+            <MapContainer center={KIGALI_CENTER} zoom={12} className="h-full w-full" whenCreated={setMap}>
+              {basemap === 'osm' ? (
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+              ) : (
+                <TileLayer
+                  attribution="Tiles &copy; Esri"
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                />
+              )}
+
+              <FitToGeoJson data={datasetGeojsonWithIds || subdivisionGeojsonWithIds} />
+              {showDataset && datasetGeojsonWithIds ? (
+                <GeoJSON data={datasetGeojsonWithIds} style={datasetStyle} onEachFeature={onDatasetEach} />
               ) : null}
-              {showSubdivision && subdivisionGeojson ? <GeoJSON data={subdivisionGeojson} style={{ color: '#4f46e5' }} /> : null}
+              {showSubdivision && subdivisionGeojsonWithIds ? (
+                <GeoJSON data={subdivisionGeojsonWithIds} style={subdivisionStyle} onEachFeature={onSubdivisionEach} />
+              ) : null}
             </MapContainer>
           </Card>
 
           <div className="mt-3 text-xs text-slate-500">
             Showing dataset (dark) and latest subdivision output (indigo) when available.
           </div>
+
+          <Card className="mt-4 overflow-hidden">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
+              <div className="text-sm font-semibold text-slate-900">Attribute table</div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={[
+                    'rounded-lg px-3 py-1.5 text-sm font-medium',
+                    resolvedTable === 'dataset'
+                      ? 'bg-slate-900 text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200',
+                  ].join(' ')}
+                  onClick={() => setActiveTable('dataset')}
+                  disabled={datasetFeatures.length === 0}
+                >
+                  Dataset ({datasetFeatures.length})
+                </button>
+                <button
+                  type="button"
+                  className={[
+                    'rounded-lg px-3 py-1.5 text-sm font-medium',
+                    resolvedTable === 'subdivision'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-indigo-50 text-indigo-800 hover:bg-indigo-100',
+                  ].join(' ')}
+                  onClick={() => setActiveTable('subdivision')}
+                  disabled={subdivisionFeatures.length === 0}
+                >
+                  Subdivision ({subdivisionFeatures.length})
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              {resolvedTable === 'dataset' ? (
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    <tr>
+                      <th className="px-4 py-3">Feature</th>
+                      <th className="px-4 py-3">Name</th>
+                      <th className="px-4 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 bg-white">
+                    {datasetFeatures.length === 0 ? (
+                      <tr>
+                        <td className="px-4 py-6 text-slate-600" colSpan={3}>
+                          No dataset features to show.
+                        </td>
+                      </tr>
+                    ) : null}
+                    {datasetFeatures.map((f, idx) => {
+                      const isSel = selected?.layer === 'dataset' && selected?.id === f.id
+                      return (
+                        <tr key={f.id || idx} className={isSel ? 'bg-indigo-50' : ''}>
+                          <td className="px-4 py-3 font-medium text-slate-900">{f.id || idx + 1}</td>
+                          <td className="px-4 py-3 text-slate-700">{f?.properties?.name || '—'}</td>
+                          <td className="px-4 py-3">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelected({ layer: 'dataset', id: f.id })
+                                zoomToFeature(f)
+                              }}
+                            >
+                              Zoom
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    <tr>
+                      <th className="px-4 py-3">Parcel</th>
+                      <th className="px-4 py-3">Area (sqm)</th>
+                      <th className="px-4 py-3">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 bg-white">
+                    {subdivisionFeatures.length === 0 ? (
+                      <tr>
+                        <td className="px-4 py-6 text-slate-600" colSpan={3}>
+                          No subdivision result yet.
+                        </td>
+                      </tr>
+                    ) : null}
+                    {subdivisionFeatures.map((f, idx) => {
+                      const isSel = selected?.layer === 'subdivision' && selected?.id === f.id
+                      const parcelNo = f?.properties?.parcelNo ?? idx + 1
+                      const area = typeof f?.properties?.areaSqm === 'number' ? f.properties.areaSqm : null
+                      return (
+                        <tr key={f.id || idx} className={isSel ? 'bg-indigo-50' : ''}>
+                          <td className="px-4 py-3 font-medium text-slate-900">{parcelNo}</td>
+                          <td className="px-4 py-3 text-slate-700">{area == null ? '—' : area.toFixed(2)}</td>
+                          <td className="px-4 py-3">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelected({ layer: 'subdivision', id: f.id })
+                                zoomToFeature(f)
+                              }}
+                            >
+                              Zoom
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </Card>
         </div>
       </div>
     </div>

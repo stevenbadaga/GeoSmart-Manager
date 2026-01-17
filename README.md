@@ -5,7 +5,8 @@ GeoSmart-Manager is an AI-integrated geospatial ERP system prototype for surveyi
 ## Tech stack
 - Frontend: React (Vite) + Tailwind CSS (JSX)
 - Backend: Java 17 + Spring Boot (REST, JWT auth)
-- DB (dev): H2 (file-based). Tests use in-memory H2.
+- DB: H2 (dev) + PostgreSQL/PostGIS (recommended)
+- Migrations: Flyway
 
 ## Quick start (dev)
 ### One command (Windows)
@@ -37,6 +38,27 @@ If PowerShell blocks `npm` scripts on your machine, use:
 npm.cmd install
 npm.cmd run dev
 ```
+
+## PostgreSQL/PostGIS (recommended)
+If you have Docker installed, start PostGIS locally:
+```bash
+docker compose up -d db
+```
+
+Then run the backend with the Postgres profile:
+- PowerShell:
+```bash
+$env:SPRING_PROFILES_ACTIVE="postgres"
+mvn -f backend/pom.xml spring-boot:run
+```
+- CMD:
+```bash
+set SPRING_PROFILES_ACTIVE=postgres
+mvn -f backend/pom.xml spring-boot:run
+```
+
+## Notes
+- If you previously ran the backend with an older local H2 database, delete `backend/data/` to let Flyway recreate the schema.
 
 ## Demo flow (for prototype)
 1. Create a Client

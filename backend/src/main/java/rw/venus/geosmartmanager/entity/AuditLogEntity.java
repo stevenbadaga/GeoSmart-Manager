@@ -33,7 +33,7 @@ public class AuditLogEntity {
     @Column(length = 64)
     private String entityId;
 
-    @Column(columnDefinition = "CLOB")
+    @Column(columnDefinition = "text")
     private String detailsJson;
 
     @CreationTimestamp
@@ -92,4 +92,3 @@ public class AuditLogEntity {
         return createdAt;
     }
 }
-

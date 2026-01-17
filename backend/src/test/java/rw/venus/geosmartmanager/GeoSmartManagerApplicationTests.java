@@ -12,8 +12,9 @@ import org.springframework.http.ResponseEntity;
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
-                "spring.datasource.url=jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1",
-                "spring.jpa.hibernate.ddl-auto=create-drop"
+                "spring.datasource.url=jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1",
+                "spring.flyway.enabled=true",
+                "spring.jpa.hibernate.ddl-auto=validate"
         }
 )
 class GeoSmartManagerApplicationTests {
@@ -27,4 +28,3 @@ class GeoSmartManagerApplicationTests {
         assertThat(res.getBody()).isNotNull();
     }
 }
-
