@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.UUID;
 import org.locationtech.jts.geom.Geometry;
@@ -141,20 +140,17 @@ public class SubdivisionService {
     }
 
     private Optional<DatasetEntity> pickDataset(UUID projectId) {
-        var all = datasetRepository.findByProjectId(projectId);
+        var all = datasetRepository.findByProjectIdOrderByUploadedAtDesc(projectId);
 
         Optional<DatasetEntity> cadastral = all.stream()
                 .filter(d -> d.getType() == DatasetType.CADASTRAL)
-                .sorted(Comparator.comparing(DatasetEntity::getUploadedAt).reversed())
                 .findFirst();
 
         if (cadastral.isPresent()) {
             return cadastral;
         }
 
-        return all.stream()
-                .sorted(Comparator.comparing(DatasetEntity::getUploadedAt).reversed())
-                .findFirst();
+        return all.stream().findFirst();
     }
 
     private void fail(SubdivisionRunEntity run, String errorMessage) {

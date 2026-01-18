@@ -5,6 +5,7 @@ import rw.venus.geosmartmanager.entity.ClientEntity;
 import rw.venus.geosmartmanager.entity.UserEntity;
 import rw.venus.geosmartmanager.exception.ApiException;
 import rw.venus.geosmartmanager.repo.ClientRepository;
+import rw.venus.geosmartmanager.repo.ProjectRepository;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -13,15 +14,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class ClientService {
     private final ClientRepository clientRepository;
+    private final ProjectRepository projectRepository;
     private final AuditService auditService;
 
-    public ClientService(ClientRepository clientRepository, AuditService auditService) {
+    public ClientService(ClientRepository clientRepository, ProjectRepository projectRepository, AuditService auditService) {
         this.clientRepository = clientRepository;
+        this.projectRepository = projectRepository;
         this.auditService = auditService;
     }
 
     public List<ClientDtos.ClientDto> list() {
-        return clientRepository.findAll().stream().map(this::toDto).toList();
+        return clientRepository.findAllByOrderByCreatedAtDesc().stream().map(this::toDto).toList();
     }
 
     public ClientDtos.ClientDto get(UUID id) {
@@ -56,6 +59,9 @@ public class ClientService {
         if (!clientRepository.existsById(id)) {
             throw new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Client not found");
         }
+        if (projectRepository.existsByClientId(id)) {
+            throw new ApiException(HttpStatus.CONFLICT, "CLIENT_HAS_PROJECTS", "Cannot delete a client that has projects");
+        }
         clientRepository.deleteById(id);
         auditService.log(actor, "CLIENT_DELETED", "Client", id);
     }
@@ -64,4 +70,3 @@ public class ClientService {
         return new ClientDtos.ClientDto(c.getId(), c.getName(), c.getEmail(), c.getPhone(), c.getAddress(), c.getCreatedAt());
     }
 }
-

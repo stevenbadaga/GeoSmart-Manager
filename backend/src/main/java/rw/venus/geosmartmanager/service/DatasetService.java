@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -36,7 +37,7 @@ public class DatasetService {
     }
 
     public List<DatasetDtos.DatasetDto> listByProject(UUID projectId) {
-        return datasetRepository.findByProjectId(projectId).stream().map(this::toDto).toList();
+        return datasetRepository.findByProjectIdOrderByUploadedAtDesc(projectId).stream().map(this::toDto).toList();
     }
 
     public DatasetDtos.DatasetDto upload(UserEntity actor, UUID projectId, DatasetDtos.CreateDatasetMetadata meta, MultipartFile file) {
@@ -82,6 +83,29 @@ public class DatasetService {
         return storageService.getRoot().resolve(dataset.getStoredPath()).normalize();
     }
 
+    public Path resolveExistingPath(DatasetEntity dataset) {
+        Path path = resolvePath(dataset);
+        if (!Files.exists(path)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "FILE_NOT_FOUND", "Dataset file not found");
+        }
+        return path;
+    }
+
+    @Transactional
+    public void delete(UserEntity actor, UUID datasetId) {
+        DatasetEntity dataset = require(datasetId);
+        Path path = resolvePath(dataset);
+        datasetRepository.delete(dataset);
+
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException ignored) {
+            // Best effort. The DB record is the source of truth; a leftover file is non-critical for the prototype.
+        }
+
+        auditService.log(actor, "DATASET_DELETED", "Dataset", datasetId);
+    }
+
     private DatasetDtos.DatasetDto toDto(DatasetEntity d) {
         return new DatasetDtos.DatasetDto(
                 d.getId(),
@@ -109,4 +133,3 @@ public class DatasetService {
         return ".geojson";
     }
 }
-

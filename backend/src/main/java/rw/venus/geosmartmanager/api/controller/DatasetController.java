@@ -14,6 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,12 +53,16 @@ public class DatasetController {
     @GetMapping("/datasets/{datasetId}/download")
     public ResponseEntity<Resource> download(@PathVariable UUID datasetId) {
         DatasetEntity dataset = datasetService.require(datasetId);
-        Path path = datasetService.resolvePath(dataset);
+        Path path = datasetService.resolveExistingPath(dataset);
         Resource resource = new FileSystemResource(path);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + dataset.getOriginalFilename() + "\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
     }
-}
 
+    @DeleteMapping("/datasets/{datasetId}")
+    public void delete(@PathVariable UUID datasetId) {
+        datasetService.delete(currentUserService.requireCurrentUser(), datasetId);
+    }
+}

@@ -6,6 +6,9 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProjectRepository extends JpaRepository<ProjectEntity, UUID> {
-    List<ProjectEntity> findByClientId(UUID clientId);
-}
+    List<ProjectEntity> findAllByOrderByCreatedAtDesc();
 
+    List<ProjectEntity> findByClientIdOrderByCreatedAtDesc(UUID clientId);
+
+    boolean existsByClientId(UUID clientId);
+}

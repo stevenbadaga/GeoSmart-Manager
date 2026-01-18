@@ -9,6 +9,7 @@ import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { Input } from '../components/Input'
 import { Badge } from '../components/Badge'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useToast } from '../components/ToastProvider'
 
 const KIGALI_CENTER = [-1.944, 30.061] // lat, lon
@@ -100,6 +101,7 @@ export function MapWorkspacePage() {
   const [activeTable, setActiveTable] = useState('subdivision')
   const [tableQuery, setTableQuery] = useState('')
   const [selected, setSelected] = useState(null)
+  const [confirmDeleteDatasetId, setConfirmDeleteDatasetId] = useState('')
 
   const datasetsQuery = useQuery({
     enabled: !!projectId,
@@ -111,9 +113,14 @@ export function MapWorkspacePage() {
 
   const selectedDatasetId = useMemo(() => {
     if (!projectId) return ''
-    if (datasetId) return datasetId
+    if (datasetId && datasets.some((d) => d.id === datasetId)) return datasetId
     return datasets[0]?.id || ''
   }, [projectId, datasetId, datasets])
+
+  const selectedDataset = useMemo(() => {
+    if (!selectedDatasetId) return null
+    return datasets.find((d) => d.id === selectedDatasetId) ?? null
+  }, [datasets, selectedDatasetId])
 
   const datasetGeoJsonQuery = useQuery({
     enabled: !!selectedDatasetId,
@@ -292,6 +299,22 @@ export function MapWorkspacePage() {
     onError: () => toast.error('Upload failed', 'Unable to upload dataset.'),
   })
 
+  const deleteDatasetMutation = useMutation({
+    mutationFn: async (id) => {
+      await api.delete(`/api/datasets/${id}`)
+    },
+    onSuccess: async (_data, id) => {
+      await qc.invalidateQueries({ queryKey: ['datasets', projectId] })
+      await qc.invalidateQueries({ queryKey: ['dataset-geojson', id] })
+      if (selected?.layer === 'dataset') {
+        setSelected(null)
+      }
+      setDatasetId('')
+      toast.success('Deleted', 'Dataset deleted successfully.')
+    },
+    onError: (e) => toast.error('Delete failed', e?.response?.data?.message || 'Unable to delete dataset.'),
+  })
+
   if (!projectId) {
     return (
       <div className="mx-auto max-w-4xl p-6">
@@ -443,6 +466,14 @@ export function MapWorkspacePage() {
                   }}
                 >
                   Download dataset
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  disabled={!selectedDatasetId || deleteDatasetMutation.isPending}
+                  onClick={() => setConfirmDeleteDatasetId(selectedDatasetId)}
+                >
+                  Delete dataset
                 </Button>
                 <Button
                   variant="outline"
@@ -688,6 +719,18 @@ export function MapWorkspacePage() {
           </Card>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDeleteDatasetId}
+        title="Delete dataset?"
+        message={`This will permanently delete the dataset${selectedDataset ? ` "${selectedDataset.name}"` : ''}.`}
+        confirmLabel={deleteDatasetMutation.isPending ? 'Deleting…' : 'Delete'}
+        danger
+        onClose={() => setConfirmDeleteDatasetId('')}
+        onConfirm={() => {
+          deleteDatasetMutation.mutate(confirmDeleteDatasetId, { onSettled: () => setConfirmDeleteDatasetId('') })
+        }}
+      />
     </div>
   )
 }

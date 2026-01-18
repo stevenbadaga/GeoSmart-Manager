@@ -28,8 +28,8 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public List<ProjectDtos.ProjectDto> list(UUID clientId) {
         List<ProjectEntity> projects = clientId == null
-                ? projectRepository.findAll()
-                : projectRepository.findByClientId(clientId);
+                ? projectRepository.findAllByOrderByCreatedAtDesc()
+                : projectRepository.findByClientIdOrderByCreatedAtDesc(clientId);
         return projects.stream().map(this::toDto).toList();
     }
 

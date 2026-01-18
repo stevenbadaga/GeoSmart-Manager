@@ -6,6 +6,5 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface DatasetRepository extends JpaRepository<DatasetEntity, UUID> {
-    List<DatasetEntity> findByProjectId(UUID projectId);
+    List<DatasetEntity> findByProjectIdOrderByUploadedAtDesc(UUID projectId);
 }
-
