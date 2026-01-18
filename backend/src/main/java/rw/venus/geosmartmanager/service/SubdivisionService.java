@@ -3,6 +3,7 @@ package rw.venus.geosmartmanager.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import rw.venus.geosmartmanager.api.dto.SubdivisionDtos;
+import rw.venus.geosmartmanager.domain.DatasetType;
 import rw.venus.geosmartmanager.domain.RunStatus;
 import rw.venus.geosmartmanager.entity.DatasetEntity;
 import rw.venus.geosmartmanager.entity.ProjectEntity;
@@ -19,6 +20,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.UUID;
+import org.locationtech.jts.geom.Geometry;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -68,8 +70,23 @@ public class SubdivisionService {
 
         try {
             Path datasetPath = storageService.getRoot().resolve(dataset.getStoredPath()).normalize();
-            GeoJsonService.BoundingBox bbox = geoJsonService.findFirstPolygonBBox(datasetPath);
-            ObjectNode result = geoJsonService.buildRectSubdivision(bbox, run.getTargetParcels());
+
+            Geometry boundary = geoJsonService.readFirstPolygonalGeometry(datasetPath);
+            double boundaryAreaSqm = geoJsonService.areaSqm(boundary);
+            if (!Double.isFinite(boundaryAreaSqm) || boundaryAreaSqm <= 0) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_GEOJSON", "Unable to compute boundary area");
+            }
+
+            int maxParcels = Math.max(1, (int) Math.floor(boundaryAreaSqm / run.getMinParcelArea()));
+            if (run.getTargetParcels() > maxParcels) {
+                throw new ApiException(
+                        HttpStatus.BAD_REQUEST,
+                        "MIN_AREA_CONSTRAINT",
+                        "Target parcels too high for minimum parcel area. Max parcels: " + maxParcels
+                );
+            }
+
+            ObjectNode result = geoJsonService.buildStripSubdivision(boundary, run.getTargetParcels());
 
             Path out = storageService.resolve("projects", projectId.toString(), "subdivisions", run.getId() + ".geojson");
             storageService.ensureParentDir(out);
@@ -124,7 +141,18 @@ public class SubdivisionService {
     }
 
     private Optional<DatasetEntity> pickDataset(UUID projectId) {
-        return datasetRepository.findByProjectId(projectId).stream()
+        var all = datasetRepository.findByProjectId(projectId);
+
+        Optional<DatasetEntity> cadastral = all.stream()
+                .filter(d -> d.getType() == DatasetType.CADASTRAL)
+                .sorted(Comparator.comparing(DatasetEntity::getUploadedAt).reversed())
+                .findFirst();
+
+        if (cadastral.isPresent()) {
+            return cadastral;
+        }
+
+        return all.stream()
                 .sorted(Comparator.comparing(DatasetEntity::getUploadedAt).reversed())
                 .findFirst();
     }

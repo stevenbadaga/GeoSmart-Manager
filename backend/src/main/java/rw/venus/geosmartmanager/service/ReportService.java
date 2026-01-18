@@ -289,11 +289,13 @@ public class ReportService {
         double maxY = Double.NEGATIVE_INFINITY;
 
         for (JsonNode f : features) {
-            for (double[] pt : extractOuterRingPoints(f.path("geometry"))) {
-                minX = Math.min(minX, pt[0]);
-                minY = Math.min(minY, pt[1]);
-                maxX = Math.max(maxX, pt[0]);
-                maxY = Math.max(maxY, pt[1]);
+            for (var ring : extractOuterRings(f.path("geometry"))) {
+                for (double[] pt : ring) {
+                    minX = Math.min(minX, pt[0]);
+                    minY = Math.min(minY, pt[1]);
+                    maxX = Math.max(maxX, pt[0]);
+                    maxY = Math.max(maxY, pt[1]);
+                }
             }
         }
 
@@ -312,32 +314,38 @@ public class ReportService {
         cs.setNonStrokingColor(new Color(238, 242, 255));
 
         for (JsonNode f : features) {
-            var pts = extractOuterRingPoints(f.path("geometry"));
-            if (pts.isEmpty()) {
+            var rings = extractOuterRings(f.path("geometry"));
+            if (rings.isEmpty()) {
                 continue;
             }
 
-            boolean started = false;
             float cx = 0;
             float cy = 0;
             int n = 0;
 
-            for (double[] pt : pts) {
-                float px = (float) (x + padX + ((pt[0] - minX) * s));
-                float py = (float) (y + padY + ((pt[1] - minY) * s));
-                if (!started) {
-                    cs.moveTo(px, py);
-                    started = true;
-                } else {
-                    cs.lineTo(px, py);
+            for (var pts : rings) {
+                if (pts.isEmpty()) {
+                    continue;
                 }
-                cx += px;
-                cy += py;
-                n++;
-            }
 
-            cs.closePath();
-            cs.fillAndStroke();
+                boolean started = false;
+                for (double[] pt : pts) {
+                    float px = (float) (x + padX + ((pt[0] - minX) * s));
+                    float py = (float) (y + padY + ((pt[1] - minY) * s));
+                    if (!started) {
+                        cs.moveTo(px, py);
+                        started = true;
+                    } else {
+                        cs.lineTo(px, py);
+                    }
+                    cx += px;
+                    cy += py;
+                    n++;
+                }
+
+                cs.closePath();
+                cs.fillAndStroke();
+            }
 
             if (n > 0) {
                 float lx = cx / n;
@@ -352,7 +360,7 @@ public class ReportService {
         }
     }
 
-    private java.util.List<double[]> extractOuterRingPoints(JsonNode geometry) {
+    private java.util.List<java.util.List<double[]>> extractOuterRings(JsonNode geometry) {
         if (geometry == null || !geometry.isObject()) {
             return java.util.List.of();
         }
@@ -362,14 +370,22 @@ public class ReportService {
             return java.util.List.of();
         }
 
-        JsonNode ringNode = null;
+        java.util.List<java.util.List<double[]>> rings = new java.util.ArrayList<>();
+
         if ("Polygon".equals(type)) {
-            ringNode = coords.path(0);
+            addRing(coords.path(0), rings);
         } else if ("MultiPolygon".equals(type)) {
-            ringNode = coords.path(0).path(0);
+            for (JsonNode poly : coords) {
+                addRing(poly.path(0), rings);
+            }
         }
+
+        return rings;
+    }
+
+    private void addRing(JsonNode ringNode, java.util.List<java.util.List<double[]>> out) {
         if (ringNode == null || !ringNode.isArray()) {
-            return java.util.List.of();
+            return;
         }
 
         java.util.List<double[]> pts = new java.util.ArrayList<>();
@@ -378,7 +394,10 @@ public class ReportService {
                 pts.add(new double[] { pt.path(0).asDouble(), pt.path(1).asDouble() });
             }
         }
-        return pts;
+
+        if (!pts.isEmpty()) {
+            out.add(pts);
+        }
     }
 
     private float sectionTitle(PDPageContentStream cs, float y, String title) throws IOException {

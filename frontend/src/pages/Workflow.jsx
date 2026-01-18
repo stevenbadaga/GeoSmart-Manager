@@ -49,9 +49,12 @@ export function WorkflowPage() {
   const qc = useQueryClient()
   const { projectId } = useProject()
   const toast = useToast()
+  const [view, setView] = useState('board')
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState('')
+  const [query, setQuery] = useState('')
+  const [updatingTaskId, setUpdatingTaskId] = useState('')
 
   const usersQuery = useQuery({
     queryKey: ['assignable-users'],
@@ -65,7 +68,29 @@ export function WorkflowPage() {
     queryFn: async () => (await api.get(`/api/projects/${projectId}/tasks`)).data,
   })
 
-  const tasks = tasksQuery.data || []
+  const tasks = useMemo(() => tasksQuery.data ?? [], [tasksQuery.data])
+
+  const filteredTasks = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return tasks
+    return tasks.filter((t) => {
+      return (
+        (t.title || '').toLowerCase().includes(q) ||
+        (t.description || '').toLowerCase().includes(q) ||
+        (t.assignedToUsername || '').toLowerCase().includes(q) ||
+        String(t.status || '').toLowerCase().includes(q)
+      )
+    })
+  }, [query, tasks])
+
+  const tasksByStatus = useMemo(() => {
+    const cols = { TODO: [], IN_PROGRESS: [], BLOCKED: [], DONE: [] }
+    for (const t of filteredTasks) {
+      cols[t.status] = cols[t.status] ?? []
+      cols[t.status].push(t)
+    }
+    return cols
+  }, [filteredTasks])
 
   const defaultValues = useMemo(
     () =>
@@ -108,6 +133,25 @@ export function WorkflowPage() {
     onError: (e) => toast.error('Save failed', e?.response?.data?.message || 'Unable to save task.'),
   })
 
+  const quickUpdateMutation = useMutation({
+    mutationFn: async ({ task, patch }) => {
+      setUpdatingTaskId(task.id)
+      const payload = {
+        title: task.title,
+        description: task.description || null,
+        status: patch.status ?? task.status,
+        assignedToUserId: patch.assignedToUserId ?? (task.assignedToUserId ? task.assignedToUserId : null),
+        dueAt: patch.dueAt ?? (task.dueAt ? task.dueAt : null),
+      }
+      return (await api.put(`/api/tasks/${task.id}`, payload)).data
+    },
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['tasks', projectId] })
+    },
+    onError: (e) => toast.error('Update failed', e?.response?.data?.message || 'Unable to update task.'),
+    onSettled: () => setUpdatingTaskId(''),
+  })
+
   const deleteMutation = useMutation({
     mutationFn: async (taskId) => {
       await api.delete(`/api/tasks/${taskId}`)
@@ -119,10 +163,10 @@ export function WorkflowPage() {
     onError: (e) => toast.error('Delete failed', e?.response?.data?.message || 'Unable to delete task.'),
   })
 
-  function openCreate() {
+  function openCreate(status = 'TODO') {
     setEditing(null)
     setOpen(true)
-    form.reset({ title: '', description: '', status: 'TODO', assignedToUserId: '', dueDate: '' })
+    form.reset({ title: '', description: '', status, assignedToUserId: '', dueDate: '' })
   }
 
   function openEdit(t) {
@@ -155,72 +199,176 @@ export function WorkflowPage() {
           <h1 className="text-xl font-bold text-slate-900">Workflow & MIS</h1>
           <p className="mt-1 text-sm text-slate-600">Track operational tasks, assignment, and progress per project.</p>
         </div>
-        <Button onClick={openCreate}>New task</Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <Input
+            className="sm:w-72"
+            placeholder="Search tasks..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <div className="flex gap-2">
+            <Button
+              variant={view === 'board' ? 'secondary' : 'outline'}
+              onClick={() => setView('board')}
+              type="button"
+            >
+              Board
+            </Button>
+            <Button
+              variant={view === 'table' ? 'secondary' : 'outline'}
+              onClick={() => setView('table')}
+              type="button"
+            >
+              Table
+            </Button>
+          </div>
+          <Button onClick={() => openCreate('TODO')}>New task</Button>
+        </div>
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
-              <tr>
-                <th className="px-4 py-3">Title</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Assigned</th>
-                <th className="px-4 py-3">Due</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {tasksQuery.isLoading ? (
-                <tr>
-                  <td className="px-4 py-4 text-slate-600" colSpan={5}>
-                    Loading…
-                  </td>
-                </tr>
-              ) : null}
-              {tasksQuery.isError ? (
-                <tr>
-                  <td className="px-4 py-4 text-rose-600" colSpan={5}>
-                    Failed to load tasks.
-                  </td>
-                </tr>
-              ) : null}
-              {!tasksQuery.isLoading && tasks.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-8 text-slate-600" colSpan={5}>
-                    No tasks yet. Create one to start tracking the workflow.
-                  </td>
-                </tr>
-              ) : null}
-              {tasks.map((t) => (
-                <tr key={t.id} className="bg-white">
-                  <td className="px-4 py-3 font-medium text-slate-900">{t.title}</td>
-                  <td className="px-4 py-3">
-                    <Badge tone={tone(t.status)}>{t.status}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-slate-700">{t.assignedToUsername || '—'}</td>
-                  <td className="px-4 py-3 text-slate-700">{t.dueAt ? new Date(t.dueAt).toLocaleDateString() : '—'}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="outline" size="sm" onClick={() => openEdit(t)}>
-                        Edit
-                      </Button>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => setConfirmDeleteId(t.id)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        Delete
-                      </Button>
+      {view === 'board' ? (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+          {['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE'].map((status) => {
+            const col = tasksByStatus[status] ?? []
+            return (
+              <Card key={status} className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-sm font-semibold text-slate-900">{status.replace('_', ' ')}</div>
+                  <Badge tone={tone(status)}>{col.length}</Badge>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                  {tasksQuery.isLoading ? <div className="text-sm text-slate-600">Loading...</div> : null}
+                  {tasksQuery.isError ? <div className="text-sm text-rose-600">Failed to load tasks.</div> : null}
+
+                  {!tasksQuery.isLoading && col.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+                      No tasks.
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  ) : null}
+
+                  {col.map((t) => (
+                    <div key={t.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-semibold text-slate-900">{t.title}</div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            {t.assignedToUsername ? `Assigned: ${t.assignedToUsername}` : 'Unassigned'}
+                            {' • '}
+                            {t.dueAt ? `Due: ${new Date(t.dueAt).toLocaleDateString()}` : 'No due date'}
+                          </div>
+                        </div>
+                        <Badge tone={tone(t.status)}>{t.status}</Badge>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <select
+                          className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                          value={t.status}
+                          disabled={quickUpdateMutation.isPending && updatingTaskId === t.id}
+                          onChange={(e) => quickUpdateMutation.mutate({ task: t, patch: { status: e.target.value } })}
+                          aria-label="Change status"
+                        >
+                          <option value="TODO">TODO</option>
+                          <option value="IN_PROGRESS">IN_PROGRESS</option>
+                          <option value="BLOCKED">BLOCKED</option>
+                          <option value="DONE">DONE</option>
+                        </select>
+                        <Button variant="outline" size="sm" onClick={() => openEdit(t)}>
+                          Edit
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => setConfirmDeleteId(t.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => openCreate(status)}>
+                    Add task
+                  </Button>
+                </div>
+              </Card>
+            )
+          })}
         </div>
-      </Card>
+      ) : (
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                <tr>
+                  <th className="px-4 py-3">Title</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Assigned</th>
+                  <th className="px-4 py-3">Due</th>
+                  <th className="px-4 py-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {tasksQuery.isLoading ? (
+                  <tr>
+                    <td className="px-4 py-4 text-slate-600" colSpan={5}>
+                      Loading...
+                    </td>
+                  </tr>
+                ) : null}
+                {tasksQuery.isError ? (
+                  <tr>
+                    <td className="px-4 py-4 text-rose-600" colSpan={5}>
+                      Failed to load tasks.
+                    </td>
+                  </tr>
+                ) : null}
+                {!tasksQuery.isLoading && tasks.length === 0 ? (
+                  <tr>
+                    <td className="px-4 py-8 text-slate-600" colSpan={5}>
+                      No tasks yet. Create one to start tracking the workflow.
+                    </td>
+                  </tr>
+                ) : null}
+                {!tasksQuery.isLoading && tasks.length > 0 && filteredTasks.length === 0 ? (
+                  <tr>
+                    <td className="px-4 py-8 text-slate-600" colSpan={5}>
+                      No tasks found.
+                    </td>
+                  </tr>
+                ) : null}
+                {filteredTasks.map((t) => (
+                  <tr key={t.id} className="bg-white">
+                    <td className="px-4 py-3 font-medium text-slate-900">{t.title}</td>
+                    <td className="px-4 py-3">
+                      <Badge tone={tone(t.status)}>{t.status}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{t.assignedToUsername || '—'}</td>
+                    <td className="px-4 py-3 text-slate-700">{t.dueAt ? new Date(t.dueAt).toLocaleDateString() : '—'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={() => openEdit(t)}>
+                          Edit
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => setConfirmDeleteId(t.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
 
       <Modal
         open={open}

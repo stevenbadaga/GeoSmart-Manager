@@ -2,7 +2,6 @@ package rw.venus.geosmartmanager.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import rw.venus.geosmartmanager.api.dto.ComplianceDtos;
 import rw.venus.geosmartmanager.domain.ComplianceStatus;
 import rw.venus.geosmartmanager.domain.RunStatus;
@@ -35,6 +34,7 @@ public class ComplianceService {
     private final ComplianceConfigService complianceConfigService;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
+    private final GeoJsonService geoJsonService;
     private final AuditService auditService;
 
     public ComplianceService(
@@ -44,6 +44,7 @@ public class ComplianceService {
             ComplianceConfigService complianceConfigService,
             StorageService storageService,
             ObjectMapper objectMapper,
+            GeoJsonService geoJsonService,
             AuditService auditService
     ) {
         this.projectRepository = projectRepository;
@@ -52,6 +53,7 @@ public class ComplianceService {
         this.complianceConfigService = complianceConfigService;
         this.storageService = storageService;
         this.objectMapper = objectMapper;
+        this.geoJsonService = geoJsonService;
         this.auditService = auditService;
     }
 
@@ -119,7 +121,7 @@ public class ComplianceService {
                     ));
                 }
 
-                double areaSqm = computeAreaSqm(feature.path("geometry"));
+                double areaSqm = geoJsonService.computeAreaSqm(feature.path("geometry"));
                 if (!Double.isFinite(areaSqm) || areaSqm <= 0) {
                     hasError = true;
                     issues.add(Map.of(
@@ -205,67 +207,5 @@ public class ComplianceService {
         } catch (Exception ex) {
             return "[]";
         }
-    }
-
-    private double computeAreaSqm(JsonNode geometry) {
-        if (geometry == null || !geometry.isObject()) {
-            return Double.NaN;
-        }
-
-        String type = geometry.path("type").asText("");
-        JsonNode coords = geometry.path("coordinates");
-        if (!coords.isArray()) {
-            return Double.NaN;
-        }
-
-        ArrayNode ring = null;
-        if ("Polygon".equals(type)) {
-            JsonNode ringNode = coords.path(0);
-            if (ringNode.isArray()) {
-                ring = (ArrayNode) ringNode;
-            }
-        } else if ("MultiPolygon".equals(type)) {
-            JsonNode ringNode = coords.path(0).path(0);
-            if (ringNode.isArray()) {
-                ring = (ArrayNode) ringNode;
-            }
-        }
-
-        if (ring == null || ring.size() < 4) {
-            return Double.NaN;
-        }
-
-        double midLat = 0;
-        int count = 0;
-        for (JsonNode pt : ring) {
-            if (pt.isArray() && pt.size() >= 2) {
-                midLat += pt.path(1).asDouble(0);
-                count++;
-            }
-        }
-        if (count == 0) {
-            return Double.NaN;
-        }
-        midLat /= count;
-
-        double metersPerDegLat = 111_320.0;
-        double metersPerDegLon = 111_320.0 * Math.cos(Math.toRadians(midLat));
-
-        // Shoelace formula on equirectangular projected coords.
-        double sum = 0;
-        for (int i = 0; i < ring.size() - 1; i++) {
-            JsonNode a = ring.get(i);
-            JsonNode b = ring.get(i + 1);
-            if (!a.isArray() || !b.isArray() || a.size() < 2 || b.size() < 2) {
-                continue;
-            }
-            double ax = a.path(0).asDouble(0) * metersPerDegLon;
-            double ay = a.path(1).asDouble(0) * metersPerDegLat;
-            double bx = b.path(0).asDouble(0) * metersPerDegLon;
-            double by = b.path(1).asDouble(0) * metersPerDegLat;
-            sum += (ax * by) - (bx * ay);
-        }
-
-        return Math.abs(sum) / 2.0;
     }
 }

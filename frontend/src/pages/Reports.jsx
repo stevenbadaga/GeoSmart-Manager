@@ -61,17 +61,25 @@ export function ReportsPage() {
   const selectedRunId = useMemo(() => runId || '', [runId])
 
   const generateMutation = useMutation({
-    mutationFn: async () => {
-      return (
+    mutationFn: async ({ openAfter } = { openAfter: false }) => {
+      const report = (
         await api.post(`/api/projects/${projectId}/reports/generate`, {
           type,
           subdivisionRunId: type === 'SUBDIVISION_SUMMARY' ? selectedRunId || null : null,
         })
       ).data
+      return { report, openAfter }
     },
-    onSuccess: async () => {
+    onSuccess: async ({ report, openAfter }) => {
       await qc.invalidateQueries({ queryKey: ['reports', projectId] })
       toast.success('Report generated', 'PDF report created successfully.')
+      if (openAfter) {
+        try {
+          await openPdf(`/api/reports/${report.id}/download`)
+        } catch {
+          toast.error('Open failed', 'Unable to open PDF.')
+        }
+      }
     },
     onError: (e) => toast.error('Report failed', e?.response?.data?.message || 'Unable to generate report.'),
   })
@@ -127,9 +135,18 @@ export function ReportsPage() {
             </select>
           </div>
 
-          <Button disabled={generateMutation.isPending} onClick={() => generateMutation.mutate()}>
-            {generateMutation.isPending ? 'Generating…' : 'Generate PDF'}
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              disabled={generateMutation.isPending}
+              onClick={() => generateMutation.mutate({ openAfter: true })}
+            >
+              {generateMutation.isPending ? 'Generating...' : 'Generate & view'}
+            </Button>
+            <Button disabled={generateMutation.isPending} onClick={() => generateMutation.mutate({ openAfter: false })}>
+              {generateMutation.isPending ? 'Generating...' : 'Generate PDF'}
+            </Button>
+          </div>
         </div>
 
         {generateMutation.isError ? (
@@ -153,7 +170,7 @@ export function ReportsPage() {
               {reportsQuery.isLoading ? (
                 <tr>
                   <td className="px-4 py-4 text-slate-600" colSpan={3}>
-                    Loading…
+                    Loading...
                   </td>
                 </tr>
               ) : null}

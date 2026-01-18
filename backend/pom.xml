@@ -22,6 +22,7 @@
         <jjwt.version>0.12.5</jjwt.version>
         <springdoc.version>2.6.0</springdoc.version>
         <pdfbox.version>2.0.31</pdfbox.version>
+        <jts.version>1.19.0</jts.version>
     </properties>
 
     <dependencies>
@@ -96,6 +97,12 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.locationtech.jts</groupId>
+            <artifactId>jts-core</artifactId>
+            <version>${jts.version}</version>
         </dependency>
 
         <dependency>

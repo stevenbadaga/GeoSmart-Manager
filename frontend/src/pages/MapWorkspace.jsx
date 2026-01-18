@@ -98,6 +98,7 @@ export function MapWorkspacePage() {
   const [showSubdivision, setShowSubdivision] = useState(true)
   const [basemap, setBasemap] = useState('osm')
   const [activeTable, setActiveTable] = useState('subdivision')
+  const [tableQuery, setTableQuery] = useState('')
   const [selected, setSelected] = useState(null)
 
   const datasetsQuery = useQuery({
@@ -163,6 +164,32 @@ export function MapWorkspacePage() {
   const datasetFeatures = useMemo(() => datasetGeojsonWithIds?.features ?? [], [datasetGeojsonWithIds])
   const subdivisionFeatures = useMemo(() => subdivisionGeojsonWithIds?.features ?? [], [subdivisionGeojsonWithIds])
 
+  const selectedFeature = useMemo(() => {
+    if (!selected) return null
+    const list = selected.layer === 'dataset' ? datasetFeatures : subdivisionFeatures
+    return list.find((f) => f?.id === selected.id) ?? null
+  }, [datasetFeatures, selected, subdivisionFeatures])
+
+  const filteredDatasetFeatures = useMemo(() => {
+    const q = tableQuery.trim().toLowerCase()
+    if (!q) return datasetFeatures
+    return datasetFeatures.filter((f) => {
+      const id = String(f?.id || '').toLowerCase()
+      const name = String(f?.properties?.name || '').toLowerCase()
+      return id.includes(q) || name.includes(q)
+    })
+  }, [datasetFeatures, tableQuery])
+
+  const filteredSubdivisionFeatures = useMemo(() => {
+    const q = tableQuery.trim().toLowerCase()
+    if (!q) return subdivisionFeatures
+    return subdivisionFeatures.filter((f, idx) => {
+      const id = String(f?.id || '').toLowerCase()
+      const parcelNo = String(f?.properties?.parcelNo ?? idx + 1).toLowerCase()
+      return id.includes(q) || parcelNo.includes(q)
+    })
+  }, [subdivisionFeatures, tableQuery])
+
   const resolvedTable = useMemo(() => {
     if (activeTable === 'dataset') {
       if (datasetFeatures.length > 0) return 'dataset'
@@ -179,6 +206,22 @@ export function MapWorkspacePage() {
     if (!map || !feature) return
     try {
       const layer = L.geoJSON(feature)
+      const bounds = layer.getBounds()
+      if (bounds?.isValid()) {
+        map.fitBounds(bounds, { padding: [24, 24] })
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  function fitAll() {
+    if (!map) return
+    const data =
+      (showSubdivision && subdivisionGeojsonWithIds) || (showDataset && datasetGeojsonWithIds) || datasetGeojsonWithIds || subdivisionGeojsonWithIds
+    if (!data) return
+    try {
+      const layer = L.geoJSON(data)
       const bounds = layer.getBounds()
       if (bounds?.isValid()) {
         map.fitBounds(bounds, { padding: [24, 24] })
@@ -382,6 +425,9 @@ export function MapWorkspacePage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={fitAll} disabled={!datasetGeojsonWithIds && !subdivisionGeojsonWithIds}>
+                  Fit all
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -448,10 +494,69 @@ export function MapWorkspacePage() {
             Showing dataset (dark) and selected subdivision output (indigo) when available.
           </div>
 
+          <Card className="mt-4 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-slate-900">Selection</div>
+                {selectedFeature ? (
+                  <div className="mt-1 text-sm text-slate-700">
+                    {selected?.layer === 'subdivision'
+                      ? `Parcel ${selectedFeature?.properties?.parcelNo ?? '—'}`
+                      : `Dataset feature ${selectedFeature?.properties?.name || selectedFeature?.id || '—'}`}
+                  </div>
+                ) : (
+                  <div className="mt-1 text-sm text-slate-600">Click a parcel or a dataset feature on the map to inspect it.</div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!selectedFeature}
+                  onClick={() => {
+                    zoomToFeature(selectedFeature)
+                  }}
+                >
+                  Zoom
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!selectedFeature}
+                  onClick={async () => {
+                    if (!selectedFeature) return
+                    try {
+                      await navigator.clipboard.writeText(JSON.stringify(selectedFeature, null, 2))
+                      toast.success('Copied', 'Selected feature copied to clipboard.')
+                    } catch {
+                      toast.error('Copy failed', 'Unable to copy to clipboard.')
+                    }
+                  }}
+                >
+                  Copy JSON
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!selected}
+                  onClick={() => {
+                    setSelected(null)
+                  }}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+          </Card>
+
           <Card className="mt-4 overflow-hidden">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
               <div className="text-sm font-semibold text-slate-900">Attribute table</div>
-              <div className="flex gap-2">
+              <div className="flex flex-1 items-center justify-end gap-2">
+                <div className="hidden w-64 sm:block">
+                  <Input placeholder="Search…" value={tableQuery} onChange={(e) => setTableQuery(e.target.value)} />
+                </div>
                 <button
                   type="button"
                   className={[
@@ -499,7 +604,14 @@ export function MapWorkspacePage() {
                         </td>
                       </tr>
                     ) : null}
-                    {datasetFeatures.map((f, idx) => {
+                    {datasetFeatures.length > 0 && filteredDatasetFeatures.length === 0 ? (
+                      <tr>
+                        <td className="px-4 py-6 text-slate-600" colSpan={3}>
+                          No matches for “{tableQuery}”.
+                        </td>
+                      </tr>
+                    ) : null}
+                    {filteredDatasetFeatures.map((f, idx) => {
                       const isSel = selected?.layer === 'dataset' && selected?.id === f.id
                       return (
                         <tr key={f.id || idx} className={isSel ? 'bg-indigo-50' : ''}>
@@ -539,7 +651,14 @@ export function MapWorkspacePage() {
                         </td>
                       </tr>
                     ) : null}
-                    {subdivisionFeatures.map((f, idx) => {
+                    {subdivisionFeatures.length > 0 && filteredSubdivisionFeatures.length === 0 ? (
+                      <tr>
+                        <td className="px-4 py-6 text-slate-600" colSpan={3}>
+                          No matches for “{tableQuery}”.
+                        </td>
+                      </tr>
+                    ) : null}
+                    {filteredSubdivisionFeatures.map((f, idx) => {
                       const isSel = selected?.layer === 'subdivision' && selected?.id === f.id
                       const parcelNo = f?.properties?.parcelNo ?? idx + 1
                       const area = typeof f?.properties?.areaSqm === 'number' ? f.properties.areaSqm : null
