@@ -90,6 +90,7 @@ export function MapWorkspacePage() {
 
   const [map, setMap] = useState(null)
   const [datasetId, setDatasetId] = useState('')
+  const [runId, setRunId] = useState('')
   const [uploadName, setUploadName] = useState('')
   const [uploadType, setUploadType] = useState('CADASTRAL')
   const [uploadFile, setUploadFile] = useState(null)
@@ -130,12 +131,18 @@ export function MapWorkspacePage() {
     queryFn: async () => (await api.get(`/api/projects/${projectId}/subdivisions`)).data,
   })
 
-  const latestRunId = runsQuery.data?.[0]?.id
+  const runs = useMemo(() => runsQuery.data ?? [], [runsQuery.data])
+
+  const selectedRunId = useMemo(() => {
+    if (!projectId) return ''
+    if (runId) return runId
+    return runs[0]?.id || ''
+  }, [projectId, runId, runs])
 
   const runDetailQuery = useQuery({
-    enabled: !!latestRunId,
-    queryKey: ['subdivision-run-detail', latestRunId],
-    queryFn: async () => (await api.get(`/api/subdivisions/${latestRunId}`)).data,
+    enabled: !!selectedRunId,
+    queryKey: ['subdivision-run-detail', selectedRunId],
+    queryFn: async () => (await api.get(`/api/subdivisions/${selectedRunId}`)).data,
   })
 
   const subdivisionGeojson = useMemo(() => {
@@ -356,8 +363,22 @@ export function MapWorkspacePage() {
                     checked={showSubdivision}
                     onChange={(e) => setShowSubdivision(e.target.checked)}
                   />
-                  Subdivision (latest)
+                  Subdivision
                 </label>
+                <select
+                  className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  value={runId}
+                  onChange={(e) => setRunId(e.target.value)}
+                  disabled={runs.length === 0}
+                  title={runs.length === 0 ? 'Run subdivision first' : 'Select subdivision run'}
+                >
+                  <option value="">Latest run</option>
+                  {runs.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.id.slice(0, 8)} — {r.status}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -380,10 +401,13 @@ export function MapWorkspacePage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={!latestRunId}
+                  disabled={!selectedRunId}
                   onClick={async () => {
                     try {
-                      await downloadBlob(`/api/subdivisions/${latestRunId}/download`, `subdivision-${latestRunId.slice(0, 8)}.geojson`)
+                      await downloadBlob(
+                        `/api/subdivisions/${selectedRunId}/download`,
+                        `subdivision-${selectedRunId.slice(0, 8)}.geojson`,
+                      )
                       toast.success('Downloaded', 'Subdivision downloaded.')
                     } catch {
                       toast.error('Download failed', 'Unable to download subdivision.')
@@ -421,7 +445,7 @@ export function MapWorkspacePage() {
           </Card>
 
           <div className="mt-3 text-xs text-slate-500">
-            Showing dataset (dark) and latest subdivision output (indigo) when available.
+            Showing dataset (dark) and selected subdivision output (indigo) when available.
           </div>
 
           <Card className="mt-4 overflow-hidden">

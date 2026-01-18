@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/http'
+import { useNavigate } from 'react-router-dom'
 import { Badge } from '../components/Badge'
 import { Button } from '../components/Button'
 import { Card } from '../components/Card'
 import { Input } from '../components/Input'
 import { Modal } from '../components/Modal'
 import { useToast } from '../components/ToastProvider'
+import { useProject } from '../projects/ProjectContext'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -27,8 +29,11 @@ function statusTone(status) {
 export function ProjectsPage() {
   const qc = useQueryClient()
   const toast = useToast()
+  const nav = useNavigate()
+  const { projectId, setSelectedProjectId } = useProject()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [query, setQuery] = useState('')
 
   const projectsQuery = useQuery({
     queryKey: ['projects'],
@@ -40,8 +45,20 @@ export function ProjectsPage() {
     queryFn: async () => (await api.get('/api/clients')).data,
   })
 
-  const projects = projectsQuery.data || []
-  const clients = clientsQuery.data || []
+  const projects = useMemo(() => projectsQuery.data ?? [], [projectsQuery.data])
+  const clients = useMemo(() => clientsQuery.data ?? [], [clientsQuery.data])
+
+  const filteredProjects = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return projects
+    return projects.filter((p) => {
+      return (
+        (p.name || '').toLowerCase().includes(q) ||
+        (p.clientName || '').toLowerCase().includes(q) ||
+        (p.status || '').toLowerCase().includes(q)
+      )
+    })
+  }, [projects, query])
 
   const defaultValues = useMemo(
     () =>
@@ -115,7 +132,15 @@ export function ProjectsPage() {
           <h1 className="text-xl font-bold text-slate-900">Projects</h1>
           <p className="mt-1 text-sm text-slate-600">Track surveying projects, statuses, and deliverables.</p>
         </div>
-        <Button onClick={openCreate}>New project</Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <Input
+            className="sm:w-72"
+            placeholder="Search projects..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <Button onClick={openCreate}>New project</Button>
+        </div>
       </div>
 
       <Card className="overflow-hidden">
@@ -151,17 +176,46 @@ export function ProjectsPage() {
                   </td>
                 </tr>
               ) : null}
-              {projects.map((p) => (
-                <tr key={p.id} className="bg-white">
+              {!projectsQuery.isLoading && projects.length > 0 && filteredProjects.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-8 text-slate-600" colSpan={4}>
+                    No projects found.
+                  </td>
+                </tr>
+              ) : null}
+              {filteredProjects.map((p) => (
+                <tr key={p.id} className={p.id === projectId ? 'bg-indigo-50' : 'bg-white'}>
                   <td className="px-4 py-3 font-medium text-slate-900">{p.name}</td>
                   <td className="px-4 py-3 text-slate-700">{p.clientName || '—'}</td>
                   <td className="px-4 py-3">
                     <Badge tone={statusTone(p.status)}>{p.status}</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <Button variant="outline" size="sm" onClick={() => openEdit(p)}>
-                      Edit
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedProjectId(p.id)
+                          toast.success('Active project set', `Now working on: ${p.name}`)
+                        }}
+                      >
+                        Set active
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedProjectId(p.id)
+                          nav('/workspace')
+                        }}
+                      >
+                        Workspace
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => openEdit(p)}>
+                        Edit
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

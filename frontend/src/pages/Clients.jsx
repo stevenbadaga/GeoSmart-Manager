@@ -24,13 +24,26 @@ export function ClientsPage() {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState('')
+  const [query, setQuery] = useState('')
 
   const q = useQuery({
     queryKey: ['clients'],
     queryFn: async () => (await api.get('/api/clients')).data,
   })
 
-  const rows = q.data || []
+  const rows = useMemo(() => q.data ?? [], [q.data])
+
+  const filteredRows = useMemo(() => {
+    const v = query.trim().toLowerCase()
+    if (!v) return rows
+    return rows.filter((c) => {
+      return (
+        (c.name || '').toLowerCase().includes(v) ||
+        (c.email || '').toLowerCase().includes(v) ||
+        (c.phone || '').toLowerCase().includes(v)
+      )
+    })
+  }, [rows, query])
 
   const defaultValues = useMemo(
     () =>
@@ -105,7 +118,15 @@ export function ClientsPage() {
           <h1 className="text-xl font-bold text-slate-900">Clients</h1>
           <p className="mt-1 text-sm text-slate-600">Manage client onboarding and contact details.</p>
         </div>
-        <Button onClick={openCreate}>Add client</Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <Input
+            className="sm:w-72"
+            placeholder="Search clients..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <Button onClick={openCreate}>Add client</Button>
+        </div>
       </div>
 
       <Card className="overflow-hidden">
@@ -141,7 +162,14 @@ export function ClientsPage() {
                   </td>
                 </tr>
               ) : null}
-              {rows.map((c) => (
+              {!q.isLoading && rows.length > 0 && filteredRows.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-8 text-slate-600" colSpan={4}>
+                    No clients found.
+                  </td>
+                </tr>
+              ) : null}
+              {filteredRows.map((c) => (
                 <tr key={c.id} className="bg-white">
                   <td className="px-4 py-3 font-medium text-slate-900">{c.name}</td>
                   <td className="px-4 py-3 text-slate-700">{c.email || '—'}</td>

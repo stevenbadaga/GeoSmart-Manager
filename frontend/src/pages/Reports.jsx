@@ -13,6 +13,12 @@ function tone(type) {
   return 'slate'
 }
 
+function prettyType(type) {
+  if (type === 'SUBDIVISION_SUMMARY') return 'Subdivision summary'
+  if (type === 'COMPLIANCE_SUMMARY') return 'Compliance summary'
+  return type
+}
+
 async function downloadBlob(url, filename) {
   const res = await api.get(url, { responseType: 'blob' })
   const blobUrl = window.URL.createObjectURL(res.data)
@@ -23,6 +29,13 @@ async function downloadBlob(url, filename) {
   a.click()
   a.remove()
   window.URL.revokeObjectURL(blobUrl)
+}
+
+async function openPdf(url) {
+  const res = await api.get(url, { responseType: 'blob' })
+  const blobUrl = window.URL.createObjectURL(res.data)
+  window.open(blobUrl, '_blank', 'noopener,noreferrer')
+  window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000)
 }
 
 export function ReportsPage() {
@@ -92,8 +105,8 @@ export function ReportsPage() {
               value={type}
               onChange={(e) => setType(e.target.value)}
             >
-              <option value="SUBDIVISION_SUMMARY">SUBDIVISION_SUMMARY</option>
-              <option value="COMPLIANCE_SUMMARY">COMPLIANCE_SUMMARY</option>
+              <option value="SUBDIVISION_SUMMARY">Subdivision summary</option>
+              <option value="COMPLIANCE_SUMMARY">Compliance summary</option>
             </select>
           </div>
 
@@ -161,17 +174,38 @@ export function ReportsPage() {
               {reports.map((r) => (
                 <tr key={r.id} className="bg-white">
                   <td className="px-4 py-3">
-                    <Badge tone={tone(r.type)}>{r.type}</Badge>
+                    <Badge tone={tone(r.type)}>{prettyType(r.type)}</Badge>
                   </td>
                   <td className="px-4 py-3 text-slate-700">{r.createdAt ? new Date(r.createdAt).toLocaleString() : '—'}</td>
                   <td className="px-4 py-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => downloadBlob(`/api/reports/${r.id}/download`, `geosmart-${r.type.toLowerCase()}.pdf`)}
-                    >
-                      Download
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            await openPdf(`/api/reports/${r.id}/download`)
+                          } catch {
+                            toast.error('Open failed', 'Unable to open PDF.')
+                          }
+                        }}
+                      >
+                        View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            await downloadBlob(`/api/reports/${r.id}/download`, `geosmart-${r.type.toLowerCase()}.pdf`)
+                          } catch {
+                            toast.error('Download failed', 'Unable to download report.')
+                          }
+                        }}
+                      >
+                        Download
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

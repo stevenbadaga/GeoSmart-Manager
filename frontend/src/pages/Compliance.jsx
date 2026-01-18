@@ -14,6 +14,12 @@ function tone(status) {
   return 'amber'
 }
 
+function severityTone(severity) {
+  if (severity === 'ERROR') return 'red'
+  if (severity === 'WARNING') return 'amber'
+  return 'slate'
+}
+
 function parseIssues(issuesJson) {
   if (!issuesJson) return []
   try {
@@ -22,6 +28,31 @@ function parseIssues(issuesJson) {
   } catch {
     return []
   }
+}
+
+function countIssues(issues) {
+  return issues.reduce(
+    (acc, it) => {
+      const sev = String(it?.severity || '').toUpperCase()
+      if (sev === 'ERROR') acc.errors += 1
+      else if (sev === 'WARNING') acc.warnings += 1
+      else acc.other += 1
+      return acc
+    },
+    { errors: 0, warnings: 0, other: 0 },
+  )
+}
+
+function downloadText(text, filename, mime = 'application/octet-stream') {
+  const blob = new Blob([text], { type: mime })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.URL.revokeObjectURL(url)
 }
 
 export function CompliancePage() {
@@ -238,19 +269,67 @@ export function CompliancePage() {
               ) : null}
               {checks.map((c) => {
                 const issues = parseIssues(c.issuesJson)
+                const counts = countIssues(issues)
                 return (
                   <tr key={c.id} className="bg-white">
                     <td className="px-4 py-3">
                       <Badge tone={tone(c.status)}>{c.status}</Badge>
                     </td>
                     <td className="px-4 py-3 text-slate-700">{c.subdivisionRunId?.slice(0, 8)}</td>
-                    <td className="px-4 py-3 text-slate-700">{issues.length}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
+                        <span>{issues.length}</span>
+                        {counts.errors > 0 ? <Badge tone="red">Errors {counts.errors}</Badge> : null}
+                        {counts.warnings > 0 ? <Badge tone="amber">Warnings {counts.warnings}</Badge> : null}
+                      </div>
+                    </td>
                     <td className="px-4 py-3">
                       <details className="text-sm text-slate-700">
                         <summary className="cursor-pointer select-none text-indigo-700 hover:text-indigo-900">View</summary>
-                        <pre className="mt-2 overflow-x-auto rounded-lg bg-slate-900 p-3 text-xs text-slate-100">
-                          {JSON.stringify(issues, null, 2)}
-                        </pre>
+                        <div className="mt-3 space-y-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                downloadText(JSON.stringify(issues, null, 2), `compliance-${c.id.slice(0, 8)}.json`, 'application/json')
+                              }
+                            >
+                              Download JSON
+                            </Button>
+                          </div>
+
+                          {issues.length === 0 ? (
+                            <div className="text-sm text-slate-600">No issues.</div>
+                          ) : (
+                            <div className="overflow-x-auto rounded-lg border border-slate-200">
+                              <table className="min-w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                                  <tr>
+                                    <th className="px-3 py-2">Severity</th>
+                                    <th className="px-3 py-2">Rule</th>
+                                    <th className="px-3 py-2">Message</th>
+                                    <th className="px-3 py-2">Parcel</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200 bg-white">
+                                  {issues.map((it, idx) => (
+                                    <tr key={idx}>
+                                      <td className="px-3 py-2">
+                                        <Badge tone={severityTone(String(it?.severity || '').toUpperCase())}>
+                                          {String(it?.severity || 'INFO').toUpperCase()}
+                                        </Badge>
+                                      </td>
+                                      <td className="px-3 py-2 font-medium text-slate-900">{it?.rule || '—'}</td>
+                                      <td className="px-3 py-2 text-slate-700">{it?.message || '—'}</td>
+                                      <td className="px-3 py-2 text-slate-700">{it?.parcelNo ?? it?.parcelIndex ?? '—'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
                       </details>
                     </td>
                   </tr>

@@ -12,6 +12,8 @@ GeoSmart-Manager is an AI-integrated geospatial ERP system prototype for surveyi
 ### One command (Windows)
 Run `dev.cmd` from the repo root to start both backend + frontend.
 
+If you want PostgreSQL/PostGIS locally (recommended), run `dev-postgres.cmd` instead (requires Docker).
+
 ### 1) Start backend (Spring Boot)
 ```bash
 cd backend
