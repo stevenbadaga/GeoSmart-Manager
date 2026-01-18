@@ -14,6 +14,8 @@ Run `dev.cmd` from the repo root to start both backend + frontend.
 
 If you want PostgreSQL/PostGIS locally (recommended), run `dev-postgres.cmd` instead (requires Docker).
 
+If the backend fails with a Flyway validation error (failed migration), run `dev-reset.cmd` once to reset the local H2 database.
+
 ### 1) Start backend (Spring Boot)
 ```bash
 cd backend
@@ -60,7 +62,7 @@ mvn -f backend/pom.xml spring-boot:run
 ```
 
 ## Notes
-- If you previously ran the backend with an older local H2 database, delete `backend/data/` to let Flyway recreate the schema.
+- If the backend fails with `FlywayValidateException` and mentions a failed migration, delete `backend/data/` (or run `reset-h2.cmd`) and start again.
 
 ## Demo flow (for prototype)
 1. Create a Client
