@@ -15,6 +15,7 @@ import { MapWorkspacePage } from './pages/MapWorkspace'
 import { SubdivisionPage } from './pages/Subdivision'
 import { CompliancePage } from './pages/Compliance'
 import { ReportsPage } from './pages/Reports'
+import { ProjectTeamPage } from './pages/ProjectTeam'
 import { AdminUsersPage } from './pages/AdminUsers'
 import { AdminAuditPage } from './pages/AdminAudit'
 import { NotFoundPage } from './pages/NotFound'
@@ -65,6 +66,14 @@ export default function App() {
                     element={
                       <AuthedShell>
                         <WorkflowPage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
+                    path="/team"
+                    element={
+                      <AuthedShell>
+                        <ProjectTeamPage />
                       </AuthedShell>
                     }
                   />

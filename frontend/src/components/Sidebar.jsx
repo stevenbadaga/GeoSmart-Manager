@@ -56,6 +56,9 @@ export function Sidebar({ onNavigate }) {
           <Item to="/projects" icon={FolderKanban}>
             Projects
           </Item>
+          <Item to="/team" icon={Users}>
+            Team
+          </Item>
           <Item to="/workflow" icon={ListTodo}>
             Workflow
           </Item>

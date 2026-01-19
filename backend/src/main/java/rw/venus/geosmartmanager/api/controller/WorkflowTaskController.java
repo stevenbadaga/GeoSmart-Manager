@@ -28,7 +28,7 @@ public class WorkflowTaskController {
 
     @GetMapping("/projects/{projectId}/tasks")
     public List<WorkflowDtos.TaskDto> list(@PathVariable UUID projectId) {
-        return workflowTaskService.listByProject(projectId);
+        return workflowTaskService.listByProject(currentUserService.requireCurrentUser(), projectId);
     }
 
     @PostMapping("/projects/{projectId}/tasks")
@@ -46,4 +46,3 @@ public class WorkflowTaskController {
         workflowTaskService.delete(currentUserService.requireCurrentUser(), taskId);
     }
 }
-

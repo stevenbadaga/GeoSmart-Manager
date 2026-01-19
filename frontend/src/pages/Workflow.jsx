@@ -57,8 +57,9 @@ export function WorkflowPage() {
   const [updatingTaskId, setUpdatingTaskId] = useState('')
 
   const usersQuery = useQuery({
-    queryKey: ['assignable-users'],
-    queryFn: async () => (await api.get('/api/users/assignable')).data,
+    enabled: !!projectId,
+    queryKey: ['assignable-users', projectId],
+    queryFn: async () => (await api.get(`/api/projects/${projectId}/assignable-users`)).data,
   })
   const users = usersQuery.data || []
 

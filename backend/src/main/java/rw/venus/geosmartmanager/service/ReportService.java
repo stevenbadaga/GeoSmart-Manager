@@ -40,6 +40,7 @@ public class ReportService {
     private final StorageService storageService;
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
+    private final ProjectAccessService projectAccessService;
 
     public ReportService(
             ProjectRepository projectRepository,
@@ -48,7 +49,8 @@ public class ReportService {
             ReportRepository reportRepository,
             StorageService storageService,
             AuditService auditService,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            ProjectAccessService projectAccessService
     ) {
         this.projectRepository = projectRepository;
         this.subdivisionRunRepository = subdivisionRunRepository;
@@ -57,10 +59,13 @@ public class ReportService {
         this.storageService = storageService;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
+        this.projectAccessService = projectAccessService;
     }
 
     @Transactional
     public ReportDtos.ReportDto generate(UserEntity actor, UUID projectId, ReportDtos.GenerateReportRequest req) {
+        projectAccessService.requireProjectWrite(actor, projectId);
+
         ProjectEntity project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Project not found"));
 
@@ -87,7 +92,8 @@ public class ReportService {
     }
 
     @Transactional(readOnly = true)
-    public java.util.List<ReportDtos.ReportDto> list(UUID projectId) {
+    public java.util.List<ReportDtos.ReportDto> list(UserEntity actor, UUID projectId) {
+        projectAccessService.requireProjectRead(actor, projectId);
         return reportRepository.findByProjectIdOrderByCreatedAtDesc(projectId).stream()
                 .map(r -> new ReportDtos.ReportDto(r.getId(), r.getProject().getId(), r.getType(), r.getCreatedAt()))
                 .toList();
@@ -97,6 +103,13 @@ public class ReportService {
     public ReportEntity require(UUID reportId) {
         return reportRepository.findById(reportId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Report not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public ReportEntity requireAccessible(UserEntity actor, UUID reportId) {
+        ReportEntity report = require(reportId);
+        projectAccessService.requireProjectRead(actor, report.getProject().getId());
+        return report;
     }
 
     @Transactional(readOnly = true)

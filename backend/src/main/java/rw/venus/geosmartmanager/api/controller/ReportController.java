@@ -38,12 +38,12 @@ public class ReportController {
 
     @GetMapping("/projects/{projectId}/reports")
     public List<ReportDtos.ReportDto> list(@PathVariable UUID projectId) {
-        return reportService.list(projectId);
+        return reportService.list(currentUserService.requireCurrentUser(), projectId);
     }
 
     @GetMapping("/reports/{reportId}/download")
     public ResponseEntity<Resource> download(@PathVariable UUID reportId) {
-        ReportEntity report = reportService.require(reportId);
+        ReportEntity report = reportService.requireAccessible(currentUserService.requireCurrentUser(), reportId);
         Path path = reportService.resolvePath(report);
         Resource resource = new FileSystemResource(path);
         String filename = "report-" + report.getType().name().toLowerCase() + ".pdf";
@@ -53,4 +53,3 @@ public class ReportController {
                 .body(resource);
     }
 }
-

@@ -22,25 +22,31 @@ public class DatasetService {
     private final DatasetRepository datasetRepository;
     private final ProjectRepository projectRepository;
     private final StorageService storageService;
+    private final ProjectAccessService projectAccessService;
     private final AuditService auditService;
 
     public DatasetService(
             DatasetRepository datasetRepository,
             ProjectRepository projectRepository,
             StorageService storageService,
+            ProjectAccessService projectAccessService,
             AuditService auditService
     ) {
         this.datasetRepository = datasetRepository;
         this.projectRepository = projectRepository;
         this.storageService = storageService;
+        this.projectAccessService = projectAccessService;
         this.auditService = auditService;
     }
 
-    public List<DatasetDtos.DatasetDto> listByProject(UUID projectId) {
+    public List<DatasetDtos.DatasetDto> listByProject(UserEntity actor, UUID projectId) {
+        projectAccessService.requireProjectRead(actor, projectId);
         return datasetRepository.findByProjectIdOrderByUploadedAtDesc(projectId).stream().map(this::toDto).toList();
     }
 
     public DatasetDtos.DatasetDto upload(UserEntity actor, UUID projectId, DatasetDtos.CreateDatasetMetadata meta, MultipartFile file) {
+        projectAccessService.requireProjectWrite(actor, projectId);
+
         ProjectEntity project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Project not found"));
 
@@ -79,6 +85,12 @@ public class DatasetService {
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Dataset not found"));
     }
 
+    public DatasetEntity requireAccessible(UserEntity actor, UUID datasetId) {
+        DatasetEntity dataset = require(datasetId);
+        projectAccessService.requireProjectRead(actor, dataset.getProject().getId());
+        return dataset;
+    }
+
     public Path resolvePath(DatasetEntity dataset) {
         return storageService.getRoot().resolve(dataset.getStoredPath()).normalize();
     }
@@ -93,7 +105,8 @@ public class DatasetService {
 
     @Transactional
     public void delete(UserEntity actor, UUID datasetId) {
-        DatasetEntity dataset = require(datasetId);
+        DatasetEntity dataset = requireAccessible(actor, datasetId);
+        projectAccessService.requireProjectWrite(actor, dataset.getProject().getId());
         Path path = resolvePath(dataset);
         datasetRepository.delete(dataset);
 

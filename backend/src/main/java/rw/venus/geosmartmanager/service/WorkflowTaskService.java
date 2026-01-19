@@ -2,11 +2,13 @@ package rw.venus.geosmartmanager.service;
 
 import rw.venus.geosmartmanager.api.dto.WorkflowDtos;
 import rw.venus.geosmartmanager.domain.TaskStatus;
+import rw.venus.geosmartmanager.domain.UserRole;
 import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.entity.UserEntity;
 import rw.venus.geosmartmanager.entity.WorkflowTaskEntity;
 import rw.venus.geosmartmanager.exception.ApiException;
 import rw.venus.geosmartmanager.repo.ProjectRepository;
+import rw.venus.geosmartmanager.repo.ProjectMemberRepository;
 import rw.venus.geosmartmanager.repo.UserRepository;
 import rw.venus.geosmartmanager.repo.WorkflowTaskRepository;
 import java.util.List;
@@ -20,28 +22,37 @@ import org.springframework.transaction.annotation.Transactional;
 public class WorkflowTaskService {
     private final WorkflowTaskRepository taskRepository;
     private final ProjectRepository projectRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
+    private final ProjectAccessService projectAccessService;
     private final AuditService auditService;
 
     public WorkflowTaskService(
             WorkflowTaskRepository taskRepository,
             ProjectRepository projectRepository,
+            ProjectMemberRepository projectMemberRepository,
             UserRepository userRepository,
+            ProjectAccessService projectAccessService,
             AuditService auditService
     ) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
+        this.projectMemberRepository = projectMemberRepository;
         this.userRepository = userRepository;
+        this.projectAccessService = projectAccessService;
         this.auditService = auditService;
     }
 
     @Transactional(readOnly = true)
-    public List<WorkflowDtos.TaskDto> listByProject(UUID projectId) {
+    public List<WorkflowDtos.TaskDto> listByProject(UserEntity actor, UUID projectId) {
+        projectAccessService.requireProjectRead(actor, projectId);
         return taskRepository.findByProjectIdOrderByCreatedAtDesc(projectId).stream().map(this::toDto).toList();
     }
 
     @Transactional
     public WorkflowDtos.TaskDto create(UserEntity actor, UUID projectId, WorkflowDtos.CreateTaskRequest req) {
+        projectAccessService.requireProjectWrite(actor, projectId);
+
         ProjectEntity project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Project not found"));
 
@@ -54,7 +65,7 @@ public class WorkflowTaskService {
         task.setDueAt(req.dueAt());
 
         if (req.assignedToUserId() != null) {
-            task.setAssignedTo(requireEnabledUser(req.assignedToUserId()));
+            task.setAssignedTo(requireAssignableUser(projectId, req.assignedToUserId()));
         }
 
         WorkflowTaskEntity saved = taskRepository.save(task);
@@ -67,6 +78,8 @@ public class WorkflowTaskService {
         WorkflowTaskEntity task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Task not found"));
 
+        projectAccessService.requireProjectWrite(actor, task.getProject().getId());
+
         task.setTitle(req.title());
         task.setDescription(req.description());
         task.setStatus(req.status());
@@ -75,7 +88,7 @@ public class WorkflowTaskService {
         if (req.assignedToUserId() == null) {
             task.setAssignedTo(null);
         } else {
-            task.setAssignedTo(requireEnabledUser(req.assignedToUserId()));
+            task.setAssignedTo(requireAssignableUser(task.getProject().getId(), req.assignedToUserId()));
         }
 
         WorkflowTaskEntity saved = taskRepository.save(task);
@@ -85,16 +98,18 @@ public class WorkflowTaskService {
 
     @Transactional
     public void delete(UserEntity actor, UUID taskId) {
-        if (!taskRepository.existsById(taskId)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Task not found");
-        }
-        taskRepository.deleteById(taskId);
+        WorkflowTaskEntity task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Task not found"));
+        projectAccessService.requireProjectWrite(actor, task.getProject().getId());
+        taskRepository.delete(task);
         auditService.log(actor, "TASK_DELETED", "WorkflowTask", taskId);
     }
 
     @Transactional(readOnly = true)
-    public List<WorkflowDtos.AssignableUserDto> listAssignableUsers() {
-        return userRepository.findAll().stream()
+    public List<WorkflowDtos.AssignableUserDto> listAssignableUsers(UserEntity actor, UUID projectId) {
+        projectAccessService.requireProjectRead(actor, projectId);
+        return projectMemberRepository.findByProjectIdOrderByAddedAtAsc(projectId).stream()
+                .map(pm -> pm.getUser())
                 .filter(UserEntity::isEnabled)
                 .map(u -> new WorkflowDtos.AssignableUserDto(u.getId(), u.getUsername(), u.getRole().name()))
                 .toList();
@@ -105,6 +120,17 @@ public class WorkflowTaskService {
                 .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "INVALID_USER", "User not found"));
         if (!user.isEnabled()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "USER_DISABLED", "User is disabled");
+        }
+        return user;
+    }
+
+    private UserEntity requireAssignableUser(UUID projectId, UUID userId) {
+        UserEntity user = requireEnabledUser(userId);
+        if (user.getRole() == UserRole.ADMIN) {
+            return user;
+        }
+        if (!projectMemberRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_ASSIGNEE", "User is not a member of this project");
         }
         return user;
     }
@@ -124,4 +150,3 @@ public class WorkflowTaskService {
         );
     }
 }
-

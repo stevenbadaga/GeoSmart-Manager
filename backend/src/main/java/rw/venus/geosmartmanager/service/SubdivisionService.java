@@ -31,6 +31,7 @@ public class SubdivisionService {
     private final StorageService storageService;
     private final GeoJsonService geoJsonService;
     private final ObjectMapper objectMapper;
+    private final ProjectAccessService projectAccessService;
     private final AuditService auditService;
 
     public SubdivisionService(
@@ -40,6 +41,7 @@ public class SubdivisionService {
             StorageService storageService,
             GeoJsonService geoJsonService,
             ObjectMapper objectMapper,
+            ProjectAccessService projectAccessService,
             AuditService auditService
     ) {
         this.projectRepository = projectRepository;
@@ -48,10 +50,13 @@ public class SubdivisionService {
         this.storageService = storageService;
         this.geoJsonService = geoJsonService;
         this.objectMapper = objectMapper;
+        this.projectAccessService = projectAccessService;
         this.auditService = auditService;
     }
 
     public SubdivisionDtos.RunDto run(UserEntity actor, UUID projectId, SubdivisionDtos.RunRequest req) {
+        projectAccessService.requireProjectWrite(actor, projectId);
+
         ProjectEntity project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Project not found"));
 
@@ -107,13 +112,17 @@ public class SubdivisionService {
         }
     }
 
-    public java.util.List<SubdivisionDtos.RunDto> list(UUID projectId) {
+    public java.util.List<SubdivisionDtos.RunDto> list(UserEntity actor, UUID projectId) {
+        projectAccessService.requireProjectRead(actor, projectId);
         return subdivisionRunRepository.findByProjectIdOrderByStartedAtDesc(projectId).stream().map(this::toDto).toList();
     }
 
-    public SubdivisionDtos.RunDetailDto getDetail(UUID runId) {
+    public SubdivisionDtos.RunDetailDto getDetail(UserEntity actor, UUID runId) {
         SubdivisionRunEntity run = subdivisionRunRepository.findById(runId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Subdivision run not found"));
+
+        projectAccessService.requireProjectRead(actor, run.getProject().getId());
+
         String geojson = null;
         if (run.getResultPath() != null) {
             try {
@@ -125,9 +134,12 @@ public class SubdivisionService {
         return new SubdivisionDtos.RunDetailDto(toDto(run), geojson);
     }
 
-    public Path getResultFile(UUID runId) {
+    public Path getResultFile(UserEntity actor, UUID runId) {
         SubdivisionRunEntity run = subdivisionRunRepository.findById(runId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Subdivision run not found"));
+
+        projectAccessService.requireProjectRead(actor, run.getProject().getId());
+
         if (run.getResultPath() == null || run.getResultPath().isBlank()) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "RUN_NOT_READY", "Subdivision run has no result yet");
         }

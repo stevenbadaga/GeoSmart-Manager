@@ -36,7 +36,7 @@ public class DatasetController {
 
     @GetMapping("/projects/{projectId}/datasets")
     public List<DatasetDtos.DatasetDto> list(@PathVariable UUID projectId) {
-        return datasetService.listByProject(projectId);
+        return datasetService.listByProject(currentUserService.requireCurrentUser(), projectId);
     }
 
     @PostMapping(value = "/projects/{projectId}/datasets/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -52,7 +52,7 @@ public class DatasetController {
 
     @GetMapping("/datasets/{datasetId}/download")
     public ResponseEntity<Resource> download(@PathVariable UUID datasetId) {
-        DatasetEntity dataset = datasetService.require(datasetId);
+        DatasetEntity dataset = datasetService.requireAccessible(currentUserService.requireCurrentUser(), datasetId);
         Path path = datasetService.resolveExistingPath(dataset);
         Resource resource = new FileSystemResource(path);
         return ResponseEntity.ok()

@@ -37,17 +37,17 @@ public class SubdivisionController {
 
     @GetMapping("/projects/{projectId}/subdivisions")
     public List<SubdivisionDtos.RunDto> list(@PathVariable UUID projectId) {
-        return subdivisionService.list(projectId);
+        return subdivisionService.list(currentUserService.requireCurrentUser(), projectId);
     }
 
     @GetMapping("/subdivisions/{runId}")
     public SubdivisionDtos.RunDetailDto get(@PathVariable UUID runId) {
-        return subdivisionService.getDetail(runId);
+        return subdivisionService.getDetail(currentUserService.requireCurrentUser(), runId);
     }
 
     @GetMapping("/subdivisions/{runId}/download")
     public ResponseEntity<Resource> download(@PathVariable UUID runId) {
-        Path path = subdivisionService.getResultFile(runId);
+        Path path = subdivisionService.getResultFile(currentUserService.requireCurrentUser(), runId);
         Resource resource = new FileSystemResource(path);
         String filename = "subdivision-" + runId + ".geojson";
         return ResponseEntity.ok()

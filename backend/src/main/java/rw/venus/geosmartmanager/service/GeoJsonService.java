@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 public class GeoJsonService {
     public record BoundingBox(double minX, double minY, double maxX, double maxY) {}
 
+    public record PolygonalFeature(Geometry geometry, JsonNode properties) {}
+
     private final ObjectMapper objectMapper;
     private final GeometryFactory geometryFactory;
 
@@ -148,6 +150,58 @@ public class GeoJsonService {
             throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_GEOJSON", "No geometry found in GeoJSON");
         }
 
+        return toGeometry(geom);
+    }
+
+    public List<PolygonalFeature> readPolygonalFeatures(Path geoJsonPath) {
+        JsonNode root;
+        try {
+            root = objectMapper.readTree(Files.readAllBytes(geoJsonPath));
+        } catch (IOException ex) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_GEOJSON", "Unable to read GeoJSON file");
+        }
+
+        String type = root.path("type").asText("");
+        List<PolygonalFeature> out = new ArrayList<>();
+
+        if ("FeatureCollection".equals(type)) {
+            JsonNode features = root.path("features");
+            if (features.isArray()) {
+                for (JsonNode f : features) {
+                    JsonNode g = f.path("geometry");
+                    if (!g.isObject()) {
+                        continue;
+                    }
+                    try {
+                        Geometry geom = toGeometry(g);
+                        out.add(new PolygonalFeature(geom, f.path("properties")));
+                    } catch (ApiException ignored) {
+                        // Skip non-polygonal features for overlay workflows
+                    }
+                }
+            }
+        } else if ("Feature".equals(type)) {
+            JsonNode g = root.path("geometry");
+            if (g.isObject()) {
+                Geometry geom = toGeometry(g);
+                out.add(new PolygonalFeature(geom, root.path("properties")));
+            }
+        } else if (root.has("coordinates") && root.has("type")) {
+            Geometry geom = toGeometry(root);
+            out.add(new PolygonalFeature(geom, objectMapper.createObjectNode()));
+        }
+
+        if (out.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_GEOJSON", "No Polygon/MultiPolygon features found");
+        }
+
+        return out;
+    }
+
+    public Geometry toPolygonalGeometry(JsonNode geom) {
+        if (geom == null || !geom.isObject()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_GEOJSON", "No geometry found");
+        }
         return toGeometry(geom);
     }
 

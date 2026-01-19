@@ -4,18 +4,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import rw.venus.geosmartmanager.api.dto.ComplianceDtos;
 import rw.venus.geosmartmanager.domain.ComplianceStatus;
+import rw.venus.geosmartmanager.domain.DatasetType;
 import rw.venus.geosmartmanager.domain.RunStatus;
 import rw.venus.geosmartmanager.entity.ComplianceConfigEntity;
 import rw.venus.geosmartmanager.entity.ComplianceCheckEntity;
+import rw.venus.geosmartmanager.entity.DatasetEntity;
 import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.entity.SubdivisionRunEntity;
 import rw.venus.geosmartmanager.entity.UserEntity;
 import rw.venus.geosmartmanager.exception.ApiException;
 import rw.venus.geosmartmanager.repo.ComplianceCheckRepository;
+import rw.venus.geosmartmanager.repo.DatasetRepository;
 import rw.venus.geosmartmanager.repo.ProjectRepository;
 import rw.venus.geosmartmanager.repo.SubdivisionRunRepository;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -23,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import org.locationtech.jts.geom.Geometry;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -32,9 +37,11 @@ public class ComplianceService {
     private final SubdivisionRunRepository subdivisionRunRepository;
     private final ComplianceCheckRepository complianceCheckRepository;
     private final ComplianceConfigService complianceConfigService;
+    private final DatasetRepository datasetRepository;
     private final StorageService storageService;
     private final ObjectMapper objectMapper;
     private final GeoJsonService geoJsonService;
+    private final ProjectAccessService projectAccessService;
     private final AuditService auditService;
 
     public ComplianceService(
@@ -42,22 +49,28 @@ public class ComplianceService {
             SubdivisionRunRepository subdivisionRunRepository,
             ComplianceCheckRepository complianceCheckRepository,
             ComplianceConfigService complianceConfigService,
+            DatasetRepository datasetRepository,
             StorageService storageService,
             ObjectMapper objectMapper,
             GeoJsonService geoJsonService,
+            ProjectAccessService projectAccessService,
             AuditService auditService
     ) {
         this.projectRepository = projectRepository;
         this.subdivisionRunRepository = subdivisionRunRepository;
         this.complianceCheckRepository = complianceCheckRepository;
         this.complianceConfigService = complianceConfigService;
+        this.datasetRepository = datasetRepository;
         this.storageService = storageService;
         this.objectMapper = objectMapper;
         this.geoJsonService = geoJsonService;
+        this.projectAccessService = projectAccessService;
         this.auditService = auditService;
     }
 
     public ComplianceDtos.ComplianceDto check(UserEntity actor, UUID projectId, ComplianceDtos.CheckRequest req) {
+        projectAccessService.requireProjectWrite(actor, projectId);
+
         ProjectEntity project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Project not found"));
         SubdivisionRunEntity run = subdivisionRunRepository.findById(req.subdivisionRunId())
@@ -71,6 +84,21 @@ public class ComplianceService {
         }
 
         ComplianceConfigEntity config = complianceConfigService.getOrCreate(projectId);
+
+        DatasetEntity masterPlanDataset = datasetRepository
+                .findFirstByProjectIdAndTypeOrderByUploadedAtDesc(projectId, DatasetType.MASTER_PLAN)
+                .orElse(null);
+
+        List<GeoJsonService.PolygonalFeature> masterPlanZones = List.of();
+        if (masterPlanDataset != null) {
+            Path p = storageService.getRoot().resolve(masterPlanDataset.getStoredPath()).normalize();
+            try {
+                masterPlanZones = geoJsonService.readPolygonalFeatures(p);
+            } catch (ApiException ex) {
+                // Keep the compliance check usable even if an overlay file is malformed.
+                masterPlanZones = List.of();
+            }
+        }
 
         JsonNode root;
         try {
@@ -121,7 +149,21 @@ public class ComplianceService {
                     ));
                 }
 
-                double areaSqm = geoJsonService.computeAreaSqm(feature.path("geometry"));
+                Geometry parcelGeom;
+                double areaSqm;
+                try {
+                    parcelGeom = geoJsonService.toPolygonalGeometry(feature.path("geometry"));
+                    areaSqm = geoJsonService.areaSqm(parcelGeom);
+                } catch (ApiException ex) {
+                    hasError = true;
+                    issues.add(Map.of(
+                            "rule", "AREA",
+                            "severity", "ERROR",
+                            "message", "Unable to compute parcel area",
+                            "parcelNo", parcelNo
+                    ));
+                    continue;
+                }
                 if (!Double.isFinite(areaSqm) || areaSqm <= 0) {
                     hasError = true;
                     issues.add(Map.of(
@@ -154,6 +196,72 @@ public class ComplianceService {
                             "areaSqm", areaSqm,
                             "maxAreaSqm", config.getMaxParcelArea()
                     ));
+                }
+
+                if (!masterPlanZones.isEmpty()) {
+                    int zoneIdx = 0;
+                    for (GeoJsonService.PolygonalFeature zone : masterPlanZones) {
+                        zoneIdx++;
+                        Geometry inter;
+                        try {
+                            inter = parcelGeom.intersection(zone.geometry());
+                        } catch (Exception ignored) {
+                            continue;
+                        }
+                        if (inter == null || inter.isEmpty()) {
+                            continue;
+                        }
+
+                        double overlapSqm = geoJsonService.areaSqm(inter);
+                        if (!Double.isFinite(overlapSqm) || overlapSqm <= 1.0) {
+                            continue;
+                        }
+
+                        String zoneName = zone.properties() == null ? "" : zone.properties().path("name").asText("");
+                        if (zoneName.isBlank() && zone.properties() != null) {
+                            zoneName = zone.properties().path("zone").asText("");
+                        }
+                        if (zoneName.isBlank() && zone.properties() != null) {
+                            zoneName = zone.properties().path("type").asText("");
+                        }
+                        if (zoneName.isBlank()) {
+                            zoneName = "Zone " + zoneIdx;
+                        }
+
+                        String severity = "WARNING";
+                        if (zone.properties() != null) {
+                            String s = zone.properties().path("severity").asText("");
+                            if ("ERROR".equalsIgnoreCase(s)) {
+                                severity = "ERROR";
+                            } else if ("WARNING".equalsIgnoreCase(s)) {
+                                severity = "WARNING";
+                            }
+
+                            boolean restricted = zone.properties().path("restricted").asBoolean(false)
+                                    || zone.properties().path("isRestricted").asBoolean(false);
+                            if (restricted) {
+                                severity = "ERROR";
+                            }
+                        }
+
+                        if ("ERROR".equalsIgnoreCase(severity)) {
+                            hasError = true;
+                        }
+
+                        issues.add(Map.of(
+                                "rule", "MASTER_PLAN_OVERLAP",
+                                "severity", severity,
+                                "message", "Parcel intersects master plan zone",
+                                "parcelNo", parcelNo,
+                                "zone", zoneName,
+                                "overlapSqm", overlapSqm,
+                                "datasetId", masterPlanDataset.getId()
+                        ));
+
+                        if (issues.size() >= 250) {
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -188,7 +296,8 @@ public class ComplianceService {
         );
     }
 
-    public List<ComplianceDtos.ComplianceDto> list(UUID projectId) {
+    public List<ComplianceDtos.ComplianceDto> list(UserEntity actor, UUID projectId) {
+        projectAccessService.requireProjectRead(actor, projectId);
         return complianceCheckRepository.findByProjectIdOrderByCheckedAtDesc(projectId).stream().map(c ->
                 new ComplianceDtos.ComplianceDto(
                         c.getId(),

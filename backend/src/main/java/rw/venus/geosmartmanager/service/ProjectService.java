@@ -1,11 +1,15 @@
 package rw.venus.geosmartmanager.service;
 
 import rw.venus.geosmartmanager.api.dto.ProjectDtos;
+import rw.venus.geosmartmanager.domain.ProjectMemberRole;
+import rw.venus.geosmartmanager.domain.UserRole;
 import rw.venus.geosmartmanager.entity.ClientEntity;
+import rw.venus.geosmartmanager.entity.ProjectMemberEntity;
 import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.entity.UserEntity;
 import rw.venus.geosmartmanager.exception.ApiException;
 import rw.venus.geosmartmanager.repo.ClientRepository;
+import rw.venus.geosmartmanager.repo.ProjectMemberRepository;
 import rw.venus.geosmartmanager.repo.ProjectRepository;
 import java.util.List;
 import java.util.UUID;
@@ -17,26 +21,39 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ClientRepository clientRepository;
+    private final ProjectMemberRepository projectMemberRepository;
+    private final ProjectAccessService projectAccessService;
     private final AuditService auditService;
 
-    public ProjectService(ProjectRepository projectRepository, ClientRepository clientRepository, AuditService auditService) {
+    public ProjectService(
+            ProjectRepository projectRepository,
+            ClientRepository clientRepository,
+            ProjectMemberRepository projectMemberRepository,
+            ProjectAccessService projectAccessService,
+            AuditService auditService
+    ) {
         this.projectRepository = projectRepository;
         this.clientRepository = clientRepository;
+        this.projectMemberRepository = projectMemberRepository;
+        this.projectAccessService = projectAccessService;
         this.auditService = auditService;
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectDtos.ProjectDto> list(UUID clientId) {
+    public List<ProjectDtos.ProjectDto> list(UserEntity actor, UUID clientId) {
         List<ProjectEntity> projects = clientId == null
-                ? projectRepository.findAllByOrderByCreatedAtDesc()
-                : projectRepository.findByClientIdOrderByCreatedAtDesc(clientId);
+                ? listAll(actor)
+                : listByClient(actor, clientId);
         return projects.stream().map(this::toDto).toList();
     }
 
     @Transactional(readOnly = true)
-    public ProjectDtos.ProjectDto get(UUID id) {
-        return toDto(projectRepository.findById(id)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Project not found")));
+    public ProjectDtos.ProjectDto get(UserEntity actor, UUID id) {
+        ProjectEntity project = projectRepository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Project not found"));
+
+        projectAccessService.requireProjectRead(actor, project.getId());
+        return toDto(project);
     }
 
     @Transactional
@@ -50,6 +67,12 @@ public class ProjectService {
         project.setDescription(req.description());
         ProjectEntity saved = projectRepository.save(project);
 
+        ProjectMemberEntity membership = new ProjectMemberEntity();
+        membership.setProject(saved);
+        membership.setUser(actor);
+        membership.setRole(ProjectMemberRole.PROJECT_ADMIN);
+        projectMemberRepository.save(membership);
+
         auditService.log(actor, "PROJECT_CREATED", "Project", saved.getId());
         return toDto(saved);
     }
@@ -58,12 +81,29 @@ public class ProjectService {
     public ProjectDtos.ProjectDto update(UserEntity actor, UUID id, ProjectDtos.UpdateProjectRequest req) {
         ProjectEntity project = projectRepository.findById(id)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Project not found"));
+
+        projectAccessService.requireProjectAdmin(actor, project.getId());
+
         project.setName(req.name());
         project.setDescription(req.description());
         project.setStatus(req.status());
         ProjectEntity saved = projectRepository.save(project);
         auditService.log(actor, "PROJECT_UPDATED", "Project", saved.getId());
         return toDto(saved);
+    }
+
+    private List<ProjectEntity> listAll(UserEntity actor) {
+        if (actor.getRole() == UserRole.ADMIN) {
+            return projectRepository.findAllByOrderByCreatedAtDesc();
+        }
+        return projectRepository.findAccessibleProjects(actor.getId());
+    }
+
+    private List<ProjectEntity> listByClient(UserEntity actor, UUID clientId) {
+        if (actor.getRole() == UserRole.ADMIN) {
+            return projectRepository.findByClientIdOrderByCreatedAtDesc(clientId);
+        }
+        return projectRepository.findAccessibleProjectsByClient(actor.getId(), clientId);
     }
 
     private ProjectDtos.ProjectDto toDto(ProjectEntity p) {

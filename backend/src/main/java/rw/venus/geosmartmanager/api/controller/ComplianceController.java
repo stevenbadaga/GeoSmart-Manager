@@ -35,7 +35,7 @@ public class ComplianceController {
 
     @GetMapping("/config")
     public ComplianceConfigDtos.ConfigDto getConfig(@PathVariable UUID projectId) {
-        return complianceConfigService.getDto(projectId);
+        return complianceConfigService.getDto(currentUserService.requireCurrentUser(), projectId);
     }
 
     @PutMapping("/config")
@@ -51,6 +51,6 @@ public class ComplianceController {
 
     @GetMapping
     public List<ComplianceDtos.ComplianceDto> list(@PathVariable UUID projectId) {
-        return complianceService.list(projectId);
+        return complianceService.list(currentUserService.requireCurrentUser(), projectId);
     }
 }

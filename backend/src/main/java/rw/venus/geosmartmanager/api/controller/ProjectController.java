@@ -28,12 +28,12 @@ public class ProjectController {
 
     @GetMapping
     public List<ProjectDtos.ProjectDto> list(@RequestParam(required = false) UUID clientId) {
-        return projectService.list(clientId);
+        return projectService.list(currentUserService.requireCurrentUser(), clientId);
     }
 
     @GetMapping("/{id}")
     public ProjectDtos.ProjectDto get(@PathVariable UUID id) {
-        return projectService.get(id);
+        return projectService.get(currentUserService.requireCurrentUser(), id);
     }
 
     @PostMapping
@@ -46,4 +46,3 @@ public class ProjectController {
         return projectService.update(currentUserService.requireCurrentUser(), id, req);
     }
 }
-

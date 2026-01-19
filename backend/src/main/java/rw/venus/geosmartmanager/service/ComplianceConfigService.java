@@ -17,15 +17,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class ComplianceConfigService {
     private final ComplianceConfigRepository configRepository;
     private final ProjectRepository projectRepository;
+    private final ProjectAccessService projectAccessService;
     private final AuditService auditService;
 
     public ComplianceConfigService(
             ComplianceConfigRepository configRepository,
             ProjectRepository projectRepository,
+            ProjectAccessService projectAccessService,
             AuditService auditService
     ) {
         this.configRepository = configRepository;
         this.projectRepository = projectRepository;
+        this.projectAccessService = projectAccessService;
         this.auditService = auditService;
     }
 
@@ -43,13 +46,15 @@ public class ComplianceConfigService {
     }
 
     @Transactional(readOnly = true)
-    public ComplianceConfigDtos.ConfigDto getDto(UUID projectId) {
+    public ComplianceConfigDtos.ConfigDto getDto(UserEntity actor, UUID projectId) {
+        projectAccessService.requireProjectRead(actor, projectId);
         ComplianceConfigEntity cfg = getOrCreate(projectId);
         return toDto(cfg);
     }
 
     @Transactional
     public ComplianceConfigDtos.ConfigDto update(UserEntity actor, UUID projectId, ComplianceConfigDtos.UpdateConfigRequest req) {
+        projectAccessService.requireProjectWrite(actor, projectId);
         ComplianceConfigEntity cfg = getOrCreate(projectId);
         cfg.setMinParcelArea(req.minParcelArea());
         cfg.setMaxParcelArea(req.maxParcelArea());
@@ -77,4 +82,3 @@ public class ComplianceConfigService {
         );
     }
 }
-

@@ -29,5 +29,11 @@ public final class UserDtos {
     public record UpdateUserStatusRequest(
             boolean enabled
     ) {}
-}
 
+    public record DirectoryUserDto(
+            UUID id,
+            String username,
+            String email,
+            UserRole role
+    ) {}
+}

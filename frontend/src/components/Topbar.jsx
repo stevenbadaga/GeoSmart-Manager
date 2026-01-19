@@ -24,6 +24,7 @@ export function Topbar({ onMenu }) {
     if (p === '/') return 'Dashboard'
     if (p.startsWith('/clients')) return 'Clients'
     if (p.startsWith('/projects')) return 'Projects'
+    if (p.startsWith('/team')) return 'Project Team'
     if (p.startsWith('/workflow')) return 'Workflow'
     if (p.startsWith('/workspace')) return 'Map Workspace'
     if (p.startsWith('/subdivision')) return 'AI Subdivision'

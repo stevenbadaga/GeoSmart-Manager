@@ -96,6 +96,8 @@ export function MapWorkspacePage() {
   const [uploadType, setUploadType] = useState('CADASTRAL')
   const [uploadFile, setUploadFile] = useState(null)
   const [showDataset, setShowDataset] = useState(true)
+  const [masterPlanDatasetId, setMasterPlanDatasetId] = useState('')
+  const [showMasterPlan, setShowMasterPlan] = useState(true)
   const [showSubdivision, setShowSubdivision] = useState(true)
   const [basemap, setBasemap] = useState('osm')
   const [activeTable, setActiveTable] = useState('subdivision')
@@ -110,10 +112,13 @@ export function MapWorkspacePage() {
   })
 
   const datasets = useMemo(() => datasetsQuery.data ?? [], [datasetsQuery.data])
+  const masterPlanDatasets = useMemo(() => datasets.filter((d) => d.type === 'MASTER_PLAN'), [datasets])
 
   const selectedDatasetId = useMemo(() => {
     if (!projectId) return ''
     if (datasetId && datasets.some((d) => d.id === datasetId)) return datasetId
+    const cadastral = datasets.find((d) => d.type === 'CADASTRAL')
+    if (cadastral?.id) return cadastral.id
     return datasets[0]?.id || ''
   }, [projectId, datasetId, datasets])
 
@@ -121,6 +126,17 @@ export function MapWorkspacePage() {
     if (!selectedDatasetId) return null
     return datasets.find((d) => d.id === selectedDatasetId) ?? null
   }, [datasets, selectedDatasetId])
+
+  const selectedMasterPlanDatasetId = useMemo(() => {
+    if (!projectId) return ''
+    if (masterPlanDatasetId && masterPlanDatasets.some((d) => d.id === masterPlanDatasetId)) return masterPlanDatasetId
+    return masterPlanDatasets[0]?.id || ''
+  }, [masterPlanDatasetId, masterPlanDatasets, projectId])
+
+  const selectedMasterPlanDataset = useMemo(() => {
+    if (!selectedMasterPlanDatasetId) return null
+    return masterPlanDatasets.find((d) => d.id === selectedMasterPlanDatasetId) ?? null
+  }, [masterPlanDatasets, selectedMasterPlanDatasetId])
 
   const datasetGeoJsonQuery = useQuery({
     enabled: !!selectedDatasetId,
@@ -132,6 +148,20 @@ export function MapWorkspacePage() {
   })
 
   const datasetGeojsonWithIds = useMemo(() => withFeatureIds(datasetGeoJsonQuery.data, 'dataset'), [datasetGeoJsonQuery.data])
+
+  const masterPlanGeoJsonQuery = useQuery({
+    enabled: !!selectedMasterPlanDatasetId,
+    queryKey: ['dataset-geojson', selectedMasterPlanDatasetId],
+    queryFn: async () => {
+      const res = await api.get(`/api/datasets/${selectedMasterPlanDatasetId}/download`, { responseType: 'text' })
+      return JSON.parse(res.data)
+    },
+  })
+
+  const masterPlanGeojsonWithIds = useMemo(
+    () => withFeatureIds(masterPlanGeoJsonQuery.data, 'master-plan'),
+    [masterPlanGeoJsonQuery.data],
+  )
 
   const runsQuery = useQuery({
     enabled: !!projectId,
@@ -167,6 +197,18 @@ export function MapWorkspacePage() {
     () => withFeatureIds(subdivisionGeojson, 'parcel'),
     [subdivisionGeojson],
   )
+
+  const fitCollection = useMemo(() => {
+    const fcs = []
+    if (showDataset && datasetGeojsonWithIds) fcs.push(datasetGeojsonWithIds)
+    if (showSubdivision && subdivisionGeojsonWithIds) fcs.push(subdivisionGeojsonWithIds)
+    if (showMasterPlan && masterPlanGeojsonWithIds) fcs.push(masterPlanGeojsonWithIds)
+    if (fcs.length === 0) return null
+    return {
+      type: 'FeatureCollection',
+      features: fcs.flatMap((fc) => fc.features || []),
+    }
+  }, [datasetGeojsonWithIds, masterPlanGeojsonWithIds, showDataset, showMasterPlan, showSubdivision, subdivisionGeojsonWithIds])
 
   const datasetFeatures = useMemo(() => datasetGeojsonWithIds?.features ?? [], [datasetGeojsonWithIds])
   const subdivisionFeatures = useMemo(() => subdivisionGeojsonWithIds?.features ?? [], [subdivisionGeojsonWithIds])
@@ -224,11 +266,9 @@ export function MapWorkspacePage() {
 
   function fitAll() {
     if (!map) return
-    const data =
-      (showSubdivision && subdivisionGeojsonWithIds) || (showDataset && datasetGeojsonWithIds) || datasetGeojsonWithIds || subdivisionGeojsonWithIds
-    if (!data) return
+    if (!fitCollection) return
     try {
-      const layer = L.geoJSON(data)
+      const layer = L.geoJSON(fitCollection)
       const bounds = layer.getBounds()
       if (bounds?.isValid()) {
         map.fitBounds(bounds, { padding: [24, 24] })
@@ -255,6 +295,16 @@ export function MapWorkspacePage() {
       weight: isSelected ? 4 : 2,
       fillColor: '#4f46e5',
       fillOpacity: isSelected ? 0.2 : 0.08,
+    }
+  }
+
+  const masterPlanStyle = () => {
+    return {
+      color: '#16a34a',
+      weight: 2,
+      fillColor: '#16a34a',
+      fillOpacity: 0.08,
+      dashArray: '4 3',
     }
   }
 
@@ -352,6 +402,7 @@ export function MapWorkspacePage() {
                   onChange={(e) => setUploadType(e.target.value)}
                 >
                   <option value="CADASTRAL">CADASTRAL</option>
+                  <option value="MASTER_PLAN">MASTER_PLAN</option>
                   <option value="UPI">UPI</option>
                   <option value="SURVEY">SURVEY</option>
                   <option value="OTHER">OTHER</option>
@@ -431,6 +482,33 @@ export function MapWorkspacePage() {
                   />
                   Subdivision
                 </label>
+
+                {masterPlanDatasets.length > 0 ? (
+                  <>
+                    <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        checked={showMasterPlan}
+                        onChange={(e) => setShowMasterPlan(e.target.checked)}
+                      />
+                      Master plan
+                    </label>
+                    <select
+                      className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                      value={masterPlanDatasetId}
+                      onChange={(e) => setMasterPlanDatasetId(e.target.value)}
+                      title="Select master plan dataset"
+                    >
+                      <option value="">{selectedMasterPlanDataset ? 'Selected master plan' : 'Latest master plan'}</option>
+                      {masterPlanDatasets.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} ({d.id.slice(0, 8)})
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                ) : null}
                 <select
                   className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={runId}
@@ -448,7 +526,12 @@ export function MapWorkspacePage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={fitAll} disabled={!datasetGeojsonWithIds && !subdivisionGeojsonWithIds}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={fitAll}
+                  disabled={!datasetGeojsonWithIds && !subdivisionGeojsonWithIds && !masterPlanGeojsonWithIds}
+                >
                   Fit all
                 </Button>
                 <Button
@@ -511,7 +594,10 @@ export function MapWorkspacePage() {
                 />
               )}
 
-              <FitToGeoJson data={datasetGeojsonWithIds || subdivisionGeojsonWithIds} />
+              <FitToGeoJson data={fitCollection} />
+              {showMasterPlan && masterPlanGeojsonWithIds ? (
+                <GeoJSON data={masterPlanGeojsonWithIds} style={masterPlanStyle} />
+              ) : null}
               {showDataset && datasetGeojsonWithIds ? (
                 <GeoJSON data={datasetGeojsonWithIds} style={datasetStyle} onEachFeature={onDatasetEach} />
               ) : null}
@@ -522,7 +608,7 @@ export function MapWorkspacePage() {
           </Card>
 
           <div className="mt-3 text-xs text-slate-500">
-            Showing dataset (dark) and selected subdivision output (indigo) when available.
+            Showing dataset (dark), subdivision output (indigo), and master plan overlay (green) when available.
           </div>
 
           <Card className="mt-4 p-4">
