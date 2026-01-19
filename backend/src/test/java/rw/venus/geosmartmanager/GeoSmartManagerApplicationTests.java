@@ -27,4 +27,10 @@ class GeoSmartManagerApplicationTests {
         assertThat(res.getStatusCode().is2xxSuccessful()).isTrue();
         assertThat(res.getBody()).isNotNull();
     }
+
+    @Test
+    void unauthenticatedApiCallsReturn401() {
+        ResponseEntity<String> res = rest.getForEntity("/api/projects", String.class);
+        assertThat(res.getStatusCodeValue()).isEqualTo(401);
+    }
 }
