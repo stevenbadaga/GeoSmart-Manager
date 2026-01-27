@@ -7,8 +7,12 @@ import {
   LayoutDashboard,
   ListTodo,
   Map,
+  MapPin,
+  MessagesSquare,
+  PanelTop,
   ShieldCheck,
   SlidersHorizontal,
+  UserCircle,
   Users,
 } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
@@ -32,6 +36,7 @@ function Item({ to, icon: Icon, children }) {
 
 export function Sidebar({ onNavigate }) {
   const { user } = useAuth()
+  const isClient = user?.role === 'CLIENT'
 
   return (
     <div className="flex h-full flex-col">
@@ -50,29 +55,47 @@ export function Sidebar({ onNavigate }) {
           <Item to="/" icon={LayoutDashboard}>
             Dashboard
           </Item>
-          <Item to="/clients" icon={Users}>
-            Clients
-          </Item>
+          {!isClient ? (
+            <Item to="/clients" icon={Users}>
+              Clients
+            </Item>
+          ) : null}
           <Item to="/projects" icon={FolderKanban}>
-            Projects
+            {isClient ? 'My Projects' : 'Projects'}
           </Item>
-          <Item to="/team" icon={Users}>
-            Team
+          <Item to="/project" icon={PanelTop}>
+            Project Dashboard
           </Item>
-          <Item to="/workflow" icon={ListTodo}>
-            Workflow
+          <Item to="/collaboration" icon={MessagesSquare}>
+            Collaboration
           </Item>
-          <Item to="/workspace" icon={Map}>
-            Map Workspace
-          </Item>
-          <Item to="/subdivision" icon={SlidersHorizontal}>
-            AI Subdivision
-          </Item>
-          <Item to="/compliance" icon={ShieldCheck}>
-            Compliance
-          </Item>
+          {!isClient ? (
+            <>
+              <Item to="/team" icon={Users}>
+                Team
+              </Item>
+              <Item to="/workflow" icon={ListTodo}>
+                Workflow
+              </Item>
+              <Item to="/field" icon={MapPin}>
+                Field Survey
+              </Item>
+              <Item to="/workspace" icon={Map}>
+                Map Workspace
+              </Item>
+              <Item to="/subdivision" icon={SlidersHorizontal}>
+                AI Subdivision
+              </Item>
+              <Item to="/compliance" icon={ShieldCheck}>
+                Compliance
+              </Item>
+            </>
+          ) : null}
           <Item to="/reports" icon={FileText}>
             Reports
+          </Item>
+          <Item to="/account" icon={UserCircle}>
+            Account
           </Item>
 
           {user?.role === 'ADMIN' ? (

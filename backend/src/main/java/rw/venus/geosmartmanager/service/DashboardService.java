@@ -1,6 +1,7 @@
 package rw.venus.geosmartmanager.service;
 
 import rw.venus.geosmartmanager.domain.UserRole;
+import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.entity.UserEntity;
 import rw.venus.geosmartmanager.repo.ClientRepository;
 import rw.venus.geosmartmanager.repo.ComplianceCheckRepository;
@@ -61,6 +62,23 @@ public class DashboardService {
                     subdivisionRunRepository.count(),
                     complianceCheckRepository.count(),
                     reportRepository.count()
+            );
+        }
+
+        if (actor.getRole() == UserRole.CLIENT) {
+            List<ProjectEntity> projects = projectRepository.findByClient_User_IdOrderByCreatedAtDesc(actor.getId());
+            List<UUID> projectIds = projects.stream().map(ProjectEntity::getId).toList();
+            if (projectIds.isEmpty()) {
+                return new Summary(0, 0, 0, 0, 0, 0, 0);
+            }
+            return new Summary(
+                    1,
+                    projectIds.size(),
+                    datasetRepository.countByProjectIdIn(projectIds),
+                    workflowTaskRepository.countByProjectIdIn(projectIds),
+                    subdivisionRunRepository.countByProjectIdIn(projectIds),
+                    complianceCheckRepository.countByProjectIdIn(projectIds),
+                    reportRepository.countByProjectIdIn(projectIds)
             );
         }
 

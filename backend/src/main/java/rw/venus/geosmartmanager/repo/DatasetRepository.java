@@ -13,5 +13,7 @@ public interface DatasetRepository extends JpaRepository<DatasetEntity, UUID> {
 
     Optional<DatasetEntity> findFirstByProjectIdAndTypeOrderByUploadedAtDesc(UUID projectId, DatasetType type);
 
+    Optional<DatasetEntity> findTopByProjectIdAndNameAndTypeOrderByVersionDesc(UUID projectId, String name, DatasetType type);
+
     long countByProjectIdIn(Collection<UUID> projectIds);
 }

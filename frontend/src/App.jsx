@@ -7,6 +7,7 @@ import { RequireAdmin } from './routes/RequireAdmin'
 import { AppShell } from './components/AppShell'
 import { ToastProvider } from './components/ToastProvider'
 import { LoginPage } from './pages/Login'
+import { RegisterPage } from './pages/Register'
 import { DashboardPage } from './pages/Dashboard'
 import { ClientsPage } from './pages/Clients'
 import { ProjectsPage } from './pages/Projects'
@@ -16,6 +17,10 @@ import { SubdivisionPage } from './pages/Subdivision'
 import { CompliancePage } from './pages/Compliance'
 import { ReportsPage } from './pages/Reports'
 import { ProjectTeamPage } from './pages/ProjectTeam'
+import { AccountPage } from './pages/Account'
+import { ProjectDashboardPage } from './pages/ProjectDashboard'
+import { FieldPage } from './pages/Field'
+import { CollaborationPage } from './pages/Collaboration'
 import { AdminUsersPage } from './pages/AdminUsers'
 import { AdminAuditPage } from './pages/AdminAudit'
 import { NotFoundPage } from './pages/NotFound'
@@ -35,6 +40,7 @@ export default function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
 
                 <Route element={<RequireAuth />}>
                   <Route
@@ -62,6 +68,14 @@ export default function App() {
                     }
                   />
                   <Route
+                    path="/project"
+                    element={
+                      <AuthedShell>
+                        <ProjectDashboardPage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
                     path="/workflow"
                     element={
                       <AuthedShell>
@@ -74,6 +88,14 @@ export default function App() {
                     element={
                       <AuthedShell>
                         <ProjectTeamPage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
+                    path="/account"
+                    element={
+                      <AuthedShell>
+                        <AccountPage />
                       </AuthedShell>
                     }
                   />
@@ -106,6 +128,22 @@ export default function App() {
                     element={
                       <AuthedShell>
                         <ReportsPage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
+                    path="/field"
+                    element={
+                      <AuthedShell>
+                        <FieldPage />
+                      </AuthedShell>
+                    }
+                  />
+                  <Route
+                    path="/collaboration"
+                    element={
+                      <AuthedShell>
+                        <CollaborationPage />
                       </AuthedShell>
                     }
                   />

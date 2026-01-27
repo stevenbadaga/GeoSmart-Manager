@@ -14,6 +14,17 @@ public final class SubdivisionDtos {
             @Min(1) double minParcelArea
     ) {}
 
+    public record SuggestRequest(
+            @Min(1) double minParcelArea,
+            Integer targetParcels
+    ) {}
+
+    public record SuggestResponse(
+            double boundaryAreaSqm,
+            int maxParcels,
+            Double estimatedParcelAreaSqm
+    ) {}
+
     public record RunDto(
             UUID id,
             UUID projectId,
@@ -26,7 +37,7 @@ public final class SubdivisionDtos {
 
     public record RunDetailDto(
             RunDto run,
-            String resultGeojson
+            String resultGeojson,
+            String issuesJson
     ) {}
 }
-

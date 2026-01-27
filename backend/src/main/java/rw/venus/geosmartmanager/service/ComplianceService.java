@@ -91,7 +91,10 @@ public class ComplianceService {
 
         List<GeoJsonService.PolygonalFeature> masterPlanZones = List.of();
         if (masterPlanDataset != null) {
-            Path p = storageService.getRoot().resolve(masterPlanDataset.getStoredPath()).normalize();
+            String geoPath = masterPlanDataset.getPreviewGeojsonPath() != null && !masterPlanDataset.getPreviewGeojsonPath().isBlank()
+                    ? masterPlanDataset.getPreviewGeojsonPath()
+                    : masterPlanDataset.getStoredPath();
+            Path p = storageService.getRoot().resolve(geoPath).normalize();
             try {
                 masterPlanZones = geoJsonService.readPolygonalFeatures(p);
             } catch (ApiException ex) {

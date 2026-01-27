@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet'
+import { MapContainer, TileLayer, GeoJSON, Polyline, Polygon, CircleMarker, useMapEvents } from 'react-leaflet'
 import { useMap } from 'react-leaflet'
 import L from 'leaflet'
 import { api } from '../api/http'
@@ -13,6 +13,11 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { useToast } from '../components/ToastProvider'
 
 const KIGALI_CENTER = [-1.944, 30.061] // lat, lon
+
+function isGeoJsonFilename(filename) {
+  const lower = String(filename || '').toLowerCase()
+  return lower.endsWith('.geojson') || lower.endsWith('.json')
+}
 
 function withFeatureIds(featureCollection, prefix) {
   if (!featureCollection || featureCollection.type !== 'FeatureCollection' || !Array.isArray(featureCollection.features)) {
@@ -51,6 +56,92 @@ function FitToGeoJson({ data }) {
   return null
 }
 
+function MeasureTool({ mode, points, setPoints }) {
+  useMapEvents({
+    click(e) {
+      if (!mode) return
+      setPoints((prev) => [...prev, [e.latlng.lat, e.latlng.lng]])
+    },
+  })
+
+  if (!mode || points.length === 0) return null
+
+  if (mode === 'distance') {
+    return (
+      <>
+        <Polyline positions={points} pathOptions={{ color: '#4f46e5', weight: 3 }} />
+        {points.map((p, idx) => (
+          <CircleMarker key={idx} center={p} radius={5} pathOptions={{ color: '#4f46e5', fillColor: '#4f46e5', fillOpacity: 1 }} />
+        ))}
+      </>
+    )
+  }
+
+  if (mode === 'area' && points.length >= 3) {
+    return (
+      <>
+        <Polygon positions={points} pathOptions={{ color: '#4f46e5', fillColor: '#4f46e5', fillOpacity: 0.15, weight: 2 }} />
+        {points.map((p, idx) => (
+          <CircleMarker key={idx} center={p} radius={5} pathOptions={{ color: '#4f46e5', fillColor: '#4f46e5', fillOpacity: 1 }} />
+        ))}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Polyline positions={points} pathOptions={{ color: '#4f46e5', weight: 3 }} />
+      {points.map((p, idx) => (
+        <CircleMarker key={idx} center={p} radius={5} pathOptions={{ color: '#4f46e5', fillColor: '#4f46e5', fillOpacity: 1 }} />
+      ))}
+    </>
+  )
+}
+
+function formatMeters(m) {
+  if (!Number.isFinite(m)) return '-'
+  if (m >= 1000) return `${(m / 1000).toFixed(2)} km`
+  return `${m.toFixed(1)} m`
+}
+
+function formatSqm(a) {
+  if (!Number.isFinite(a)) return '-'
+  if (a >= 1_000_000) return `${(a / 1_000_000).toFixed(2)} km²`
+  if (a >= 10_000) return `${(a / 10_000).toFixed(2)} ha`
+  return `${a.toFixed(1)} m²`
+}
+
+function measureDistanceMeters(points) {
+  if (!Array.isArray(points) || points.length < 2) return 0
+  let sum = 0
+  for (let i = 1; i < points.length; i++) {
+    const a = L.latLng(points[i - 1][0], points[i - 1][1])
+    const b = L.latLng(points[i][0], points[i][1])
+    sum += a.distanceTo(b)
+  }
+  return sum
+}
+
+function measureAreaSqm(points) {
+  if (!Array.isArray(points) || points.length < 3) return 0
+  const deg2rad = Math.PI / 180
+  const R = 6378137
+  const midLat =
+    (points.reduce((acc, p) => acc + p[0], 0) / Math.max(1, points.length)) * deg2rad
+  const pts = points.map(([lat, lon]) => {
+    const x = lon * deg2rad * Math.cos(midLat) * R
+    const y = lat * deg2rad * R
+    return [x, y]
+  })
+  let area = 0
+  for (let i = 0; i < pts.length; i++) {
+    const [x1, y1] = pts[i]
+    const [x2, y2] = pts[(i + 1) % pts.length]
+    area += x1 * y2 - x2 * y1
+  }
+  return Math.abs(area) / 2
+}
+
 async function downloadBlob(url, filename) {
   const res = await api.get(url, { responseType: 'blob' })
   const blobUrl = window.URL.createObjectURL(res.data)
@@ -64,6 +155,7 @@ async function downloadBlob(url, filename) {
 }
 
 function DatasetRow({ active, d, onSelect }) {
+  const format = d.format || (isGeoJsonFilename(d.originalFilename) ? 'GEOJSON' : '')
   return (
     <button
       type="button"
@@ -76,7 +168,12 @@ function DatasetRow({ active, d, onSelect }) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold text-slate-900">{d.name}</div>
-          <div className="mt-1 truncate text-xs text-slate-600">{d.originalFilename}</div>
+          <div className="mt-1 truncate text-xs text-slate-600">
+            {d.originalFilename}
+            {d.version ? ` • v${d.version}` : ''}
+            {format ? ` • ${format}` : ''}
+            {!isGeoJsonFilename(d.originalFilename) && !d.hasGeojsonPreview ? ' • no preview' : ''}
+          </div>
         </div>
         <Badge tone="blue">{d.type}</Badge>
       </div>
@@ -95,11 +192,14 @@ export function MapWorkspacePage() {
   const [uploadName, setUploadName] = useState('')
   const [uploadType, setUploadType] = useState('CADASTRAL')
   const [uploadFile, setUploadFile] = useState(null)
+  const [uploadPreviewFile, setUploadPreviewFile] = useState(null)
   const [showDataset, setShowDataset] = useState(true)
   const [masterPlanDatasetId, setMasterPlanDatasetId] = useState('')
   const [showMasterPlan, setShowMasterPlan] = useState(true)
   const [showSubdivision, setShowSubdivision] = useState(true)
   const [basemap, setBasemap] = useState('osm')
+  const [measureMode, setMeasureMode] = useState('')
+  const [measurePoints, setMeasurePoints] = useState([])
   const [activeTable, setActiveTable] = useState('subdivision')
   const [tableQuery, setTableQuery] = useState('')
   const [selected, setSelected] = useState(null)
@@ -127,6 +227,11 @@ export function MapWorkspacePage() {
     return datasets.find((d) => d.id === selectedDatasetId) ?? null
   }, [datasets, selectedDatasetId])
 
+  const canPreviewSelectedDataset = useMemo(() => {
+    if (!selectedDataset) return false
+    return isGeoJsonFilename(selectedDataset.originalFilename) || selectedDataset.hasGeojsonPreview
+  }, [selectedDataset])
+
   const selectedMasterPlanDatasetId = useMemo(() => {
     if (!projectId) return ''
     if (masterPlanDatasetId && masterPlanDatasets.some((d) => d.id === masterPlanDatasetId)) return masterPlanDatasetId
@@ -138,11 +243,16 @@ export function MapWorkspacePage() {
     return masterPlanDatasets.find((d) => d.id === selectedMasterPlanDatasetId) ?? null
   }, [masterPlanDatasets, selectedMasterPlanDatasetId])
 
+  const canPreviewMasterPlan = useMemo(() => {
+    if (!selectedMasterPlanDataset) return false
+    return isGeoJsonFilename(selectedMasterPlanDataset.originalFilename) || selectedMasterPlanDataset.hasGeojsonPreview
+  }, [selectedMasterPlanDataset])
+
   const datasetGeoJsonQuery = useQuery({
-    enabled: !!selectedDatasetId,
+    enabled: !!selectedDatasetId && canPreviewSelectedDataset,
     queryKey: ['dataset-geojson', selectedDatasetId],
     queryFn: async () => {
-      const res = await api.get(`/api/datasets/${selectedDatasetId}/download`, { responseType: 'text' })
+      const res = await api.get(`/api/datasets/${selectedDatasetId}/geojson`, { responseType: 'text' })
       return JSON.parse(res.data)
     },
   })
@@ -150,10 +260,10 @@ export function MapWorkspacePage() {
   const datasetGeojsonWithIds = useMemo(() => withFeatureIds(datasetGeoJsonQuery.data, 'dataset'), [datasetGeoJsonQuery.data])
 
   const masterPlanGeoJsonQuery = useQuery({
-    enabled: !!selectedMasterPlanDatasetId,
+    enabled: !!selectedMasterPlanDatasetId && canPreviewMasterPlan,
     queryKey: ['dataset-geojson', selectedMasterPlanDatasetId],
     queryFn: async () => {
-      const res = await api.get(`/api/datasets/${selectedMasterPlanDatasetId}/download`, { responseType: 'text' })
+      const res = await api.get(`/api/datasets/${selectedMasterPlanDatasetId}/geojson`, { responseType: 'text' })
       return JSON.parse(res.data)
     },
   })
@@ -251,6 +361,16 @@ export function MapWorkspacePage() {
     return 'subdivision'
   }, [activeTable, datasetFeatures.length, subdivisionFeatures.length])
 
+  const measuredDistance = useMemo(() => {
+    if (measureMode !== 'distance') return null
+    return measureDistanceMeters(measurePoints)
+  }, [measureMode, measurePoints])
+
+  const measuredArea = useMemo(() => {
+    if (measureMode !== 'area') return null
+    return measureAreaSqm(measurePoints)
+  }, [measureMode, measurePoints])
+
   function zoomToFeature(feature) {
     if (!map || !feature) return
     try {
@@ -334,6 +454,9 @@ export function MapWorkspacePage() {
       fd.set('name', uploadName || uploadFile?.name || 'Dataset')
       fd.set('type', uploadType)
       fd.set('file', uploadFile)
+      if (uploadPreviewFile) {
+        fd.set('previewGeojson', uploadPreviewFile)
+      }
       const res = await api.post(`/api/projects/${projectId}/datasets/upload`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
@@ -343,6 +466,7 @@ export function MapWorkspacePage() {
       await qc.invalidateQueries({ queryKey: ['datasets', projectId] })
       setDatasetId(saved.id)
       setUploadFile(null)
+      setUploadPreviewFile(null)
       setUploadName('')
       toast.success('Uploaded', 'Dataset uploaded successfully.')
     },
@@ -409,14 +533,32 @@ export function MapWorkspacePage() {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700">GeoJSON file</label>
+                <label className="text-sm font-medium text-slate-700">Dataset file</label>
+                <input
+                  type="file"
+                  accept=".json,.geojson,.kml,.kmz,.gpx,.csv,.zip,.dxf,application/geo+json,application/json"
+                  className="mt-1 block w-full text-sm"
+                  onChange={(e) => {
+                    setUploadFile(e.target.files?.[0] || null)
+                    setUploadPreviewFile(null)
+                  }}
+                />
+                <div className="mt-1 text-xs text-slate-500">
+                  Supported: GeoJSON, KML/KMZ, GPX, CSV, Shapefile (ZIP), DXF. For non-GeoJSON sources, a GeoJSON preview will
+                  be generated when possible.
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700">GeoJSON preview (optional)</label>
                 <input
                   type="file"
                   accept=".json,.geojson,application/geo+json,application/json"
                   className="mt-1 block w-full text-sm"
-                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                  onChange={(e) => setUploadPreviewFile(e.target.files?.[0] || null)}
                 />
-                <div className="mt-1 text-xs text-slate-500">Tip: upload a FeatureCollection with a Polygon boundary.</div>
+                <div className="mt-1 text-xs text-slate-500">
+                  Recommended for Shapefile ZIP and DXF so the map can display the layer and AI subdivision can run.
+                </div>
               </div>
               <Button
                 className="w-full"
@@ -463,6 +605,26 @@ export function MapWorkspacePage() {
                     <option value="osm">OSM</option>
                     <option value="satellite">Satellite</option>
                   </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-slate-700">Measure</span>
+                  <select
+                    className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    value={measureMode}
+                    onChange={(e) => {
+                      setMeasureMode(e.target.value)
+                      setMeasurePoints([])
+                    }}
+                  >
+                    <option value="">Off</option>
+                    <option value="distance">Distance</option>
+                    <option value="area">Area</option>
+                  </select>
+                  {measureMode ? (
+                    <span className="rounded-lg bg-slate-50 px-2 py-1 text-sm text-slate-700">
+                      {measureMode === 'distance' ? formatMeters(measuredDistance) : formatSqm(measuredArea)}
+                    </span>
+                  ) : null}
                 </div>
                 <label className="inline-flex items-center gap-2 text-sm text-slate-700">
                   <input
@@ -534,6 +696,11 @@ export function MapWorkspacePage() {
                 >
                   Fit all
                 </Button>
+                {measureMode ? (
+                  <Button variant="outline" size="sm" onClick={() => setMeasurePoints([])}>
+                    Clear measure
+                  </Button>
+                ) : null}
                 <Button
                   variant="outline"
                   size="sm"
@@ -578,6 +745,17 @@ export function MapWorkspacePage() {
                 </Button>
               </div>
             </div>
+            {showDataset && selectedDataset && !canPreviewSelectedDataset ? (
+              <div className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                The selected dataset "{selectedDataset.name}" has no GeoJSON preview. Upload a GeoJSON preview (or use GeoJSON/KML/GPX/CSV)
+                so it can be displayed on the map.
+              </div>
+            ) : null}
+            {showMasterPlan && selectedMasterPlanDataset && !canPreviewMasterPlan ? (
+              <div className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                The selected master plan dataset "{selectedMasterPlanDataset.name}" has no GeoJSON preview.
+              </div>
+            ) : null}
           </Card>
 
           <Card className="h-[70vh] overflow-hidden sm:h-[75vh]">
@@ -595,6 +773,7 @@ export function MapWorkspacePage() {
               )}
 
               <FitToGeoJson data={fitCollection} />
+              <MeasureTool mode={measureMode} points={measurePoints} setPoints={setMeasurePoints} />
               {showMasterPlan && masterPlanGeojsonWithIds ? (
                 <GeoJSON data={masterPlanGeojsonWithIds} style={masterPlanStyle} />
               ) : null}

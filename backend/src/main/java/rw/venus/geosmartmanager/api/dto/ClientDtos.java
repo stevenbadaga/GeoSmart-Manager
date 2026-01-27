@@ -10,10 +10,15 @@ public final class ClientDtos {
 
     public record ClientDto(
             UUID id,
+            UUID userId,
             String name,
             String email,
             String phone,
             String address,
+            String kycIdType,
+            String kycIdNumber,
+            String kycNotes,
+            String landOwnershipDetails,
             Instant createdAt
     ) {}
 
@@ -21,14 +26,23 @@ public final class ClientDtos {
             @NotBlank String name,
             @Email String email,
             String phone,
-            String address
+            String address,
+            UUID userId,
+            String kycIdType,
+            String kycIdNumber,
+            String kycNotes,
+            String landOwnershipDetails
     ) {}
 
     public record UpdateClientRequest(
             @NotBlank String name,
             @Email String email,
             String phone,
-            String address
+            String address,
+            UUID userId,
+            String kycIdType,
+            String kycIdNumber,
+            String kycNotes,
+            String landOwnershipDetails
     ) {}
 }
-

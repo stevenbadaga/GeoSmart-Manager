@@ -16,17 +16,38 @@ function loadUser() {
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('geosmart.token'))
   const [user, setUser] = useState(() => loadUser())
+  const [sessionId, setSessionId] = useState(() => localStorage.getItem('geosmart.sessionId'))
   const [busy, setBusy] = useState(false)
 
   const value = useMemo(() => {
-    async function login(username, password) {
+    function updateUser(nextUser) {
+      localStorage.setItem('geosmart.user', JSON.stringify(nextUser))
+      setUser(nextUser)
+    }
+
+    async function login(username, password, mfaCode) {
       setBusy(true)
       try {
-        const res = await api.post('/api/auth/login', { username, password })
+        const res = await api.post('/api/auth/login', { username, password, mfaCode: mfaCode || null })
         localStorage.setItem('geosmart.token', res.data.token)
-        localStorage.setItem('geosmart.user', JSON.stringify(res.data.user))
+        updateUser(res.data.user)
+        localStorage.setItem('geosmart.sessionId', res.data.sessionId)
         setToken(res.data.token)
-        setUser(res.data.user)
+        setSessionId(res.data.sessionId)
+      } finally {
+        setBusy(false)
+      }
+    }
+
+    async function register(payload) {
+      setBusy(true)
+      try {
+        const res = await api.post('/api/auth/register', payload)
+        localStorage.setItem('geosmart.token', res.data.token)
+        updateUser(res.data.user)
+        localStorage.setItem('geosmart.sessionId', res.data.sessionId)
+        setToken(res.data.token)
+        setSessionId(res.data.sessionId)
       } finally {
         setBusy(false)
       }
@@ -35,12 +56,14 @@ export function AuthProvider({ children }) {
     function logout() {
       localStorage.removeItem('geosmart.token')
       localStorage.removeItem('geosmart.user')
+      localStorage.removeItem('geosmart.sessionId')
       setToken(null)
       setUser(null)
+      setSessionId(null)
     }
 
-    return { token, user, busy, login, logout }
-  }, [token, user, busy])
+    return { token, user, sessionId, busy, login, register, updateUser, logout }
+  }, [token, user, sessionId, busy])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

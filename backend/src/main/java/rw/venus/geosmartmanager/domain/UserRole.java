@@ -2,6 +2,8 @@ package rw.venus.geosmartmanager.domain;
 
 public enum UserRole {
     ADMIN,
-    ENGINEER
+    PROJECT_MANAGER,
+    ENGINEER,
+    SURVEYOR,
+    CLIENT
 }
-

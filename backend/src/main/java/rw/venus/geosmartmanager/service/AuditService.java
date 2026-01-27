@@ -7,6 +7,7 @@ import rw.venus.geosmartmanager.entity.UserEntity;
 import rw.venus.geosmartmanager.repo.AuditLogRepository;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,22 @@ public class AuditService {
     @Transactional(readOnly = true)
     public List<AuditDtos.AuditLogDto> list(int page, int size) {
         return auditLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size))
+                .stream()
+                .map(a -> new AuditDtos.AuditLogDto(
+                        a.getId(),
+                        a.getActor() == null ? null : a.getActor().getUsername(),
+                        a.getAction(),
+                        a.getEntityType(),
+                        a.getEntityId(),
+                        a.getDetailsJson(),
+                        a.getCreatedAt()
+                ))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<AuditDtos.AuditLogDto> listForActor(UUID actorId, int page, int size) {
+        return auditLogRepository.findByActorIdOrderByCreatedAtDesc(actorId, PageRequest.of(page, size))
                 .stream()
                 .map(a -> new AuditDtos.AuditLogDto(
                         a.getId(),

@@ -58,6 +58,10 @@ public class ProjectService {
 
     @Transactional
     public ProjectDtos.ProjectDto create(UserEntity actor, ProjectDtos.CreateProjectRequest req) {
+        if (actor.getRole() == UserRole.CLIENT) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "FORBIDDEN", "Clients cannot create projects");
+        }
+
         ClientEntity client = clientRepository.findById(req.clientId())
                 .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "INVALID_CLIENT", "Client not found"));
 
@@ -65,6 +69,11 @@ public class ProjectService {
         project.setClient(client);
         project.setName(req.name());
         project.setDescription(req.description());
+        project.setType(req.type());
+        project.setLocation(req.location());
+        project.setScope(req.scope());
+        project.setStartDate(req.startDate());
+        project.setEndDate(req.endDate());
         ProjectEntity saved = projectRepository.save(project);
 
         ProjectMemberEntity membership = new ProjectMemberEntity();
@@ -87,6 +96,12 @@ public class ProjectService {
         project.setName(req.name());
         project.setDescription(req.description());
         project.setStatus(req.status());
+        project.setType(req.type());
+        project.setLocation(req.location());
+        project.setScope(req.scope());
+        project.setStartDate(req.startDate());
+        project.setEndDate(req.endDate());
+        project.setArchived(req.archived());
         ProjectEntity saved = projectRepository.save(project);
         auditService.log(actor, "PROJECT_UPDATED", "Project", saved.getId());
         return toDto(saved);
@@ -96,12 +111,21 @@ public class ProjectService {
         if (actor.getRole() == UserRole.ADMIN) {
             return projectRepository.findAllByOrderByCreatedAtDesc();
         }
+        if (actor.getRole() == UserRole.CLIENT) {
+            return projectRepository.findByClient_User_IdOrderByCreatedAtDesc(actor.getId());
+        }
         return projectRepository.findAccessibleProjects(actor.getId());
     }
 
     private List<ProjectEntity> listByClient(UserEntity actor, UUID clientId) {
         if (actor.getRole() == UserRole.ADMIN) {
             return projectRepository.findByClientIdOrderByCreatedAtDesc(clientId);
+        }
+        if (actor.getRole() == UserRole.CLIENT) {
+            return projectRepository.findByClient_User_IdOrderByCreatedAtDesc(actor.getId())
+                    .stream()
+                    .filter(p -> p.getClient().getId().equals(clientId))
+                    .toList();
         }
         return projectRepository.findAccessibleProjectsByClient(actor.getId(), clientId);
     }
@@ -114,6 +138,12 @@ public class ProjectService {
                 p.getName(),
                 p.getDescription(),
                 p.getStatus(),
+                p.getType(),
+                p.getLocation(),
+                p.getScope(),
+                p.getStartDate(),
+                p.getEndDate(),
+                p.isArchived(),
                 p.getCreatedAt()
         );
     }

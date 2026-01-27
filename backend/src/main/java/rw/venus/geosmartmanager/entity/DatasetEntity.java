@@ -40,11 +40,23 @@ public class DatasetEntity {
     @Column(nullable = false, length = 512)
     private String storedPath;
 
+    @Column(nullable = false)
+    private int version = 1;
+
+    @Column(length = 32)
+    private String format;
+
+    @Column(length = 512)
+    private String previewGeojsonPath;
+
     @Column(length = 255)
     private String contentType;
 
     @Column(nullable = false)
     private long sizeBytes;
+
+    @Column(length = 64)
+    private String checksumSha256;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -98,6 +110,30 @@ public class DatasetEntity {
         this.storedPath = storedPath;
     }
 
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public String getFormat() {
+        return format;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
+    public String getPreviewGeojsonPath() {
+        return previewGeojsonPath;
+    }
+
+    public void setPreviewGeojsonPath(String previewGeojsonPath) {
+        this.previewGeojsonPath = previewGeojsonPath;
+    }
+
     public String getContentType() {
         return contentType;
     }
@@ -114,8 +150,15 @@ public class DatasetEntity {
         this.sizeBytes = sizeBytes;
     }
 
+    public String getChecksumSha256() {
+        return checksumSha256;
+    }
+
+    public void setChecksumSha256(String checksumSha256) {
+        this.checksumSha256 = checksumSha256;
+    }
+
     public Instant getUploadedAt() {
         return uploadedAt;
     }
 }
-

@@ -28,12 +28,12 @@ public class ClientController {
 
     @GetMapping
     public List<ClientDtos.ClientDto> list() {
-        return clientService.list();
+        return clientService.list(currentUserService.requireCurrentUser());
     }
 
     @GetMapping("/{id}")
     public ClientDtos.ClientDto get(@PathVariable UUID id) {
-        return clientService.get(id);
+        return clientService.get(currentUserService.requireCurrentUser(), id);
     }
 
     @PostMapping
@@ -51,4 +51,3 @@ public class ClientController {
         clientService.delete(currentUserService.requireCurrentUser(), id);
     }
 }
-

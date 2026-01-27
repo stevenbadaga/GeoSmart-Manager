@@ -72,6 +72,8 @@ mvn -f backend/pom.xml spring-boot:run
 5. Run AI Subdivision
 6. Run Compliance Check
 7. Generate a PDF report and download it
+8. In Field Survey: capture a GPS observation + equipment log
+9. In Collaboration: post messages, request approvals, schedule meetings, and view notifications
 
 Sample GeoJSON you can upload:
 - `sample-data/kigali-sample-boundary.geojson`

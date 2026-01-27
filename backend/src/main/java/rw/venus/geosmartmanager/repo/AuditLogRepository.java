@@ -8,5 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AuditLogRepository extends JpaRepository<AuditLogEntity, UUID> {
     Page<AuditLogEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    Page<AuditLogEntity> findByActorIdOrderByCreatedAtDesc(UUID actorId, Pageable pageable);
 }
-

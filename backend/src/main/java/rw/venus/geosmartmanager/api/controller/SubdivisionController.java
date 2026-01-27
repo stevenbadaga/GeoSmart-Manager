@@ -35,6 +35,11 @@ public class SubdivisionController {
         return subdivisionService.run(currentUserService.requireCurrentUser(), projectId, req);
     }
 
+    @PostMapping("/projects/{projectId}/subdivisions/suggest")
+    public SubdivisionDtos.SuggestResponse suggest(@PathVariable UUID projectId, @Valid @RequestBody SubdivisionDtos.SuggestRequest req) {
+        return subdivisionService.suggest(currentUserService.requireCurrentUser(), projectId, req);
+    }
+
     @GetMapping("/projects/{projectId}/subdivisions")
     public List<SubdivisionDtos.RunDto> list(@PathVariable UUID projectId) {
         return subdivisionService.list(currentUserService.requireCurrentUser(), projectId);

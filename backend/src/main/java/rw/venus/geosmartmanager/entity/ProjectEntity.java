@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.time.Instant;
 import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
@@ -36,6 +37,22 @@ public class ProjectEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
     private ProjectStatus status = ProjectStatus.DRAFT;
+
+    @Column(length = 64)
+    private String type;
+
+    @Column(length = 255)
+    private String location;
+
+    @Column(length = 2000)
+    private String scope;
+
+    private LocalDate startDate;
+
+    private LocalDate endDate;
+
+    @Column(nullable = false)
+    private boolean archived = false;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -81,8 +98,55 @@ public class ProjectEntity {
         this.status = status;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getScope() {
+        return scope;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDate startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDate endDate) {
+        this.endDate = endDate;
+    }
+
+    public boolean isArchived() {
+        return archived;
+    }
+
+    public void setArchived(boolean archived) {
+        this.archived = archived;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
 }
-

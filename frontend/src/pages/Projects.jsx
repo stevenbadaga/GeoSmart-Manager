@@ -9,6 +9,7 @@ import { Input } from '../components/Input'
 import { Modal } from '../components/Modal'
 import { useToast } from '../components/ToastProvider'
 import { useProject } from '../projects/ProjectContext'
+import { useAuth } from '../auth/AuthContext'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -17,7 +18,13 @@ const schema = z.object({
   clientId: z.string().min(1, 'Client is required'),
   name: z.string().min(1, 'Name is required'),
   description: z.string().optional(),
+  type: z.string().optional(),
+  location: z.string().optional(),
+  scope: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
   status: z.enum(['DRAFT', 'IN_PROGRESS', 'COMPLETED']).default('DRAFT'),
+  archived: z.boolean().optional(),
 })
 
 function statusTone(status) {
@@ -26,14 +33,29 @@ function statusTone(status) {
   return 'slate'
 }
 
+function isoToDateInput(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
 export function ProjectsPage() {
   const qc = useQueryClient()
   const toast = useToast()
   const nav = useNavigate()
   const { projectId, setSelectedProjectId } = useProject()
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [query, setQuery] = useState('')
+  const [showArchived, setShowArchived] = useState(false)
+
+  const isClient = user?.role === 'CLIENT'
+  const canManage = !isClient
 
   const projectsQuery = useQuery({
     queryKey: ['projects'],
@@ -41,6 +63,7 @@ export function ProjectsPage() {
   })
 
   const clientsQuery = useQuery({
+    enabled: canManage,
     queryKey: ['clients'],
     queryFn: async () => (await api.get('/api/clients')).data,
   })
@@ -50,15 +73,19 @@ export function ProjectsPage() {
 
   const filteredProjects = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return projects
-    return projects.filter((p) => {
-      return (
-        (p.name || '').toLowerCase().includes(q) ||
-        (p.clientName || '').toLowerCase().includes(q) ||
-        (p.status || '').toLowerCase().includes(q)
-      )
-    })
-  }, [projects, query])
+    return projects
+      .filter((p) => (showArchived ? true : !p.archived))
+      .filter((p) => {
+        if (!q) return true
+        return (
+          (p.name || '').toLowerCase().includes(q) ||
+          (p.clientName || '').toLowerCase().includes(q) ||
+          (p.status || '').toLowerCase().includes(q) ||
+          (p.type || '').toLowerCase().includes(q) ||
+          (p.location || '').toLowerCase().includes(q)
+        )
+      })
+  }, [projects, query, showArchived])
 
   const defaultValues = useMemo(
     () =>
@@ -67,9 +94,26 @@ export function ProjectsPage() {
             clientId: editing.clientId || '',
             name: editing.name || '',
             description: editing.description || '',
+            type: editing.type || '',
+            location: editing.location || '',
+            scope: editing.scope || '',
+            startDate: isoToDateInput(editing.startDate),
+            endDate: isoToDateInput(editing.endDate),
             status: editing.status || 'DRAFT',
+            archived: !!editing.archived,
           }
-        : { clientId: '', name: '', description: '', status: 'DRAFT' },
+        : {
+            clientId: '',
+            name: '',
+            description: '',
+            type: '',
+            location: '',
+            scope: '',
+            startDate: '',
+            endDate: '',
+            status: 'DRAFT',
+            archived: false,
+          },
     [editing],
   )
 
@@ -86,8 +130,14 @@ export function ProjectsPage() {
         return (
           await api.put(`/api/projects/${editing.id}`, {
             name: values.name,
-            description: values.description,
+            description: values.description || null,
             status: values.status,
+            type: values.type || null,
+            location: values.location || null,
+            scope: values.scope || null,
+            startDate: values.startDate || null,
+            endDate: values.endDate || null,
+            archived: !!values.archived,
           })
         ).data
       }
@@ -95,7 +145,12 @@ export function ProjectsPage() {
         await api.post('/api/projects', {
           clientId: values.clientId,
           name: values.name,
-          description: values.description,
+          description: values.description || null,
+          type: values.type || null,
+          location: values.location || null,
+          scope: values.scope || null,
+          startDate: values.startDate || null,
+          endDate: values.endDate || null,
         })
       ).data
     },
@@ -104,24 +159,54 @@ export function ProjectsPage() {
       setOpen(false)
       toast.success('Saved', editing ? 'Project updated successfully.' : 'Project created successfully.')
       setEditing(null)
-      reset({ clientId: '', name: '', description: '', status: 'DRAFT' })
+      reset({
+        clientId: '',
+        name: '',
+        description: '',
+        type: '',
+        location: '',
+        scope: '',
+        startDate: '',
+        endDate: '',
+        status: 'DRAFT',
+        archived: false,
+      })
     },
   })
 
   function openCreate() {
+    if (!canManage) return
     setEditing(null)
     setOpen(true)
-    reset({ clientId: '', name: '', description: '', status: 'DRAFT' })
+    reset({
+      clientId: '',
+      name: '',
+      description: '',
+      type: '',
+      location: '',
+      scope: '',
+      startDate: '',
+      endDate: '',
+      status: 'DRAFT',
+      archived: false,
+    })
   }
 
   function openEdit(p) {
+    if (!canManage) return
     setEditing(p)
     setOpen(true)
     reset({
       clientId: p.clientId || '',
       name: p.name || '',
       description: p.description || '',
+      type: p.type || '',
+      location: p.location || '',
+      scope: p.scope || '',
+      startDate: isoToDateInput(p.startDate),
+      endDate: isoToDateInput(p.endDate),
       status: p.status || 'DRAFT',
+      archived: !!p.archived,
     })
   }
 
@@ -129,8 +214,8 @@ export function ProjectsPage() {
     <div className="mx-auto max-w-6xl p-4 sm:p-6">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Projects</h1>
-          <p className="mt-1 text-sm text-slate-600">Track surveying projects, statuses, and deliverables.</p>
+          <h1 className="text-xl font-bold text-slate-900">{isClient ? 'My Projects' : 'Projects'}</h1>
+          <p className="mt-1 text-sm text-slate-600">Track projects, timelines, and deliverables.</p>
         </div>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <Input
@@ -139,7 +224,16 @@ export function ProjectsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <Button onClick={openCreate}>New project</Button>
+          <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+            />
+            Show archived
+          </label>
+          {canManage ? <Button onClick={openCreate}>New project</Button> : null}
         </div>
       </div>
 
@@ -151,34 +245,35 @@ export function ProjectsPage() {
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Client</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Timeline</th>
                 <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
               {projectsQuery.isLoading ? (
                 <tr>
-                  <td className="px-4 py-4 text-slate-600" colSpan={4}>
+                  <td className="px-4 py-4 text-slate-600" colSpan={5}>
                     Loading…
                   </td>
                 </tr>
               ) : null}
               {projectsQuery.isError ? (
                 <tr>
-                  <td className="px-4 py-4 text-rose-600" colSpan={4}>
+                  <td className="px-4 py-4 text-rose-600" colSpan={5}>
                     Failed to load projects.
                   </td>
                 </tr>
               ) : null}
               {!projectsQuery.isLoading && projects.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-8 text-slate-600" colSpan={4}>
+                  <td className="px-4 py-8 text-slate-600" colSpan={5}>
                     No projects yet. Create a project to start workflows.
                   </td>
                 </tr>
               ) : null}
               {!projectsQuery.isLoading && projects.length > 0 && filteredProjects.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-8 text-slate-600" colSpan={4}>
+                  <td className="px-4 py-8 text-slate-600" colSpan={5}>
                     No projects found.
                   </td>
                 </tr>
@@ -186,9 +281,21 @@ export function ProjectsPage() {
               {filteredProjects.map((p) => (
                 <tr key={p.id} className={p.id === projectId ? 'bg-indigo-50' : 'bg-white'}>
                   <td className="px-4 py-3 font-medium text-slate-900">{p.name}</td>
-                  <td className="px-4 py-3 text-slate-700">{p.clientName || '—'}</td>
+                  <td className="px-4 py-3 text-slate-700">{p.clientName || '-'}</td>
                   <td className="px-4 py-3">
-                    <Badge tone={statusTone(p.status)}>{p.status}</Badge>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge tone={statusTone(p.status)}>{p.status}</Badge>
+                      {p.archived ? <Badge tone="slate">ARCHIVED</Badge> : null}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-slate-700">
+                    {p.startDate || p.endDate ? (
+                      <span>
+                        {p.startDate || '?'} {'→'} {p.endDate || '?'}
+                      </span>
+                    ) : (
+                      '-'
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
@@ -207,14 +314,28 @@ export function ProjectsPage() {
                         size="sm"
                         onClick={() => {
                           setSelectedProjectId(p.id)
-                          nav('/workspace')
+                          nav('/project')
                         }}
                       >
-                        Workspace
+                        Dashboard
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => openEdit(p)}>
-                        Edit
-                      </Button>
+                      {canManage ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedProjectId(p.id)
+                            nav('/workspace')
+                          }}
+                        >
+                          Workspace
+                        </Button>
+                      ) : null}
+                      {canManage ? (
+                        <Button variant="outline" size="sm" onClick={() => openEdit(p)}>
+                          Edit
+                        </Button>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
@@ -233,7 +354,7 @@ export function ProjectsPage() {
         }}
       >
         <form className="space-y-4" onSubmit={handleSubmit((v) => saveMutation.mutate(v))}>
-          {!editing ? (
+          {!editing && canManage ? (
             <div>
               <label className="text-sm font-medium text-slate-700">Client</label>
               <select
@@ -265,6 +386,33 @@ export function ProjectsPage() {
             <Input {...register('description')} />
           </div>
 
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Type</label>
+              <Input placeholder="E.g. Land subdivision" {...register('type')} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">Location</label>
+              <Input placeholder="E.g. Kigali, Gasabo" {...register('location')} />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-slate-700">Scope</label>
+            <Input placeholder="Short scope / objectives" {...register('scope')} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Start date</label>
+              <Input type="date" {...register('startDate')} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-slate-700">End date</label>
+              <Input type="date" {...register('endDate')} />
+            </div>
+          </div>
+
           {editing ? (
             <div>
               <label className="text-sm font-medium text-slate-700">Status</label>
@@ -277,6 +425,17 @@ export function ProjectsPage() {
                 <option value="COMPLETED">COMPLETED</option>
               </select>
             </div>
+          ) : null}
+
+          {editing ? (
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                {...register('archived')}
+              />
+              Archive project
+            </label>
           ) : null}
 
           {saveMutation.isError ? (

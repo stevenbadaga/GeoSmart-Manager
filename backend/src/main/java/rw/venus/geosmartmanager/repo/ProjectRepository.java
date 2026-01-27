@@ -15,6 +15,10 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, UUID> {
 
     boolean existsByClientId(UUID clientId);
 
+    List<ProjectEntity> findByClient_User_IdOrderByCreatedAtDesc(UUID userId);
+
+    boolean existsByIdAndClient_User_Id(UUID id, UUID userId);
+
     @Query("""
             select p
             from ProjectEntity p

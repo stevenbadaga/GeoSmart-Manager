@@ -21,6 +21,7 @@ api.interceptors.response.use(
     if (err?.response?.status === 401) {
       localStorage.removeItem('geosmart.token')
       localStorage.removeItem('geosmart.user')
+      localStorage.removeItem('geosmart.sessionId')
       if (window.location.pathname !== '/login') {
         window.location.assign('/login')
       }
@@ -28,4 +29,3 @@ api.interceptors.response.use(
     return Promise.reject(err)
   },
 )
-

@@ -1,5 +1,6 @@
 package rw.venus.geosmartmanager.api.dto;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import rw.venus.geosmartmanager.domain.DatasetType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,9 +15,13 @@ public final class DatasetDtos {
             UUID projectId,
             String name,
             DatasetType type,
+            int version,
+            String format,
+            boolean hasGeojsonPreview,
             String originalFilename,
             String contentType,
             long sizeBytes,
+            String checksumSha256,
             Instant uploadedAt
     ) {}
 
@@ -24,5 +29,9 @@ public final class DatasetDtos {
             @NotBlank String name,
             @NotNull DatasetType type
     ) {}
-}
 
+    public record SaveGeoJsonVersionRequest(
+            String name,
+            @NotNull JsonNode geojson
+    ) {}
+}

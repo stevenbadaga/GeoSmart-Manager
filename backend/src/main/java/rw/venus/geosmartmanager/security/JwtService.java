@@ -9,6 +9,7 @@ import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,7 @@ public class JwtService {
         this.key = Keys.hmacShaKeyFor(appProperties.getJwt().getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    public String createToken(String username, UserRole role) {
+    public String createToken(String username, UserRole role, UUID sessionId) {
         Instant now = Instant.now();
         Instant exp = now.plus(appProperties.getJwt().getExpiration());
 
@@ -30,6 +31,7 @@ public class JwtService {
                 .issuer(appProperties.getJwt().getIssuer())
                 .subject(username)
                 .claim("role", role.name())
+                .claim("sid", sessionId.toString())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .signWith(key)
@@ -43,4 +45,3 @@ public class JwtService {
                 .parseSignedClaims(token);
     }
 }
-

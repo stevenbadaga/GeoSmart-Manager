@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,10 +45,25 @@ public class DatasetController {
             @PathVariable UUID projectId,
             @RequestParam @NotBlank String name,
             @RequestParam DatasetType type,
-            @RequestParam MultipartFile file
+            @RequestParam MultipartFile file,
+            @RequestParam(required = false) MultipartFile previewGeojson
     ) {
         DatasetDtos.CreateDatasetMetadata meta = new DatasetDtos.CreateDatasetMetadata(name, type);
-        return datasetService.upload(currentUserService.requireCurrentUser(), projectId, meta, file);
+        return datasetService.upload(currentUserService.requireCurrentUser(), projectId, meta, file, previewGeojson);
+    }
+
+    @GetMapping(value = "/datasets/{datasetId}/geojson", produces = "application/geo+json")
+    public String geojson(@PathVariable UUID datasetId) {
+        DatasetEntity dataset = datasetService.requireAccessible(currentUserService.requireCurrentUser(), datasetId);
+        return datasetService.readGeoJson(dataset);
+    }
+
+    @PostMapping(value = "/datasets/{datasetId}/geojson/version", produces = "application/json")
+    public DatasetDtos.DatasetDto saveGeoJsonVersion(
+            @PathVariable UUID datasetId,
+            @RequestBody DatasetDtos.SaveGeoJsonVersionRequest req
+    ) {
+        return datasetService.saveGeoJsonVersion(currentUserService.requireCurrentUser(), datasetId, req);
     }
 
     @GetMapping("/datasets/{datasetId}/download")

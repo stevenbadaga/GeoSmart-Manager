@@ -7,21 +7,27 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Instant;
+import java.util.UUID;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import rw.venus.geosmartmanager.entity.UserSessionEntity;
+import rw.venus.geosmartmanager.repo.UserSessionRepository;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final AppUserDetailsService userDetailsService;
+    private final UserSessionRepository userSessionRepository;
 
-    public JwtAuthFilter(JwtService jwtService, AppUserDetailsService userDetailsService) {
+    public JwtAuthFilter(JwtService jwtService, AppUserDetailsService userDetailsService, UserSessionRepository userSessionRepository) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.userSessionRepository = userSessionRepository;
     }
 
     @Override
@@ -42,6 +48,26 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 return;
             }
 
+            String sidRaw = jws.getPayload().get("sid", String.class);
+            UUID sessionId = null;
+            if (sidRaw != null && !sidRaw.isBlank()) {
+                try {
+                    sessionId = UUID.fromString(sidRaw);
+                } catch (IllegalArgumentException ignored) {
+                    // ignore invalid session id
+                }
+            }
+            if (sessionId == null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            UserSessionEntity session = userSessionRepository.findById(sessionId).orElse(null);
+            if (session == null || session.getRevokedAt() != null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
@@ -52,6 +78,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
+
+            if (session.getUser() != null && username.equals(session.getUser().getUsername())) {
+                session.setLastSeenAt(Instant.now());
+                userSessionRepository.save(session);
+            }
         } catch (Exception ignored) {
             // Ignore invalid tokens (will be treated as unauthenticated by downstream security)
         }
@@ -59,4 +90,3 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 }
-

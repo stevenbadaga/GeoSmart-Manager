@@ -17,6 +17,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.locationtech.jts.geom.Geometry;
@@ -73,7 +77,10 @@ public class SubdivisionService {
         run = subdivisionRunRepository.save(run);
 
         try {
-            Path datasetPath = storageService.getRoot().resolve(dataset.getStoredPath()).normalize();
+            String geoPath = dataset.getPreviewGeojsonPath() != null && !dataset.getPreviewGeojsonPath().isBlank()
+                    ? dataset.getPreviewGeojsonPath()
+                    : dataset.getStoredPath();
+            Path datasetPath = storageService.getRoot().resolve(geoPath).normalize();
 
             Geometry boundary = geoJsonService.readFirstPolygonalGeometry(datasetPath);
             double boundaryAreaSqm = geoJsonService.areaSqm(boundary);
@@ -117,6 +124,32 @@ public class SubdivisionService {
         return subdivisionRunRepository.findByProjectIdOrderByStartedAtDesc(projectId).stream().map(this::toDto).toList();
     }
 
+    public SubdivisionDtos.SuggestResponse suggest(UserEntity actor, UUID projectId, SubdivisionDtos.SuggestRequest req) {
+        projectAccessService.requireProjectRead(actor, projectId);
+
+        DatasetEntity dataset = pickDataset(projectId).orElseThrow(() ->
+                new ApiException(HttpStatus.BAD_REQUEST, "NO_DATASET", "Upload a cadastral GeoJSON dataset first"));
+
+        String geoPath = dataset.getPreviewGeojsonPath() != null && !dataset.getPreviewGeojsonPath().isBlank()
+                ? dataset.getPreviewGeojsonPath()
+                : dataset.getStoredPath();
+        Path datasetPath = storageService.getRoot().resolve(geoPath).normalize();
+
+        Geometry boundary = geoJsonService.readFirstPolygonalGeometry(datasetPath);
+        double boundaryAreaSqm = geoJsonService.areaSqm(boundary);
+        if (!Double.isFinite(boundaryAreaSqm) || boundaryAreaSqm <= 0) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_GEOJSON", "Unable to compute boundary area");
+        }
+
+        int maxParcels = Math.max(1, (int) Math.floor(boundaryAreaSqm / req.minParcelArea()));
+        Double estimated = null;
+        if (req.targetParcels() != null && req.targetParcels() > 0) {
+            estimated = boundaryAreaSqm / req.targetParcels();
+        }
+
+        return new SubdivisionDtos.SuggestResponse(boundaryAreaSqm, maxParcels, estimated);
+    }
+
     public SubdivisionDtos.RunDetailDto getDetail(UserEntity actor, UUID runId) {
         SubdivisionRunEntity run = subdivisionRunRepository.findById(runId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Subdivision run not found"));
@@ -131,7 +164,9 @@ public class SubdivisionService {
                 geojson = null;
             }
         }
-        return new SubdivisionDtos.RunDetailDto(toDto(run), geojson);
+
+        String issuesJson = computeIssuesJson(run, geojson);
+        return new SubdivisionDtos.RunDetailDto(toDto(run), geojson, issuesJson);
     }
 
     public Path getResultFile(UserEntity actor, UUID runId) {
@@ -170,6 +205,126 @@ public class SubdivisionService {
         run.setErrorMessage(errorMessage);
         run.setFinishedAt(Instant.now());
         subdivisionRunRepository.save(run);
+    }
+
+    private String computeIssuesJson(SubdivisionRunEntity run, String geojson) {
+        if (geojson == null || geojson.isBlank()) {
+            return "[]";
+        }
+
+        try {
+            var root = objectMapper.readTree(geojson);
+            var features = root.path("features");
+            if (!features.isArray()) {
+                return "[]";
+            }
+
+            List<Geometry> geometries = new ArrayList<>();
+            List<Integer> parcelNos = new ArrayList<>();
+
+            int idx = 0;
+            for (var f : features) {
+                idx++;
+                var geomNode = f.path("geometry");
+                if (!geomNode.isObject()) {
+                    continue;
+                }
+                Geometry g;
+                try {
+                    g = geoJsonService.toPolygonalGeometry(geomNode);
+                } catch (Exception ex) {
+                    continue;
+                }
+                if (g == null || g.isEmpty()) {
+                    continue;
+                }
+                geometries.add(g);
+
+                int parcelNo = f.path("properties").path("parcelNo").asInt(idx);
+                parcelNos.add(parcelNo);
+            }
+
+            List<Map<String, Object>> issues = new ArrayList<>();
+
+            if (geometries.size() != run.getTargetParcels()) {
+                issues.add(Map.of(
+                        "rule", "COUNT_MISMATCH",
+                        "severity", "WARNING",
+                        "message", "Result parcel count differs from target",
+                        "targetParcels", run.getTargetParcels(),
+                        "actualParcels", geometries.size()
+                ));
+            }
+
+            for (int i = 0; i < geometries.size(); i++) {
+                Geometry g = geometries.get(i);
+                int no = parcelNos.get(i);
+
+                if (!g.isValid()) {
+                    issues.add(Map.of(
+                            "rule", "INVALID_GEOMETRY",
+                            "severity", "ERROR",
+                            "message", "Parcel geometry is invalid",
+                            "parcelNo", no
+                    ));
+                }
+
+                double areaSqm = geoJsonService.areaSqm(g);
+                if (Double.isFinite(areaSqm) && areaSqm > 0 && areaSqm < run.getMinParcelArea()) {
+                    issues.add(Map.of(
+                            "rule", "MIN_AREA",
+                            "severity", "ERROR",
+                            "message", "Parcel area is below minimum",
+                            "parcelNo", no,
+                            "areaSqm", areaSqm,
+                            "minParcelArea", run.getMinParcelArea()
+                    ));
+                }
+            }
+
+            for (int i = 0; i < geometries.size(); i++) {
+                Geometry a = geometries.get(i);
+                int aNo = parcelNos.get(i);
+                for (int j = i + 1; j < geometries.size(); j++) {
+                    Geometry b = geometries.get(j);
+                    int bNo = parcelNos.get(j);
+
+                    Geometry inter;
+                    try {
+                        inter = a.intersection(b);
+                    } catch (Exception ex) {
+                        continue;
+                    }
+                    if (inter == null || inter.isEmpty()) {
+                        continue;
+                    }
+                    double overlapSqm = geoJsonService.areaSqm(inter);
+                    if (!Double.isFinite(overlapSqm) || overlapSqm <= 1.0) {
+                        continue;
+                    }
+
+                    Map<String, Object> issue = new HashMap<>();
+                    issue.put("rule", "OVERLAP");
+                    issue.put("severity", "ERROR");
+                    issue.put("message", "Parcels overlap");
+                    issue.put("parcelA", aNo);
+                    issue.put("parcelB", bNo);
+                    issue.put("overlapSqm", overlapSqm);
+                    issues.add(issue);
+
+                    if (issues.size() >= 200) {
+                        break;
+                    }
+                }
+                if (issues.size() >= 200) {
+                    break;
+                }
+            }
+
+            return objectMapper.writeValueAsString(issues);
+        } catch (Exception ex) {
+            return "[]";
+        }
     }
 
     private SubdivisionDtos.RunDto toDto(SubdivisionRunEntity run) {

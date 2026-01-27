@@ -2,9 +2,12 @@ package rw.venus.geosmartmanager.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
@@ -28,6 +31,22 @@ public class ClientEntity {
 
     @Column(length = 512)
     private String address;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
+
+    @Column(length = 64)
+    private String kycIdType;
+
+    @Column(length = 128)
+    private String kycIdNumber;
+
+    @Column(length = 1000)
+    private String kycNotes;
+
+    @Column(length = 2000)
+    private String landOwnershipDetails;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -73,8 +92,47 @@ public class ClientEntity {
         this.address = address;
     }
 
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public void setUser(UserEntity user) {
+        this.user = user;
+    }
+
+    public String getKycIdType() {
+        return kycIdType;
+    }
+
+    public void setKycIdType(String kycIdType) {
+        this.kycIdType = kycIdType;
+    }
+
+    public String getKycIdNumber() {
+        return kycIdNumber;
+    }
+
+    public void setKycIdNumber(String kycIdNumber) {
+        this.kycIdNumber = kycIdNumber;
+    }
+
+    public String getKycNotes() {
+        return kycNotes;
+    }
+
+    public void setKycNotes(String kycNotes) {
+        this.kycNotes = kycNotes;
+    }
+
+    public String getLandOwnershipDetails() {
+        return landOwnershipDetails;
+    }
+
+    public void setLandOwnershipDetails(String landOwnershipDetails) {
+        this.landOwnershipDetails = landOwnershipDetails;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
 }
-

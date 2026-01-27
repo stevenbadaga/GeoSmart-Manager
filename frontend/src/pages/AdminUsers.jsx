@@ -15,7 +15,7 @@ const schema = z.object({
   username: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
-  role: z.enum(['ADMIN', 'ENGINEER']),
+  role: z.enum(['ADMIN', 'PROJECT_MANAGER', 'ENGINEER', 'SURVEYOR', 'CLIENT']),
 })
 
 function tone(role) {
@@ -145,6 +145,9 @@ export function AdminUsersPage() {
                 {...form.register('role')}
               >
                 <option value="ENGINEER">ENGINEER</option>
+                <option value="SURVEYOR">SURVEYOR</option>
+                <option value="PROJECT_MANAGER">PROJECT_MANAGER</option>
+                <option value="CLIENT">CLIENT</option>
                 <option value="ADMIN">ADMIN</option>
               </select>
             </div>
