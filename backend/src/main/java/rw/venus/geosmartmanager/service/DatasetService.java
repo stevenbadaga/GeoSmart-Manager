@@ -243,7 +243,7 @@ public class DatasetService {
                 Files.deleteIfExists(preview);
             }
         } catch (IOException ignored) {
-            // Best effort. The DB record is the source of truth; a leftover file is non-critical for the prototype.
+            // Best effort. The DB record is the source of truth; a leftover file is non-critical.
         }
 
         auditService.log(actor, "DATASET_DELETED", "Dataset", datasetId);

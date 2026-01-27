@@ -200,7 +200,7 @@ export function ProjectTeamPage() {
                           Remove
                         </Button>
                       ) : (
-                        <span className="text-xs text-slate-500">—</span>
+                        <span className="text-xs text-slate-500">-</span>
                       )}
                     </td>
                   </tr>
@@ -307,4 +307,3 @@ export function ProjectTeamPage() {
     </div>
   )
 }
-

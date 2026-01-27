@@ -56,7 +56,7 @@ function ProfileTab({ user, onUserUpdated }) {
         <div>
           <label className="text-sm font-medium text-slate-700">Role</label>
           <div className="mt-1">
-            <Badge tone={user?.role === 'ADMIN' ? 'blue' : 'slate'}>{user?.role || '—'}</Badge>
+            <Badge tone={user?.role === 'ADMIN' ? 'blue' : 'slate'}>{user?.role || '-'}</Badge>
           </div>
         </div>
         <div />
@@ -91,7 +91,7 @@ function ProfileTab({ user, onUserUpdated }) {
 
       <div className="mt-6 flex justify-end">
         <Button onClick={() => updateProfileMutation.mutate()} disabled={updateProfileMutation.isPending}>
-          {updateProfileMutation.isPending ? 'Saving…' : 'Save profile'}
+          {updateProfileMutation.isPending ? 'Saving...' : 'Save profile'}
         </Button>
       </div>
     </Card>
@@ -168,7 +168,7 @@ function SecurityTab({ user, sessionId, onUserUpdated, onLogout }) {
         {!user?.mfaEnabled ? (
           <div className="mt-4 space-y-3">
             <Button variant="outline" onClick={() => startMfaMutation.mutate()} disabled={startMfaMutation.isPending}>
-              {startMfaMutation.isPending ? 'Starting…' : 'Start MFA setup'}
+              {startMfaMutation.isPending ? 'Starting...' : 'Start MFA setup'}
             </Button>
 
             {mfaSetup ? (
@@ -199,7 +199,7 @@ function SecurityTab({ user, sessionId, onUserUpdated, onLogout }) {
                   <Input value={mfaCode} onChange={(e) => setMfaCode(e.target.value)} placeholder="123456" inputMode="numeric" />
                   <div className="mt-2 flex justify-end">
                     <Button onClick={() => enableMfaMutation.mutate()} disabled={enableMfaMutation.isPending || !mfaCode}>
-                      {enableMfaMutation.isPending ? 'Enabling…' : 'Enable MFA'}
+                      {enableMfaMutation.isPending ? 'Enabling...' : 'Enable MFA'}
                     </Button>
                   </div>
                 </div>
@@ -214,7 +214,7 @@ function SecurityTab({ user, sessionId, onUserUpdated, onLogout }) {
             </div>
             <div className="flex justify-end">
               <Button variant="danger" onClick={() => disableMfaMutation.mutate()} disabled={disableMfaMutation.isPending || !mfaCode}>
-                {disableMfaMutation.isPending ? 'Disabling…' : 'Disable MFA'}
+                {disableMfaMutation.isPending ? 'Disabling...' : 'Disable MFA'}
               </Button>
             </div>
           </div>
@@ -239,7 +239,7 @@ function SecurityTab({ user, sessionId, onUserUpdated, onLogout }) {
               {sessionsQuery.isLoading ? (
                 <tr>
                   <td className="px-4 py-5 text-slate-600" colSpan={3}>
-                    Loading…
+                    Loading...
                   </td>
                 </tr>
               ) : null}
@@ -258,7 +258,7 @@ function SecurityTab({ user, sessionId, onUserUpdated, onLogout }) {
                         <div className="truncate text-xs text-slate-500">{s.ipAddress || ''}</div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate-700">{s.lastSeenAt ? new Date(s.lastSeenAt).toLocaleString() : '—'}</td>
+                    <td className="px-4 py-3 text-slate-700">{s.lastSeenAt ? new Date(s.lastSeenAt).toLocaleString() : '-'}</td>
                     <td className="px-4 py-3">
                       {!revoked ? (
                         <Button
@@ -270,7 +270,7 @@ function SecurityTab({ user, sessionId, onUserUpdated, onLogout }) {
                           {isCurrent ? 'Sign out' : 'Revoke'}
                         </Button>
                       ) : (
-                        <span className="text-xs text-slate-500">—</span>
+                        <span className="text-xs text-slate-500">-</span>
                       )}
                     </td>
                   </tr>
@@ -310,18 +310,18 @@ function ActivityTab() {
             {activityQuery.isLoading ? (
               <tr>
                 <td className="px-4 py-5 text-slate-600" colSpan={4}>
-                  Loading…
+                  Loading...
                 </td>
               </tr>
             ) : null}
             {(activityQuery.data ?? []).map((a) => (
               <tr key={a.id}>
-                <td className="px-4 py-3 text-slate-700">{a.createdAt ? new Date(a.createdAt).toLocaleString() : '—'}</td>
+                <td className="px-4 py-3 text-slate-700">{a.createdAt ? new Date(a.createdAt).toLocaleString() : '-'}</td>
                 <td className="px-4 py-3">
                   <Badge tone={toneAction(a.action)}>{a.action}</Badge>
                 </td>
                 <td className="px-4 py-3 text-slate-700">{a.entityType}</td>
-                <td className="px-4 py-3 font-mono text-xs text-slate-700">{a.entityId || '—'}</td>
+                <td className="px-4 py-3 font-mono text-xs text-slate-700">{a.entityId || '-'}</td>
               </tr>
             ))}
           </tbody>

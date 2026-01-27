@@ -85,7 +85,7 @@ export function AdminUsersPage() {
               {usersQuery.isLoading ? (
                 <tr>
                   <td className="px-4 py-4 text-slate-600" colSpan={5}>
-                    Loading…
+                    Loading...
                   </td>
                 </tr>
               ) : null}
@@ -164,7 +164,7 @@ export function AdminUsersPage() {
               Cancel
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? 'Creating…' : 'Create'}
+              {createMutation.isPending ? 'Creating...' : 'Create'}
             </Button>
           </div>
         </form>

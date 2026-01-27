@@ -67,7 +67,7 @@ export function Sidebar({ onNavigate }) {
             Project Dashboard
           </Item>
           <Item to="/collaboration" icon={MessagesSquare}>
-            Collaboration
+            Collaboration Portal
           </Item>
           {!isClient ? (
             <>
@@ -78,13 +78,13 @@ export function Sidebar({ onNavigate }) {
                 Workflow
               </Item>
               <Item to="/field" icon={MapPin}>
-                Field Survey
+                Field Survey & Mobile
               </Item>
               <Item to="/workspace" icon={Map}>
                 Map Workspace
               </Item>
               <Item to="/subdivision" icon={SlidersHorizontal}>
-                AI Subdivision
+                AI Land Subdivision
               </Item>
               <Item to="/compliance" icon={ShieldCheck}>
                 Compliance

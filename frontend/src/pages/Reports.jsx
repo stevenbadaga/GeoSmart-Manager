@@ -129,7 +129,7 @@ export function ReportsPage() {
               <option value="">Latest run</option>
               {runs.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.id.slice(0, 8)} — {r.status}
+                  {r.id.slice(0, 8)} - {r.status}
                 </option>
               ))}
             </select>
@@ -193,7 +193,7 @@ export function ReportsPage() {
                   <td className="px-4 py-3">
                     <Badge tone={tone(r.type)}>{prettyType(r.type)}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-slate-700">{r.createdAt ? new Date(r.createdAt).toLocaleString() : '—'}</td>
+                  <td className="px-4 py-3 text-slate-700">{r.createdAt ? new Date(r.createdAt).toLocaleString() : '-'}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
                       <Button

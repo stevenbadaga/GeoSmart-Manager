@@ -174,7 +174,7 @@ export function RegisterPage() {
             {error ? <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div> : null}
 
             <Button className="w-full" type="submit" disabled={busy}>
-              {busy ? 'Creating…' : 'Create account'}
+              {busy ? 'Creating...' : 'Create account'}
             </Button>
 
             <div className="text-xs text-slate-600">

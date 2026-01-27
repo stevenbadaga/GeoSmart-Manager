@@ -324,7 +324,7 @@ export function SubdivisionPage() {
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-900">AI Land Subdivision</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Generate an automated subdivision proposal (prototype: clipped strip parcels inside the cadastral boundary).
+          Generate an automated subdivision proposal within the cadastral boundary.
         </p>
       </div>
 
@@ -352,10 +352,10 @@ export function SubdivisionPage() {
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">AI suggestion</div>
-                  {suggestQuery.isLoading ? <div className="text-xs text-slate-500">Calculating…</div> : null}
-                </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-slate-600">AI suggestion</div>
+                    {suggestQuery.isLoading ? <div className="text-xs text-slate-500">Calculating...</div> : null}
+                  </div>
 
                 {suggestQuery.isError ? (
                   <div className="mt-2 text-xs text-rose-600">Unable to compute suggestions. Upload a cadastral GeoJSON dataset first.</div>
@@ -366,7 +366,7 @@ export function SubdivisionPage() {
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-slate-600">Boundary area</div>
                       <div className="font-medium text-slate-900">
-                        {Number.isFinite(suggestQuery.data.boundaryAreaSqm) ? suggestQuery.data.boundaryAreaSqm.toFixed(2) : '—'} sqm
+                        {Number.isFinite(suggestQuery.data.boundaryAreaSqm) ? suggestQuery.data.boundaryAreaSqm.toFixed(2) : '-'} sqm
                       </div>
                     </div>
                     <div className="flex items-center justify-between gap-3">
@@ -551,7 +551,7 @@ export function SubdivisionPage() {
                   {selectedFeature ? (
                     <>
                       Selected parcel:{' '}
-                      <span className="font-medium text-slate-900">{selectedFeature?.properties?.parcelNo ?? '—'}</span>
+                      <span className="font-medium text-slate-900">{selectedFeature?.properties?.parcelNo ?? '-'}</span>
                     </>
                   ) : (
                     'Click a parcel on the map or in the table to inspect it.'
@@ -614,7 +614,7 @@ export function SubdivisionPage() {
                     return (
                       <tr key={f.id || idx} className={isSel ? 'bg-indigo-50' : ''}>
                         <td className="px-3 py-2 font-medium text-slate-900">{parcelNo}</td>
-                        <td className="px-3 py-2 text-slate-700">{area == null ? '—' : area.toFixed(2)}</td>
+                        <td className="px-3 py-2 text-slate-700">{area == null ? '-' : area.toFixed(2)}</td>
                         <td className="px-3 py-2">
                           <Button
                             size="sm"
@@ -652,7 +652,7 @@ export function SubdivisionPage() {
 
             {!selectedRunId ? <div className="mt-4 text-sm text-slate-600">Run subdivision first to see validation results.</div> : null}
 
-            {selectedRunId && runDetailQuery.isLoading ? <div className="mt-4 text-sm text-slate-600">Loading…</div> : null}
+            {selectedRunId && runDetailQuery.isLoading ? <div className="mt-4 text-sm text-slate-600">Loading...</div> : null}
             {selectedRunId && runDetailQuery.isError ? (
               <div className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">Failed to load validation results.</div>
             ) : null}
@@ -679,8 +679,8 @@ export function SubdivisionPage() {
                   <tbody className="divide-y divide-slate-200 bg-white">
                     {issues.map((it, idx) => {
                       const sev = String(it?.severity || '').toUpperCase()
-                      const rule = String(it?.rule || '—')
-                      const message = String(it?.message || '—')
+                      const rule = String(it?.rule || '-')
+                      const message = String(it?.message || '-')
 
                       const parcelNo = Number(it?.parcelNo)
                       const parcelA = Number(it?.parcelA)
@@ -694,7 +694,7 @@ export function SubdivisionPage() {
                         ? `#${parcelNo}`
                         : Number.isFinite(parcelA) && Number.isFinite(parcelB)
                           ? `#${parcelA} & #${parcelB}`
-                          : '—'
+                          : '-'
 
                       const detailParts = []
                       if (it?.areaSqm != null && Number.isFinite(Number(it.areaSqm))) detailParts.push(`area ${Number(it.areaSqm).toFixed(2)} sqm`)
@@ -704,12 +704,12 @@ export function SubdivisionPage() {
                         detailParts.push(`overlap ${Number(it.overlapSqm).toFixed(2)} sqm`)
                       if (it?.targetParcels != null) detailParts.push(`target ${it.targetParcels}`)
                       if (it?.actualParcels != null) detailParts.push(`actual ${it.actualParcels}`)
-                      const details = detailParts.length ? detailParts.join(' · ') : '—'
+                      const details = detailParts.length ? detailParts.join(' - ') : '-'
 
                       return (
                         <tr key={`${rule}-${idx}`}>
                           <td className="px-3 py-2">
-                            <Badge tone={severityTone(sev)}>{sev || '—'}</Badge>
+                            <Badge tone={severityTone(sev)}>{sev || '-'}</Badge>
                           </td>
                           <td className="px-3 py-2 font-medium text-slate-900">{rule}</td>
                           <td className="px-3 py-2 text-slate-700">{message}</td>
@@ -741,7 +741,7 @@ export function SubdivisionPage() {
                                 Focus
                               </Button>
                             ) : (
-                              <span className="text-xs text-slate-500">—</span>
+                              <span className="text-xs text-slate-500">-</span>
                             )}
                           </td>
                         </tr>

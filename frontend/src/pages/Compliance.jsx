@@ -320,9 +320,9 @@ export function CompliancePage() {
                                           {String(it?.severity || 'INFO').toUpperCase()}
                                         </Badge>
                                       </td>
-                                      <td className="px-3 py-2 font-medium text-slate-900">{it?.rule || '—'}</td>
-                                      <td className="px-3 py-2 text-slate-700">{it?.message || '—'}</td>
-                                      <td className="px-3 py-2 text-slate-700">{it?.parcelNo ?? it?.parcelIndex ?? '—'}</td>
+                                      <td className="px-3 py-2 font-medium text-slate-900">{it?.rule || '-'}</td>
+                                      <td className="px-3 py-2 text-slate-700">{it?.message || '-'}</td>
+                                      <td className="px-3 py-2 text-slate-700">{it?.parcelNo ?? it?.parcelIndex ?? '-'}</td>
                                     </tr>
                                   ))}
                                 </tbody>

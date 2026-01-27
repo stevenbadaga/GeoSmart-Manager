@@ -1,6 +1,6 @@
 # GeoSmart-Manager (Final Year Project 25961)
 
-GeoSmart-Manager is an AI-integrated geospatial ERP system prototype for surveying and engineering companies to automate land subdivision and survey operations (MIS + AI + geospatial workflows).
+GeoSmart-Manager is an AI-integrated geospatial ERP system for surveying and engineering companies to automate land subdivision and survey operations (MIS + AI + geospatial workflows).
 
 ## Tech stack
 - Frontend: React (Vite) + Tailwind CSS (JSX)
@@ -64,7 +64,7 @@ mvn -f backend/pom.xml spring-boot:run
 ## Notes
 - If the backend fails with `FlywayValidateException` and mentions a failed migration, delete `backend/data/` (or run `reset-h2.cmd`) and start again.
 
-## Demo flow (for prototype)
+## Demo flow (end-to-end)
 1. Create a Client
 2. Create a Project
 3. (Optional) In Workflow: create/assign tasks

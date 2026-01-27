@@ -166,7 +166,7 @@ export function ClientsPage() {
               {q.isLoading ? (
                 <tr>
                   <td className="px-4 py-4 text-slate-600" colSpan={tableCols}>
-                    Loading…
+                    Loading...
                   </td>
                 </tr>
               ) : null}
@@ -307,7 +307,7 @@ export function ClientsPage() {
               Cancel
             </Button>
             <Button type="submit" disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? 'Saving…' : 'Save'}
+              {saveMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </form>
@@ -317,7 +317,7 @@ export function ClientsPage() {
         open={!!confirmDeleteId}
         title="Delete client?"
         message="This will permanently delete the client. Projects linked to this client may fail to load."
-        confirmLabel={deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+        confirmLabel={deleteMutation.isPending ? 'Deleting...' : 'Delete'}
         danger
         onClose={() => setConfirmDeleteId('')}
         onConfirm={() => {

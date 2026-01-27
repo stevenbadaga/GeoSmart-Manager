@@ -28,7 +28,7 @@ export function LoginPage() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { username: 'admin', password: 'Admin123!', mfaCode: '' },
+    defaultValues: { username: '', password: '', mfaCode: '' },
   })
 
   async function onSubmit(values) {
@@ -64,12 +64,12 @@ export function LoginPage() {
           <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <label className="text-sm font-medium text-slate-700">Username</label>
-              <Input placeholder="admin" {...register('username')} />
+              <Input placeholder="Enter your username" autoComplete="username" {...register('username')} />
               {errors.username ? <div className="mt-1 text-xs text-rose-600">{errors.username.message}</div> : null}
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700">Password</label>
-              <Input type="password" placeholder="••••••••" {...register('password')} />
+              <Input type="password" placeholder="Enter your password" autoComplete="current-password" {...register('password')} />
               {errors.password ? <div className="mt-1 text-xs text-rose-600">{errors.password.message}</div> : null}
             </div>
 
@@ -83,7 +83,7 @@ export function LoginPage() {
             {error ? <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div> : null}
 
             <Button className="w-full" type="submit" disabled={busy}>
-              {busy ? 'Signing in…' : 'Sign in'}
+              {busy ? 'Signing in...' : 'Sign in'}
             </Button>
 
             <div className="flex items-center justify-between text-xs text-slate-600">
@@ -96,9 +96,6 @@ export function LoginPage() {
               <span className="text-slate-500">MFA supported</span>
             </div>
 
-            <div className="text-xs text-slate-500">
-              Default dev account: <span className="font-mono">admin / Admin123!</span>
-            </div>
           </form>
         </Card>
       </div>

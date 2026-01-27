@@ -106,9 +106,9 @@ function formatMeters(m) {
 
 function formatSqm(a) {
   if (!Number.isFinite(a)) return '-'
-  if (a >= 1_000_000) return `${(a / 1_000_000).toFixed(2)} km²`
+  if (a >= 1_000_000) return `${(a / 1_000_000).toFixed(2)} km^2`
   if (a >= 10_000) return `${(a / 10_000).toFixed(2)} ha`
-  return `${a.toFixed(1)} m²`
+  return `${a.toFixed(1)} m^2`
 }
 
 function measureDistanceMeters(points) {
@@ -170,9 +170,9 @@ function DatasetRow({ active, d, onSelect }) {
           <div className="truncate text-sm font-semibold text-slate-900">{d.name}</div>
           <div className="mt-1 truncate text-xs text-slate-600">
             {d.originalFilename}
-            {d.version ? ` • v${d.version}` : ''}
-            {format ? ` • ${format}` : ''}
-            {!isGeoJsonFilename(d.originalFilename) && !d.hasGeojsonPreview ? ' • no preview' : ''}
+            {d.version ? ` - v${d.version}` : ''}
+            {format ? ` - ${format}` : ''}
+            {!isGeoJsonFilename(d.originalFilename) && !d.hasGeojsonPreview ? ' - no preview' : ''}
           </div>
         </div>
         <Badge tone="blue">{d.type}</Badge>
@@ -495,7 +495,7 @@ export function MapWorkspacePage() {
         <Card className="p-6">
           <div className="text-lg font-semibold text-slate-900">Select a project</div>
           <p className="mt-2 text-sm text-slate-600">
-            Use the “Active Project” selector in the top bar, or create a project first.
+            Use the "Active Project" selector in the top bar, or create a project first.
           </p>
         </Card>
       </div>
@@ -565,7 +565,7 @@ export function MapWorkspacePage() {
                 disabled={!uploadFile || uploadMutation.isPending}
                 onClick={() => uploadMutation.mutate()}
               >
-                {uploadMutation.isPending ? 'Uploading…' : 'Upload'}
+                {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
               </Button>
               {uploadMutation.isError ? (
                 <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">Upload failed.</div>
@@ -579,7 +579,7 @@ export function MapWorkspacePage() {
               <div className="text-xs text-slate-500">{datasets.length}</div>
             </div>
             <div className="mt-4 space-y-2">
-              {datasetsQuery.isLoading ? <div className="text-sm text-slate-600">Loading…</div> : null}
+              {datasetsQuery.isLoading ? <div className="text-sm text-slate-600">Loading...</div> : null}
               {datasetsQuery.isError ? <div className="text-sm text-rose-600">Failed to load datasets.</div> : null}
               {!datasetsQuery.isLoading && datasets.length === 0 ? (
                 <div className="text-sm text-slate-600">No datasets yet. Upload one above.</div>
@@ -681,7 +681,7 @@ export function MapWorkspacePage() {
                   <option value="">Latest run</option>
                   {runs.map((r) => (
                     <option key={r.id} value={r.id}>
-                      {r.id.slice(0, 8)} — {r.status}
+                      {r.id.slice(0, 8)} - {r.status}
                     </option>
                   ))}
                 </select>
@@ -797,8 +797,8 @@ export function MapWorkspacePage() {
                 {selectedFeature ? (
                   <div className="mt-1 text-sm text-slate-700">
                     {selected?.layer === 'subdivision'
-                      ? `Parcel ${selectedFeature?.properties?.parcelNo ?? '—'}`
-                      : `Dataset feature ${selectedFeature?.properties?.name || selectedFeature?.id || '—'}`}
+                      ? `Parcel ${selectedFeature?.properties?.parcelNo ?? '-'}`
+                      : `Dataset feature ${selectedFeature?.properties?.name || selectedFeature?.id || '-'}`}
                   </div>
                 ) : (
                   <div className="mt-1 text-sm text-slate-600">Click a parcel or a dataset feature on the map to inspect it.</div>
@@ -851,7 +851,7 @@ export function MapWorkspacePage() {
               <div className="text-sm font-semibold text-slate-900">Attribute table</div>
               <div className="flex flex-1 items-center justify-end gap-2">
                 <div className="hidden w-64 sm:block">
-                  <Input placeholder="Search…" value={tableQuery} onChange={(e) => setTableQuery(e.target.value)} />
+                  <Input placeholder="Search..." value={tableQuery} onChange={(e) => setTableQuery(e.target.value)} />
                 </div>
                 <button
                   type="button"
@@ -903,7 +903,7 @@ export function MapWorkspacePage() {
                     {datasetFeatures.length > 0 && filteredDatasetFeatures.length === 0 ? (
                       <tr>
                         <td className="px-4 py-6 text-slate-600" colSpan={3}>
-                          No matches for “{tableQuery}”.
+                          No matches for "{tableQuery}".
                         </td>
                       </tr>
                     ) : null}
@@ -912,7 +912,7 @@ export function MapWorkspacePage() {
                       return (
                         <tr key={f.id || idx} className={isSel ? 'bg-indigo-50' : ''}>
                           <td className="px-4 py-3 font-medium text-slate-900">{f.id || idx + 1}</td>
-                          <td className="px-4 py-3 text-slate-700">{f?.properties?.name || '—'}</td>
+                          <td className="px-4 py-3 text-slate-700">{f?.properties?.name || '-'}</td>
                           <td className="px-4 py-3">
                             <Button
                               size="sm"
@@ -950,7 +950,7 @@ export function MapWorkspacePage() {
                     {subdivisionFeatures.length > 0 && filteredSubdivisionFeatures.length === 0 ? (
                       <tr>
                         <td className="px-4 py-6 text-slate-600" colSpan={3}>
-                          No matches for “{tableQuery}”.
+                          No matches for "{tableQuery}".
                         </td>
                       </tr>
                     ) : null}
@@ -961,7 +961,7 @@ export function MapWorkspacePage() {
                       return (
                         <tr key={f.id || idx} className={isSel ? 'bg-indigo-50' : ''}>
                           <td className="px-4 py-3 font-medium text-slate-900">{parcelNo}</td>
-                          <td className="px-4 py-3 text-slate-700">{area == null ? '—' : area.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-slate-700">{area == null ? '-' : area.toFixed(2)}</td>
                           <td className="px-4 py-3">
                             <Button
                               size="sm"
@@ -989,7 +989,7 @@ export function MapWorkspacePage() {
         open={!!confirmDeleteDatasetId}
         title="Delete dataset?"
         message={`This will permanently delete the dataset${selectedDataset ? ` "${selectedDataset.name}"` : ''}.`}
-        confirmLabel={deleteDatasetMutation.isPending ? 'Deleting…' : 'Delete'}
+        confirmLabel={deleteDatasetMutation.isPending ? 'Deleting...' : 'Delete'}
         danger
         onClose={() => setConfirmDeleteDatasetId('')}
         onConfirm={() => {

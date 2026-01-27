@@ -253,7 +253,7 @@ export function ProjectsPage() {
               {projectsQuery.isLoading ? (
                 <tr>
                   <td className="px-4 py-4 text-slate-600" colSpan={5}>
-                    Loading…
+                    Loading...
                   </td>
                 </tr>
               ) : null}
@@ -291,7 +291,7 @@ export function ProjectsPage() {
                   <td className="px-4 py-3 text-slate-700">
                     {p.startDate || p.endDate ? (
                       <span>
-                        {p.startDate || '?'} {'→'} {p.endDate || '?'}
+                        {p.startDate || '?'} {'->'} {p.endDate || '?'}
                       </span>
                     ) : (
                       '-'
@@ -361,7 +361,7 @@ export function ProjectsPage() {
                 className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 {...register('clientId')}
               >
-                <option value="">Select a client…</option>
+                <option value="">Select a client...</option>
                 {clients.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -454,7 +454,7 @@ export function ProjectsPage() {
               Cancel
             </Button>
             <Button type="submit" disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? 'Saving…' : 'Save'}
+              {saveMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </form>

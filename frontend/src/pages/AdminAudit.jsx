@@ -33,7 +33,7 @@ export function AdminAuditPage() {
               {q.isLoading ? (
                 <tr>
                   <td className="px-4 py-4 text-slate-600" colSpan={5}>
-                    Loading…
+                    Loading...
                   </td>
                 </tr>
               ) : null}
@@ -53,8 +53,8 @@ export function AdminAuditPage() {
               ) : null}
               {rows.map((a) => (
                 <tr key={a.id} className="bg-white">
-                  <td className="px-4 py-3 text-slate-700">{a.createdAt ? new Date(a.createdAt).toLocaleString() : '—'}</td>
-                  <td className="px-4 py-3 text-slate-700">{a.actorUsername || '—'}</td>
+                  <td className="px-4 py-3 text-slate-700">{a.createdAt ? new Date(a.createdAt).toLocaleString() : '-'}</td>
+                  <td className="px-4 py-3 text-slate-700">{a.actorUsername || '-'}</td>
                   <td className="px-4 py-3 font-medium text-slate-900">{a.action}</td>
                   <td className="px-4 py-3 text-slate-700">
                     {a.entityType} {a.entityId ? a.entityId.slice(0, 8) : ''}
@@ -76,4 +76,3 @@ export function AdminAuditPage() {
     </div>
   )
 }
-

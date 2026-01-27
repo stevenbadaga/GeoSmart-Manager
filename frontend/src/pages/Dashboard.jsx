@@ -98,7 +98,7 @@ export function DashboardPage() {
     <div className="mx-auto max-w-6xl p-4 sm:p-6">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-600">A quick overview and a guided prototype workflow for GeoSmart-Manager.</p>
+        <p className="mt-1 text-sm text-slate-600">A quick overview and a guided workflow for GeoSmart-Manager.</p>
       </div>
 
       {summaryQuery.isLoading ? <div className="text-sm text-slate-600">Loading...</div> : null}
@@ -125,7 +125,7 @@ export function DashboardPage() {
                 {activeProject ? (
                   <>
                     <span className="font-medium text-slate-900">{activeProject.name}</span>
-                    <span className="text-slate-500"> • </span>
+                    <span className="text-slate-500"> - </span>
                     <Badge tone={activeProject.status === 'COMPLETED' ? 'green' : activeProject.status === 'IN_PROGRESS' ? 'amber' : 'slate'}>
                       {activeProject.status}
                     </Badge>
@@ -141,41 +141,41 @@ export function DashboardPage() {
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-slate-50 px-3 py-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Datasets</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? datasets.length : '—'}</div>
+              <div className="rounded-xl bg-slate-50 px-3 py-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Datasets</div>
+                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? datasets.length : '-'}</div>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-3 py-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Runs</div>
+                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? runs.length : '-'}</div>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-3 py-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compliance</div>
+                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? checks.length : '-'}</div>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-3 py-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reports</div>
+                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? reports.length : '-'}</div>
+              </div>
             </div>
-            <div className="rounded-xl bg-slate-50 px-3 py-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Runs</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? runs.length : '—'}</div>
-            </div>
-            <div className="rounded-xl bg-slate-50 px-3 py-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compliance</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? checks.length : '—'}</div>
-            </div>
-            <div className="rounded-xl bg-slate-50 px-3 py-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reports</div>
-              <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? reports.length : '—'}</div>
-            </div>
-          </div>
 
           {projectId ? (
             <div className="mt-4 space-y-2 text-sm text-slate-600">
               <div className="flex items-center justify-between gap-2">
                 <span>Latest subdivision</span>
-                <span className="font-medium text-slate-900">{latestRun ? latestRun.status : '—'}</span>
+                <span className="font-medium text-slate-900">{latestRun ? latestRun.status : '-'}</span>
               </div>
               <div className="flex items-center justify-between gap-2">
                 <span>Latest compliance</span>
-                <span className="font-medium text-slate-900">{latestCheck ? latestCheck.status : '—'}</span>
+                <span className="font-medium text-slate-900">{latestCheck ? latestCheck.status : '-'}</span>
               </div>
             </div>
           ) : null}
         </Card>
 
         <Card className="p-5 lg:col-span-2">
-          <div className="text-sm font-semibold text-slate-900">Prototype workflow</div>
-          <div className="mt-1 text-sm text-slate-600">Follow these steps to demo the full system end-to-end.</div>
+          <div className="text-sm font-semibold text-slate-900">Workflow checklist</div>
+          <div className="mt-1 text-sm text-slate-600">Follow these steps to run an end-to-end land subdivision workflow.</div>
 
           <div className="mt-4 space-y-3">
             <StepRow

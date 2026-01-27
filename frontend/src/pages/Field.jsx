@@ -297,7 +297,7 @@ export function FieldPage() {
                   className="mt-1 min-h-[96px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={obsDraft.notes}
                   onChange={(e) => setObsDraft((p) => ({ ...p, notes: e.target.value }))}
-                  placeholder="Field notes…"
+                  placeholder="Field notes..."
                 />
               </div>
               <div className="sm:col-span-2">
@@ -305,7 +305,7 @@ export function FieldPage() {
                 <Input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] || null)} />
                 {!isOnline && photoFile ? (
                   <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-                    Photos can’t be queued offline in the web prototype. Save the observation offline, then attach the photo when back online.
+                    Photos can't be queued offline. Save the observation offline, then attach the photo when back online.
                   </div>
                 ) : null}
               </div>
@@ -338,7 +338,7 @@ export function FieldPage() {
                   }}
                   disabled={createObservationMutation.isPending}
                 >
-                  {createObservationMutation.isPending ? 'Saving…' : 'Save observation'}
+                  {createObservationMutation.isPending ? 'Saving...' : 'Save observation'}
                 </Button>
               )}
 
@@ -348,7 +348,7 @@ export function FieldPage() {
                   onClick={() => syncOfflineMutation.mutate()}
                   disabled={syncOfflineMutation.isPending || offlineQueue.length === 0}
                 >
-                  {syncOfflineMutation.isPending ? 'Syncing…' : 'Sync offline queue'}
+                  {syncOfflineMutation.isPending ? 'Syncing...' : 'Sync offline queue'}
                 </Button>
               ) : null}
             </div>
@@ -366,7 +366,7 @@ export function FieldPage() {
             </div>
 
             <div className="mt-4 space-y-2">
-              {observationsQuery.isLoading ? <div className="text-sm text-slate-600">Loading…</div> : null}
+              {observationsQuery.isLoading ? <div className="text-sm text-slate-600">Loading...</div> : null}
               {observationsQuery.isError ? <div className="text-sm text-rose-600">Failed to load observations.</div> : null}
               {!observationsQuery.isLoading && observations.length === 0 ? <div className="text-sm text-slate-600">No observations yet.</div> : null}
 
@@ -377,12 +377,12 @@ export function FieldPage() {
                       <div className="truncate text-sm font-semibold text-slate-900">{o.title || 'Untitled observation'}</div>
                       <div className="mt-1 text-xs text-slate-600">
                         {o.latitude.toFixed(6)}, {o.longitude.toFixed(6)}
-                        {o.accuracyM != null ? ` · ±${Math.round(o.accuracyM)}m` : ''}
-                        {o.altitudeM != null ? ` · ${o.altitudeM.toFixed(1)}m` : ''}
+                        {o.accuracyM != null ? ` - +/-${Math.round(o.accuracyM)}m` : ''}
+                        {o.altitudeM != null ? ` - ${o.altitudeM.toFixed(1)}m` : ''}
                       </div>
                       <div className="mt-1 text-xs text-slate-500">
                         {o.observedAt ? `Observed: ${new Date(o.observedAt).toLocaleString()}` : ''}
-                        {o.createdAt ? ` · Saved: ${new Date(o.createdAt).toLocaleString()}` : ''}
+                        {o.createdAt ? ` - Saved: ${new Date(o.createdAt).toLocaleString()}` : ''}
                       </div>
                       {o.notes ? <div className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{o.notes}</div> : null}
                       <div className="mt-2 text-xs text-slate-500">{o.createdByUsername ? `By ${o.createdByUsername}` : ''}</div>
@@ -428,7 +428,7 @@ export function FieldPage() {
                       </div>
                     </div>
                   ))}
-                  {offlineQueue.length > 5 ? <div className="text-xs text-slate-500">…and {offlineQueue.length - 5} more</div> : null}
+                  {offlineQueue.length > 5 ? <div className="text-xs text-slate-500">...and {offlineQueue.length - 5} more</div> : null}
                 </div>
               </div>
             ) : null}
@@ -471,14 +471,14 @@ export function FieldPage() {
                   className="mt-1 min-h-[96px] w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                   value={equipDraft.notes}
                   onChange={(e) => setEquipDraft((p) => ({ ...p, notes: e.target.value }))}
-                  placeholder="Calibration notes…"
+                  placeholder="Calibration notes..."
                 />
               </div>
             </div>
 
             <div className="mt-4 flex justify-end">
               <Button onClick={() => createEquipmentMutation.mutate()} disabled={createEquipmentMutation.isPending}>
-                {createEquipmentMutation.isPending ? 'Saving…' : 'Save log'}
+                {createEquipmentMutation.isPending ? 'Saving...' : 'Save log'}
               </Button>
             </div>
           </Card>
@@ -495,7 +495,7 @@ export function FieldPage() {
             </div>
 
             <div className="mt-4 space-y-2">
-              {equipmentQuery.isLoading ? <div className="text-sm text-slate-600">Loading…</div> : null}
+              {equipmentQuery.isLoading ? <div className="text-sm text-slate-600">Loading...</div> : null}
               {equipmentQuery.isError ? <div className="text-sm text-rose-600">Failed to load equipment logs.</div> : null}
               {!equipmentQuery.isLoading && equipmentLogs.length === 0 ? <div className="text-sm text-slate-600">No equipment logs yet.</div> : null}
 
@@ -506,7 +506,7 @@ export function FieldPage() {
                       <div className="truncate text-sm font-semibold text-slate-900">{e.equipmentName}</div>
                       <div className="mt-1 text-xs text-slate-600">
                         {e.serialNumber ? `SN ${e.serialNumber}` : ''}
-                        {e.calibrationDate ? ` · Calibrated: ${e.calibrationDate}` : ''}
+                        {e.calibrationDate ? ` - Calibrated: ${e.calibrationDate}` : ''}
                       </div>
                       {e.notes ? <div className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{e.notes}</div> : null}
                       <div className="mt-2 text-xs text-slate-500">{e.createdByUsername ? `By ${e.createdByUsername}` : ''}</div>
@@ -522,4 +522,3 @@ export function FieldPage() {
     </div>
   )
 }
-

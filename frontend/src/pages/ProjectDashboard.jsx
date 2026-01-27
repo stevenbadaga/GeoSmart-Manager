@@ -202,7 +202,7 @@ export function ProjectDashboardPage() {
 
       <Card className="p-6">
         {projectQuery.isLoading ? (
-          <div className="text-sm text-slate-600">Loading project…</div>
+          <div className="text-sm text-slate-600">Loading project...</div>
         ) : projectQuery.isError ? (
           <div className="text-sm text-rose-700">Unable to load project.</div>
         ) : (
@@ -210,19 +210,19 @@ export function ProjectDashboardPage() {
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Project</div>
               <div className="mt-1 text-sm font-semibold text-slate-900">{project?.name}</div>
-              <div className="mt-1 text-sm text-slate-700">{project?.description || '—'}</div>
+              <div className="mt-1 text-sm text-slate-700">{project?.description || '-'}</div>
             </div>
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Client</div>
               <div className="mt-1 text-sm font-semibold text-slate-900">{project?.clientName}</div>
-              <div className="mt-1 text-sm text-slate-700">{project?.location || '—'}</div>
+              <div className="mt-1 text-sm text-slate-700">{project?.location || '-'}</div>
             </div>
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Timeline</div>
               <div className="mt-1 text-sm text-slate-700">
-                {project?.startDate || '—'} → {project?.endDate || '—'}
+                {project?.startDate || '-'} - {project?.endDate || '-'}
               </div>
-              <div className="mt-1 text-sm text-slate-700">Type: {project?.type || '—'}</div>
+              <div className="mt-1 text-sm text-slate-700">Type: {project?.type || '-'}</div>
             </div>
           </div>
         )}
@@ -263,23 +263,23 @@ export function ProjectDashboardPage() {
                 <label className="text-sm font-medium text-slate-700">File</label>
                 <Input type="file" onChange={(e) => setDocFile(e.target.files?.[0] || null)} />
               </div>
-              <div className="flex justify-end">
-                <Button onClick={() => uploadDocMutation.mutate()} disabled={!docFile || uploadDocMutation.isPending}>
-                  {uploadDocMutation.isPending ? 'Uploading…' : 'Upload'}
-                </Button>
+                <div className="flex justify-end">
+                  <Button onClick={() => uploadDocMutation.mutate()} disabled={!docFile || uploadDocMutation.isPending}>
+                    {uploadDocMutation.isPending ? 'Uploading...' : 'Upload'}
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="mt-4 text-sm text-slate-600">Client view: documents are read-only.</div>
-          )}
+            ) : (
+              <div className="mt-4 text-sm text-slate-600">Client view: documents are read-only.</div>
+            )}
 
-          <div className="mt-4 space-y-2">
-            {docsQuery.isLoading ? <div className="text-sm text-slate-600">Loading…</div> : null}
-            {!docsQuery.isLoading && documents.length === 0 ? <div className="text-sm text-slate-600">No documents yet.</div> : null}
-            {documents.map((d) => (
-              <div key={d.id} className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-medium text-slate-900">{d.name}</div>
+            <div className="mt-4 space-y-2">
+              {docsQuery.isLoading ? <div className="text-sm text-slate-600">Loading...</div> : null}
+              {!docsQuery.isLoading && documents.length === 0 ? <div className="text-sm text-slate-600">No documents yet.</div> : null}
+              {documents.map((d) => (
+                <div key={d.id} className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-slate-900">{d.name}</div>
                   <div className="truncate text-xs text-slate-600">{d.originalFilename}</div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -324,23 +324,23 @@ export function ProjectDashboardPage() {
             )}
             <div>
               <label className="text-sm font-medium text-slate-700">Message</label>
-              <Input value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Type a message…" />
+              <Input value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Type a message..." />
             </div>
             <div className="flex justify-end">
               <Button onClick={() => postMessageMutation.mutate()} disabled={!messageText || postMessageMutation.isPending}>
-                {postMessageMutation.isPending ? 'Sending…' : 'Send'}
+                {postMessageMutation.isPending ? 'Sending...' : 'Send'}
               </Button>
             </div>
           </div>
 
           <div className="mt-4 space-y-2">
-            {messagesQuery.isLoading ? <div className="text-sm text-slate-600">Loading…</div> : null}
+            {messagesQuery.isLoading ? <div className="text-sm text-slate-600">Loading...</div> : null}
             {!messagesQuery.isLoading && messages.length === 0 ? <div className="text-sm text-slate-600">No messages yet.</div> : null}
             {messages.map((m) => (
               <div key={m.id} className="rounded-xl border border-slate-200 bg-white px-3 py-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="text-xs text-slate-600">
-                    {m.actorUsername || 'User'} • {m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}
+                    {m.actorUsername || 'User'} - {m.createdAt ? new Date(m.createdAt).toLocaleString() : ''}
                   </div>
                   <Badge tone={m.visibility === 'CLIENT_VISIBLE' ? 'blue' : 'slate'}>{m.visibility}</Badge>
                 </div>
@@ -365,7 +365,7 @@ export function ProjectDashboardPage() {
         </div>
 
         <div className="mt-4 space-y-3">
-          {invoicesQuery.isLoading ? <div className="text-sm text-slate-600">Loading…</div> : null}
+          {invoicesQuery.isLoading ? <div className="text-sm text-slate-600">Loading...</div> : null}
           {!invoicesQuery.isLoading && invoices.length === 0 ? <div className="text-sm text-slate-600">No invoices yet.</div> : null}
           {invoices.map((inv) => (
             <div key={inv.id} className="rounded-xl border border-slate-200 bg-white p-4">
@@ -373,7 +373,7 @@ export function ProjectDashboardPage() {
                 <div>
                   <div className="text-sm font-semibold text-slate-900">{inv.invoiceNumber}</div>
                   <div className="text-xs text-slate-600">
-                    {inv.currency} {inv.amount.toFixed(2)} • Due: {inv.dueDate || '—'}
+                    {inv.currency} {inv.amount.toFixed(2)} - Due: {inv.dueDate || '-'}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -410,9 +410,9 @@ export function ProjectDashboardPage() {
                           <td className="px-3 py-2 text-slate-700">
                             {inv.currency} {p.amount.toFixed(2)}
                           </td>
-                          <td className="px-3 py-2 text-slate-700">{p.method || '—'}</td>
-                          <td className="px-3 py-2 font-mono text-xs text-slate-700">{p.reference || '—'}</td>
-                          <td className="px-3 py-2 text-slate-700">{p.paidAt ? new Date(p.paidAt).toLocaleString() : '—'}</td>
+                          <td className="px-3 py-2 text-slate-700">{p.method || '-'}</td>
+                          <td className="px-3 py-2 font-mono text-xs text-slate-700">{p.reference || '-'}</td>
+                          <td className="px-3 py-2 text-slate-700">{p.paidAt ? new Date(p.paidAt).toLocaleString() : '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -428,7 +428,7 @@ export function ProjectDashboardPage() {
         open={!!confirmDeleteDoc}
         title="Delete document?"
         message={confirmDeleteDoc ? `This will permanently delete "${confirmDeleteDoc.name}".` : 'This will delete the document.'}
-        confirmLabel={deleteDocMutation.isPending ? 'Deleting…' : 'Delete'}
+        confirmLabel={deleteDocMutation.isPending ? 'Deleting...' : 'Delete'}
         danger
         onClose={() => setConfirmDeleteDoc(null)}
         onConfirm={() => {
@@ -490,7 +490,7 @@ export function ProjectDashboardPage() {
               onClick={() => createInvoiceMutation.mutate()}
               disabled={createInvoiceMutation.isPending || !invoiceDraft.invoiceNumber}
             >
-              {createInvoiceMutation.isPending ? 'Creating…' : 'Create'}
+              {createInvoiceMutation.isPending ? 'Creating...' : 'Create'}
             </Button>
           </div>
         </form>
@@ -517,7 +517,7 @@ export function ProjectDashboardPage() {
               Cancel
             </Button>
             <Button type="button" onClick={() => addPaymentMutation.mutate()} disabled={addPaymentMutation.isPending || !paymentDraft.amount}>
-              {addPaymentMutation.isPending ? 'Saving…' : 'Save payment'}
+              {addPaymentMutation.isPending ? 'Saving...' : 'Save payment'}
             </Button>
           </div>
         </form>
@@ -525,4 +525,3 @@ export function ProjectDashboardPage() {
     </div>
   )
 }
-

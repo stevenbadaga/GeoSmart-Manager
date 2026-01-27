@@ -255,7 +255,7 @@ export function WorkflowPage() {
                           <div className="truncate text-sm font-semibold text-slate-900">{t.title}</div>
                           <div className="mt-1 text-xs text-slate-500">
                             {t.assignedToUsername ? `Assigned: ${t.assignedToUsername}` : 'Unassigned'}
-                            {' • '}
+                            {' - '}
                             {t.dueAt ? `Due: ${new Date(t.dueAt).toLocaleDateString()}` : 'No due date'}
                           </div>
                         </div>
@@ -346,8 +346,8 @@ export function WorkflowPage() {
                     <td className="px-4 py-3">
                       <Badge tone={tone(t.status)}>{t.status}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-slate-700">{t.assignedToUsername || '—'}</td>
-                    <td className="px-4 py-3 text-slate-700">{t.dueAt ? new Date(t.dueAt).toLocaleDateString() : '—'}</td>
+                    <td className="px-4 py-3 text-slate-700">{t.assignedToUsername || '-'}</td>
+                    <td className="px-4 py-3 text-slate-700">{t.dueAt ? new Date(t.dueAt).toLocaleDateString() : '-'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-2">
                         <Button variant="outline" size="sm" onClick={() => openEdit(t)}>
@@ -445,7 +445,7 @@ export function WorkflowPage() {
               Cancel
             </Button>
             <Button type="submit" disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? 'Saving…' : 'Save'}
+              {saveMutation.isPending ? 'Saving...' : 'Save'}
             </Button>
           </div>
         </form>
@@ -455,7 +455,7 @@ export function WorkflowPage() {
         open={!!confirmDeleteId}
         title="Delete task?"
         message="This will permanently delete the task."
-        confirmLabel={deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+        confirmLabel={deleteMutation.isPending ? 'Deleting...' : 'Delete'}
         danger
         onClose={() => setConfirmDeleteId('')}
         onConfirm={() => {

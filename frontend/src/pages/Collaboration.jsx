@@ -499,16 +499,16 @@ export function CollaborationPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <div className="text-sm font-semibold text-slate-900">
-                          {a.scope} · {a.targetType}
+                          {a.scope} - {a.targetType}
                         </div>
                         <div className="mt-1 text-xs text-slate-600">Target: {String(a.targetId).slice(0, 8)}</div>
                         {a.requestNote ? <div className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{a.requestNote}</div> : null}
                         <div className="mt-2 text-xs text-slate-500">
-                          Requested by {a.requestedByUsername || '-'} · {a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}
+                          Requested by {a.requestedByUsername || '-'} - {a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}
                         </div>
                         {a.decidedAt ? (
                           <div className="mt-1 text-xs text-slate-500">
-                            Decided by {a.decidedByUsername || '-'} · {new Date(a.decidedAt).toLocaleString()}
+                            Decided by {a.decidedByUsername || '-'} - {new Date(a.decidedAt).toLocaleString()}
                           </div>
                         ) : null}
                         {a.decisionComment ? (
@@ -618,7 +618,7 @@ export function CollaborationPage() {
                       <div className="truncate text-sm font-semibold text-slate-900">{m.title}</div>
                       <div className="mt-1 text-xs text-slate-600">
                         {m.scheduledAt ? new Date(m.scheduledAt).toLocaleString() : ''}
-                        {m.location ? ` · ${m.location}` : ''}
+                        {m.location ? ` - ${m.location}` : ''}
                       </div>
                       {m.agenda ? <div className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{m.agenda}</div> : null}
                       {m.minutes ? (
@@ -758,7 +758,7 @@ export function CollaborationPage() {
         <div className="space-y-3">
           {decision ? (
             <div className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
-              {decision.approval.scope} · {decision.approval.targetType} · {String(decision.approval.targetId).slice(0, 8)}
+              {decision.approval.scope} - {decision.approval.targetType} - {String(decision.approval.targetId).slice(0, 8)}
             </div>
           ) : null}
 
