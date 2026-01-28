@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { CheckCircle2, Circle, ArrowRight } from 'lucide-react'
 import { api } from '../api/http'
+import { useAuth } from '../auth/AuthContext'
 import { useProject } from '../projects/ProjectContext'
 import { Badge } from '../components/Badge'
 import { Button } from '../components/Button'
@@ -39,7 +40,9 @@ function StepRow({ done, title, description, actionLabel, onAction, disabled }) 
 
 export function DashboardPage() {
   const nav = useNavigate()
+  const { user } = useAuth()
   const { projectId } = useProject()
+  const isClient = user?.role === 'CLIENT'
 
   const summaryQuery = useQuery({
     queryKey: ['dashboard-summary'],
@@ -52,13 +55,13 @@ export function DashboardPage() {
   })
 
   const datasetsQuery = useQuery({
-    enabled: !!projectId,
+    enabled: !!projectId && !isClient,
     queryKey: ['datasets', projectId],
     queryFn: async () => (await api.get(`/api/projects/${projectId}/datasets`)).data,
   })
 
   const runsQuery = useQuery({
-    enabled: !!projectId,
+    enabled: !!projectId && !isClient,
     queryKey: ['subdivision-runs', projectId],
     queryFn: async () => (await api.get(`/api/projects/${projectId}/subdivisions`)).data,
   })
@@ -106,13 +109,23 @@ export function DashboardPage() {
 
       {summary ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard label="Clients" value={summary.clients} />
-          <StatCard label="Projects" value={summary.projects} />
-          <StatCard label="Datasets" value={summary.datasets} />
-          <StatCard label="Workflow Tasks" value={summary.tasks} />
-          <StatCard label="Subdivision Runs" value={summary.subdivisionRuns} />
-          <StatCard label="Compliance Checks" value={summary.complianceChecks} />
-          <StatCard label="Reports" value={summary.reports} />
+          {isClient ? (
+            <>
+              <StatCard label="My Projects" value={summary.projects} />
+              <StatCard label="Compliance Checks" value={summary.complianceChecks} />
+              <StatCard label="Reports" value={summary.reports} />
+            </>
+          ) : (
+            <>
+              <StatCard label="Clients" value={summary.clients} />
+              <StatCard label="Projects" value={summary.projects} />
+              <StatCard label="Datasets" value={summary.datasets} />
+              <StatCard label="Workflow Tasks" value={summary.tasks} />
+              <StatCard label="Subdivision Runs" value={summary.subdivisionRuns} />
+              <StatCard label="Compliance Checks" value={summary.complianceChecks} />
+              <StatCard label="Reports" value={summary.reports} />
+            </>
+          )}
         </div>
       ) : null}
 
@@ -140,7 +153,8 @@ export function DashboardPage() {
             </Button>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          {!isClient ? (
+            <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-slate-50 px-3 py-2">
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Datasets</div>
                 <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? datasets.length : '-'}</div>
@@ -158,59 +172,114 @@ export function DashboardPage() {
                 <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? reports.length : '-'}</div>
               </div>
             </div>
+          ) : (
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-slate-50 px-3 py-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compliance</div>
+                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? checks.length : '-'}</div>
+              </div>
+              <div className="rounded-xl bg-slate-50 px-3 py-2">
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reports</div>
+                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? reports.length : '-'}</div>
+              </div>
+            </div>
+          )}
 
           {projectId ? (
             <div className="mt-4 space-y-2 text-sm text-slate-600">
               <div className="flex items-center justify-between gap-2">
-                <span>Latest subdivision</span>
-                <span className="font-medium text-slate-900">{latestRun ? latestRun.status : '-'}</span>
-              </div>
-              <div className="flex items-center justify-between gap-2">
                 <span>Latest compliance</span>
                 <span className="font-medium text-slate-900">{latestCheck ? latestCheck.status : '-'}</span>
               </div>
+              {!isClient ? (
+                <div className="flex items-center justify-between gap-2">
+                  <span>Latest subdivision</span>
+                  <span className="font-medium text-slate-900">{latestRun ? latestRun.status : '-'}</span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <span>Reports available</span>
+                  <span className="font-medium text-slate-900">{reports.length}</span>
+                </div>
+              )}
             </div>
           ) : null}
         </Card>
 
         <Card className="p-5 lg:col-span-2">
-          <div className="text-sm font-semibold text-slate-900">Workflow checklist</div>
-          <div className="mt-1 text-sm text-slate-600">Follow these steps to run an end-to-end land subdivision workflow.</div>
+          {isClient ? (
+            <>
+              <div className="text-sm font-semibold text-slate-900">Client portal</div>
+              <div className="mt-1 text-sm text-slate-600">View project status, communicate with the team, and download reports.</div>
 
-          <div className="mt-4 space-y-3">
-            <StepRow
-              done={hasDataset}
-              title="Upload cadastral dataset"
-              description="Upload a boundary GeoJSON in Map Workspace."
-              actionLabel="Open workspace"
-              onAction={() => nav('/workspace')}
-              disabled={!projectId}
-            />
-            <StepRow
-              done={hasRun}
-              title="Run AI subdivision"
-              description="Generate an automated parcel subdivision proposal."
-              actionLabel="Run subdivision"
-              onAction={() => nav('/subdivision')}
-              disabled={!projectId || !hasDataset}
-            />
-            <StepRow
-              done={hasCompliance}
-              title="Run compliance checks"
-              description="Validate the output against project-level rules."
-              actionLabel="Check compliance"
-              onAction={() => nav('/compliance')}
-              disabled={!projectId || !hasRun}
-            />
-            <StepRow
-              done={hasReport}
-              title="Generate PDF report"
-              description="Create professional reports for the project deliverables."
-              actionLabel="Generate report"
-              onAction={() => nav('/reports')}
-              disabled={!projectId}
-            />
-          </div>
+              <div className="mt-4 space-y-3">
+                <StepRow
+                  done={!!projectId}
+                  title="Open project dashboard"
+                  description="View documents, invoices, and project details."
+                  actionLabel="Open"
+                  onAction={() => nav('/project')}
+                  disabled={!projectId}
+                />
+                <StepRow
+                  done={false}
+                  title="Collaboration portal"
+                  description="Messages, approvals, meeting schedule, and notifications."
+                  actionLabel="Open"
+                  onAction={() => nav('/collaboration')}
+                  disabled={false}
+                />
+                <StepRow
+                  done={hasReport}
+                  title="View reports"
+                  description="Open and download shared PDF reports."
+                  actionLabel="Open"
+                  onAction={() => nav('/reports')}
+                  disabled={!projectId}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm font-semibold text-slate-900">Workflow checklist</div>
+              <div className="mt-1 text-sm text-slate-600">Follow these steps to run an end-to-end land subdivision workflow.</div>
+
+              <div className="mt-4 space-y-3">
+                <StepRow
+                  done={hasDataset}
+                  title="Upload cadastral dataset"
+                  description="Upload a boundary GeoJSON in Map Workspace."
+                  actionLabel="Open workspace"
+                  onAction={() => nav('/workspace')}
+                  disabled={!projectId}
+                />
+                <StepRow
+                  done={hasRun}
+                  title="Run AI subdivision"
+                  description="Generate an automated parcel subdivision proposal."
+                  actionLabel="Run subdivision"
+                  onAction={() => nav('/subdivision')}
+                  disabled={!projectId || !hasDataset}
+                />
+                <StepRow
+                  done={hasCompliance}
+                  title="Run compliance checks"
+                  description="Validate the output against project-level rules."
+                  actionLabel="Check compliance"
+                  onAction={() => nav('/compliance')}
+                  disabled={!projectId || !hasRun}
+                />
+                <StepRow
+                  done={hasReport}
+                  title="Generate PDF report"
+                  description="Create professional reports for the project deliverables."
+                  actionLabel="Generate report"
+                  onAction={() => nav('/reports')}
+                  disabled={!projectId}
+                />
+              </div>
+            </>
+          )}
 
           {!projectId ? (
             <div className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">

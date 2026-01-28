@@ -4,6 +4,7 @@ import { AuthProvider } from './auth/AuthContext'
 import { ProjectProvider } from './projects/ProjectContext'
 import { RequireAuth } from './routes/RequireAuth'
 import { RequireAdmin } from './routes/RequireAdmin'
+import { RequireStaff } from './routes/RequireStaff'
 import { AppShell } from './components/AppShell'
 import { ToastProvider } from './components/ToastProvider'
 import { LoginPage } from './pages/Login'
@@ -52,14 +53,6 @@ export default function App() {
                     }
                   />
                   <Route
-                    path="/clients"
-                    element={
-                      <AuthedShell>
-                        <ClientsPage />
-                      </AuthedShell>
-                    }
-                  />
-                  <Route
                     path="/projects"
                     element={
                       <AuthedShell>
@@ -76,50 +69,10 @@ export default function App() {
                     }
                   />
                   <Route
-                    path="/workflow"
-                    element={
-                      <AuthedShell>
-                        <WorkflowPage />
-                      </AuthedShell>
-                    }
-                  />
-                  <Route
-                    path="/team"
-                    element={
-                      <AuthedShell>
-                        <ProjectTeamPage />
-                      </AuthedShell>
-                    }
-                  />
-                  <Route
                     path="/account"
                     element={
                       <AuthedShell>
                         <AccountPage />
-                      </AuthedShell>
-                    }
-                  />
-                  <Route
-                    path="/workspace"
-                    element={
-                      <AuthedShell>
-                        <MapWorkspacePage />
-                      </AuthedShell>
-                    }
-                  />
-                  <Route
-                    path="/subdivision"
-                    element={
-                      <AuthedShell>
-                        <SubdivisionPage />
-                      </AuthedShell>
-                    }
-                  />
-                  <Route
-                    path="/compliance"
-                    element={
-                      <AuthedShell>
-                        <CompliancePage />
                       </AuthedShell>
                     }
                   />
@@ -132,14 +85,6 @@ export default function App() {
                     }
                   />
                   <Route
-                    path="/field"
-                    element={
-                      <AuthedShell>
-                        <FieldPage />
-                      </AuthedShell>
-                    }
-                  />
-                  <Route
                     path="/collaboration"
                     element={
                       <AuthedShell>
@@ -147,6 +92,65 @@ export default function App() {
                       </AuthedShell>
                     }
                   />
+
+                  <Route element={<RequireStaff />}>
+                    <Route
+                      path="/clients"
+                      element={
+                        <AuthedShell>
+                          <ClientsPage />
+                        </AuthedShell>
+                      }
+                    />
+                    <Route
+                      path="/workflow"
+                      element={
+                        <AuthedShell>
+                          <WorkflowPage />
+                        </AuthedShell>
+                      }
+                    />
+                    <Route
+                      path="/team"
+                      element={
+                        <AuthedShell>
+                          <ProjectTeamPage />
+                        </AuthedShell>
+                      }
+                    />
+                    <Route
+                      path="/field"
+                      element={
+                        <AuthedShell>
+                          <FieldPage />
+                        </AuthedShell>
+                      }
+                    />
+                    <Route
+                      path="/workspace"
+                      element={
+                        <AuthedShell>
+                          <MapWorkspacePage />
+                        </AuthedShell>
+                      }
+                    />
+                    <Route
+                      path="/subdivision"
+                      element={
+                        <AuthedShell>
+                          <SubdivisionPage />
+                        </AuthedShell>
+                      }
+                    />
+                    <Route
+                      path="/compliance"
+                      element={
+                        <AuthedShell>
+                          <CompliancePage />
+                        </AuthedShell>
+                      }
+                    />
+                  </Route>
 
                   <Route element={<RequireAdmin />}>
                     <Route

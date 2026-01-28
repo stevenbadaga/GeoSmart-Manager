@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/http'
+import { useAuth } from '../auth/AuthContext'
 import { useProject } from '../projects/ProjectContext'
 import { Badge } from '../components/Badge'
 import { Button } from '../components/Button'
@@ -41,7 +42,9 @@ async function openPdf(url) {
 export function ReportsPage() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { user } = useAuth()
   const { projectId } = useProject()
+  const isClient = user?.role === 'CLIENT'
   const [type, setType] = useState('SUBDIVISION_SUMMARY')
   const [runId, setRunId] = useState('')
 
@@ -52,7 +55,7 @@ export function ReportsPage() {
   })
 
   const runsQuery = useQuery({
-    enabled: !!projectId,
+    enabled: !!projectId && !isClient,
     queryKey: ['subdivision-runs', projectId],
     queryFn: async () => (await api.get(`/api/projects/${projectId}/subdivisions`)).data,
   })
@@ -89,7 +92,7 @@ export function ReportsPage() {
       <div className="mx-auto max-w-4xl p-6">
         <Card className="p-6">
           <div className="text-lg font-semibold text-slate-900">Select a project</div>
-          <p className="mt-2 text-sm text-slate-600">Choose an Active Project to generate reports.</p>
+          <p className="mt-2 text-sm text-slate-600">Choose an Active Project to view reports.</p>
         </Card>
       </div>
     )
@@ -101,60 +104,71 @@ export function ReportsPage() {
     <div className="mx-auto max-w-6xl p-4 sm:p-6">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-900">Reports & Analytics</h1>
-        <p className="mt-1 text-sm text-slate-600">Generate PDF reports for subdivision and compliance outcomes.</p>
+        <p className="mt-1 text-sm text-slate-600">
+          {isClient ? 'View and download reports shared by the team.' : 'Generate PDF reports for subdivision and compliance outcomes.'}
+        </p>
       </div>
 
-      <Card className="p-5">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
-          <div>
-            <label className="text-sm font-medium text-slate-700">Report type</label>
-            <select
-              className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-            >
-              <option value="SUBDIVISION_SUMMARY">Subdivision summary</option>
-              <option value="COMPLIANCE_SUMMARY">Compliance summary</option>
-            </select>
+      {!isClient ? (
+        <Card className="p-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
+            <div>
+              <label className="text-sm font-medium text-slate-700">Report type</label>
+              <select
+                className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+              >
+                <option value="SUBDIVISION_SUMMARY">Subdivision summary</option>
+                <option value="COMPLIANCE_SUMMARY">Compliance summary</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-slate-700">Subdivision run (optional)</label>
+              <select
+                className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                value={selectedRunId}
+                onChange={(e) => setRunId(e.target.value)}
+                disabled={type !== 'SUBDIVISION_SUMMARY'}
+              >
+                <option value="">Latest run</option>
+                {runs.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.id.slice(0, 8)} - {r.status}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button
+                variant="outline"
+                disabled={generateMutation.isPending}
+                onClick={() => generateMutation.mutate({ openAfter: true })}
+              >
+                {generateMutation.isPending ? 'Generating...' : 'Generate & view'}
+              </Button>
+              <Button disabled={generateMutation.isPending} onClick={() => generateMutation.mutate({ openAfter: false })}>
+                {generateMutation.isPending ? 'Generating...' : 'Generate PDF'}
+              </Button>
+            </div>
           </div>
 
-          <div>
-            <label className="text-sm font-medium text-slate-700">Subdivision run (optional)</label>
-            <select
-              className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-              value={selectedRunId}
-              onChange={(e) => setRunId(e.target.value)}
-              disabled={type !== 'SUBDIVISION_SUMMARY'}
-            >
-              <option value="">Latest run</option>
-              {runs.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.id.slice(0, 8)} - {r.status}
-                </option>
-              ))}
-            </select>
+          {generateMutation.isError ? (
+            <div className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              {generateMutation.error?.response?.data?.message || 'Report generation failed.'}
+            </div>
+          ) : null}
+        </Card>
+      ) : (
+        <Card className="p-5">
+          <div className="text-sm font-semibold text-slate-900">Client report portal</div>
+          <div className="mt-1 text-sm text-slate-600">
+            Reports are generated by the project team and shared here for viewing and download.
           </div>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-            <Button
-              variant="outline"
-              disabled={generateMutation.isPending}
-              onClick={() => generateMutation.mutate({ openAfter: true })}
-            >
-              {generateMutation.isPending ? 'Generating...' : 'Generate & view'}
-            </Button>
-            <Button disabled={generateMutation.isPending} onClick={() => generateMutation.mutate({ openAfter: false })}>
-              {generateMutation.isPending ? 'Generating...' : 'Generate PDF'}
-            </Button>
-          </div>
-        </div>
-
-        {generateMutation.isError ? (
-          <div className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {generateMutation.error?.response?.data?.message || 'Report generation failed.'}
-          </div>
-        ) : null}
-      </Card>
+        </Card>
+      )}
 
       <Card className="mt-6 overflow-hidden">
         <div className="overflow-x-auto">
