@@ -7,8 +7,8 @@ export function AppShell({ children }) {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="h-full">
-      <div className="flex h-full">
+    <div className="min-h-full">
+      <div className="flex min-h-full">
         <div className="hidden w-72 flex-shrink-0 border-r border-slate-200 bg-white lg:block">
           <Sidebar />
         </div>
@@ -22,7 +22,7 @@ export function AppShell({ children }) {
       {open ? (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className={cn('absolute left-0 top-0 h-full w-80 bg-white shadow-xl')}>
+          <div className={cn('absolute left-0 top-0 h-full w-80 bg-white shadow-2xl')}>
             <Sidebar onNavigate={() => setOpen(false)} />
           </div>
         </div>
@@ -30,4 +30,3 @@ export function AppShell({ children }) {
     </div>
   )
 }
-

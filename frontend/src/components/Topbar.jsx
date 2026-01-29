@@ -46,7 +46,7 @@ export function Topbar({ onMenu }) {
   }, [projectId, projects, setSelectedProjectId])
 
   return (
-    <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
+    <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <button
         type="button"
         className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 lg:hidden"

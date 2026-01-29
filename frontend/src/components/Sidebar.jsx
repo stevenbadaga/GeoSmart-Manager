@@ -42,7 +42,7 @@ export function Sidebar({ onNavigate }) {
     <div className="flex h-full flex-col">
       <div className="px-4 py-4">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-indigo-600" />
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-sm" />
           <div className="leading-tight">
             <div className="text-sm font-semibold text-slate-900">GeoSmart-Manager</div>
             <div className="text-xs text-slate-500">Geospatial ERP</div>
@@ -50,8 +50,8 @@ export function Sidebar({ onNavigate }) {
         </div>
       </div>
 
-      <div className="flex-1 space-y-1 px-3">
-        <div onClick={onNavigate}>
+      <div className="min-h-0 flex-1 overflow-y-auto px-3">
+        <div className="space-y-1 pb-3" onClick={onNavigate}>
           <Item to="/" icon={LayoutDashboard}>
             Dashboard
           </Item>
