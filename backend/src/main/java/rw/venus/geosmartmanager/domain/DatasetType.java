@@ -1,9 +1,11 @@
 package rw.venus.geosmartmanager.domain;
 
 public enum DatasetType {
-    UPI,
     CADASTRAL,
+    UPI,
+    TOPOGRAPHIC,
+    BOUNDARY,
     MASTER_PLAN,
-    SURVEY,
-    OTHER
+    ADMIN_BOUNDARY,
+    ROAD_NETWORK
 }

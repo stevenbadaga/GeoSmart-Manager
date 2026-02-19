@@ -1,13 +1,15 @@
 package rw.venus.geosmartmanager.repo;
 
-import rw.venus.geosmartmanager.entity.SubdivisionRunEntity;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import rw.venus.geosmartmanager.entity.SubdivisionRunEntity;
 
-public interface SubdivisionRunRepository extends JpaRepository<SubdivisionRunEntity, UUID> {
-    List<SubdivisionRunEntity> findByProjectIdOrderByStartedAtDesc(UUID projectId);
+import java.util.List;
 
-    long countByProjectIdIn(Collection<UUID> projectIds);
+public interface SubdivisionRunRepository extends JpaRepository<SubdivisionRunEntity, Long> {
+    List<SubdivisionRunEntity> findByProjectId(Long projectId);
+    long countByProjectId(Long projectId);
+
+    @Query("select coalesce(sum(length(s.resultGeoJson)), 0) from SubdivisionRunEntity s")
+    long sumResultGeoJsonSize();
 }

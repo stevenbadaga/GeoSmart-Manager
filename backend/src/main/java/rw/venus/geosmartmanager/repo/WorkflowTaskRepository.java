@@ -1,13 +1,14 @@
 package rw.venus.geosmartmanager.repo;
 
-import rw.venus.geosmartmanager.entity.WorkflowTaskEntity;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import rw.venus.geosmartmanager.domain.WorkflowStatus;
+import rw.venus.geosmartmanager.entity.WorkflowTaskEntity;
 
-public interface WorkflowTaskRepository extends JpaRepository<WorkflowTaskEntity, UUID> {
-    List<WorkflowTaskEntity> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
+import java.util.List;
 
-    long countByProjectIdIn(Collection<UUID> projectIds);
+public interface WorkflowTaskRepository extends JpaRepository<WorkflowTaskEntity, Long> {
+    List<WorkflowTaskEntity> findByProjectId(Long projectId);
+    long countByProjectIdAndStatusNot(Long projectId, WorkflowStatus status);
+
+    long countByStatusNot(WorkflowStatus status);
 }

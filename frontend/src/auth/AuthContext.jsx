@@ -1,69 +1,63 @@
-/* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useMemo, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { api } from '../api/http'
 
 const AuthContext = createContext(null)
 
-function loadUser() {
-  try {
-    const raw = localStorage.getItem('geosmart.user')
-    return raw ? JSON.parse(raw) : null
-  } catch {
-    return null
-  }
-}
-
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem('geosmart.token'))
-  const [user, setUser] = useState(() => loadUser())
-  const [sessionId, setSessionId] = useState(() => localStorage.getItem('geosmart.sessionId'))
-  const [busy, setBusy] = useState(false)
+  const [token, setToken] = useState(localStorage.getItem('token'))
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(false)
 
-  const value = useMemo(() => {
-    function updateUser(nextUser) {
-      localStorage.setItem('geosmart.user', JSON.stringify(nextUser))
-      setUser(nextUser)
-    }
-
-    async function login(username, password, mfaCode) {
-      setBusy(true)
-      try {
-        const res = await api.post('/api/auth/login', { username, password, mfaCode: mfaCode || null })
-        localStorage.setItem('geosmart.token', res.data.token)
-        updateUser(res.data.user)
-        localStorage.setItem('geosmart.sessionId', res.data.sessionId)
-        setToken(res.data.token)
-        setSessionId(res.data.sessionId)
-      } finally {
-        setBusy(false)
-      }
-    }
-
-    async function register(payload) {
-      setBusy(true)
-      try {
-        const res = await api.post('/api/auth/register', payload)
-        localStorage.setItem('geosmart.token', res.data.token)
-        updateUser(res.data.user)
-        localStorage.setItem('geosmart.sessionId', res.data.sessionId)
-        setToken(res.data.token)
-        setSessionId(res.data.sessionId)
-      } finally {
-        setBusy(false)
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem('geosmart.token')
-      localStorage.removeItem('geosmart.user')
-      localStorage.removeItem('geosmart.sessionId')
-      setToken(null)
+  useEffect(() => {
+    if (!token) {
       setUser(null)
-      setSessionId(null)
+      return
     }
 
-    return { token, user, sessionId, busy, login, register, updateUser, logout }
-  }, [token, user, sessionId, busy])
+    let active = true
+    setLoading(true)
+    api.get('/api/users/me')
+      .then((data) => {
+        if (active) setUser(data)
+      })
+      .catch(() => {
+        if (active) {
+          setToken(null)
+          localStorage.removeItem('token')
+          setUser(null)
+        }
+      })
+      .finally(() => active && setLoading(false))
+
+    return () => {
+      active = false
+    }
+  }, [token])
+
+  const login = async (credentials) => {
+    const data = await api.post('/api/auth/login', credentials)
+    localStorage.setItem('token', data.token)
+    setToken(data.token)
+    setUser(data.user)
+  }
+
+  const register = async (payload) => {
+    const data = await api.post('/api/auth/register', payload)
+    localStorage.setItem('token', data.token)
+    setToken(data.token)
+    setUser(data.user)
+  }
+
+  const logout = () => {
+    if (token) {
+      api.post('/api/users/me/offline').catch(() => {})
+    }
+    localStorage.removeItem('token')
+    setToken(null)
+    setUser(null)
+  }
+
+  const value = useMemo(() => ({ token, user, loading, login, register, logout }), [token, user, loading])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

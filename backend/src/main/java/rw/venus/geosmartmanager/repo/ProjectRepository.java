@@ -1,58 +1,18 @@
 package rw.venus.geosmartmanager.repo;
 
-import rw.venus.geosmartmanager.entity.ProjectEntity;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import rw.venus.geosmartmanager.domain.ProjectStatus;
+import rw.venus.geosmartmanager.entity.ProjectEntity;
 
-public interface ProjectRepository extends JpaRepository<ProjectEntity, UUID> {
-    List<ProjectEntity> findAllByOrderByCreatedAtDesc();
+import java.util.List;
+import java.time.Instant;
 
-    List<ProjectEntity> findByClientIdOrderByCreatedAtDesc(UUID clientId);
+public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
+    List<ProjectEntity> findByClientId(Long clientId);
 
-    boolean existsByClientId(UUID clientId);
+    long countByStatus(ProjectStatus status);
 
-    List<ProjectEntity> findByClient_User_IdOrderByCreatedAtDesc(UUID userId);
+    long countByStatusNot(ProjectStatus status);
 
-    boolean existsByIdAndClient_User_Id(UUID id, UUID userId);
-
-    @Query("""
-            select p
-            from ProjectEntity p
-            join ProjectMemberEntity m on m.project = p
-            where m.user.id = :userId
-            order by p.createdAt desc
-            """)
-    List<ProjectEntity> findAccessibleProjects(@Param("userId") UUID userId);
-
-    @Query("""
-            select p
-            from ProjectEntity p
-            join ProjectMemberEntity m on m.project = p
-            where m.user.id = :userId
-              and p.client.id = :clientId
-            order by p.createdAt desc
-            """)
-    List<ProjectEntity> findAccessibleProjectsByClient(@Param("userId") UUID userId, @Param("clientId") UUID clientId);
-
-    @Query("""
-            select p.id
-            from ProjectEntity p
-            join ProjectMemberEntity m on m.project = p
-            where m.user.id = :userId
-            """)
-    List<UUID> findAccessibleProjectIds(@Param("userId") UUID userId);
-
-    @Query("""
-            select count(distinct p.client.id)
-            from ProjectEntity p
-            join ProjectMemberEntity m on m.project = p
-            where m.user.id = :userId
-            """)
-    long countAccessibleClients(@Param("userId") UUID userId);
-
-    long countByIdIn(Collection<UUID> ids);
+    long countByCreatedAtAfter(Instant after);
 }

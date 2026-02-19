@@ -1,19 +1,13 @@
 package rw.venus.geosmartmanager.api.dto;
 
-import java.time.Instant;
-import java.util.UUID;
-
-public final class AuditDtos {
-    private AuditDtos() {}
-
-    public record AuditLogDto(
-            UUID id,
-            String actorUsername,
+public class AuditDtos {
+    public record AuditLogResponse(
+            Long id,
+            String actorEmail,
             String action,
             String entityType,
-            String entityId,
-            String detailsJson,
-            Instant createdAt
+            Long entityId,
+            String details,
+            String createdAt
     ) {}
 }
-

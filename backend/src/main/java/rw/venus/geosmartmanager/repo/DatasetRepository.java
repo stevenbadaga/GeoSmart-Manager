@@ -1,19 +1,18 @@
 package rw.venus.geosmartmanager.repo;
 
-import rw.venus.geosmartmanager.entity.DatasetEntity;
-import rw.venus.geosmartmanager.domain.DatasetType;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import rw.venus.geosmartmanager.domain.DatasetType;
+import rw.venus.geosmartmanager.entity.DatasetEntity;
 
-public interface DatasetRepository extends JpaRepository<DatasetEntity, UUID> {
-    List<DatasetEntity> findByProjectIdOrderByUploadedAtDesc(UUID projectId);
+import java.util.List;
 
-    Optional<DatasetEntity> findFirstByProjectIdAndTypeOrderByUploadedAtDesc(UUID projectId, DatasetType type);
+public interface DatasetRepository extends JpaRepository<DatasetEntity, Long> {
+    List<DatasetEntity> findByProjectId(Long projectId);
+    long countByProjectId(Long projectId);
 
-    Optional<DatasetEntity> findTopByProjectIdAndNameAndTypeOrderByVersionDesc(UUID projectId, String name, DatasetType type);
+    List<DatasetEntity> findByProjectIdAndType(Long projectId, DatasetType type);
 
-    long countByProjectIdIn(Collection<UUID> projectIds);
+    @Query("select coalesce(sum(length(d.geoJson)), 0) from DatasetEntity d")
+    long sumGeoJsonSize();
 }

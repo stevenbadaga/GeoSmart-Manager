@@ -1,13 +1,18 @@
 package rw.venus.geosmartmanager.repo;
 
-import rw.venus.geosmartmanager.entity.ComplianceCheckEntity;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import rw.venus.geosmartmanager.domain.ComplianceStatus;
+import rw.venus.geosmartmanager.entity.ComplianceCheckEntity;
+import org.springframework.data.jpa.repository.Query;
 
-public interface ComplianceCheckRepository extends JpaRepository<ComplianceCheckEntity, UUID> {
-    List<ComplianceCheckEntity> findByProjectIdOrderByCheckedAtDesc(UUID projectId);
+import java.util.List;
 
-    long countByProjectIdIn(Collection<UUID> projectIds);
+public interface ComplianceCheckRepository extends JpaRepository<ComplianceCheckEntity, Long> {
+    List<ComplianceCheckEntity> findByProjectId(Long projectId);
+    long countByProjectId(Long projectId);
+
+    long countByStatus(ComplianceStatus status);
+
+    @Query("select coalesce(sum(length(c.findings)), 0) from ComplianceCheckEntity c")
+    long sumFindingsSize();
 }

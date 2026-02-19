@@ -1,31 +1,46 @@
-import axios from 'axios'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-
-export const api = axios.create({
-  baseURL: API_BASE_URL,
-})
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('geosmart.token')
-  if (token) {
-    config.headers = config.headers ?? {}
-    config.headers.Authorization = `Bearer ${token}`
+async function parseResponse(response) {
+  const text = await response.text()
+  if (!text) return null
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
   }
-  return config
-})
+}
 
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err?.response?.status === 401) {
-      localStorage.removeItem('geosmart.token')
-      localStorage.removeItem('geosmart.user')
-      localStorage.removeItem('geosmart.sessionId')
-      if (window.location.pathname !== '/login') {
-        window.location.assign('/login')
-      }
-    }
-    return Promise.reject(err)
-  },
-)
+export async function apiRequest(path, options = {}) {
+  const token = localStorage.getItem('token')
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {})
+  }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers
+  })
+
+  if (!response.ok) {
+    const data = await parseResponse(response)
+    const message = typeof data === 'string'
+      ? data
+      : data?.error || data?.message || (data ? Object.values(data).join(', ') : 'Request failed')
+    throw new Error(message)
+  }
+
+  return parseResponse(response)
+}
+
+export const api = {
+  get: (path) => apiRequest(path),
+  post: (path, body) => apiRequest(path, { method: 'POST', body: JSON.stringify(body) }),
+  put: (path, body) => apiRequest(path, { method: 'PUT', body: JSON.stringify(body) }),
+  patch: (path, body) => apiRequest(path, { method: 'PATCH', body: JSON.stringify(body) }),
+  del: (path) => apiRequest(path, { method: 'DELETE' })
+}

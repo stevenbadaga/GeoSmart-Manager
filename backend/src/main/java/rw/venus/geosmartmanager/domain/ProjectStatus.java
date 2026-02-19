@@ -1,8 +1,9 @@
 package rw.venus.geosmartmanager.domain;
 
 public enum ProjectStatus {
-    DRAFT,
+    PLANNING,
     IN_PROGRESS,
+    REVIEW,
+    APPROVED,
     COMPLETED
 }
-

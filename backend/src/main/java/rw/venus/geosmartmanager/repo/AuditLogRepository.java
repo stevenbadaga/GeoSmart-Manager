@@ -1,12 +1,16 @@
 package rw.venus.geosmartmanager.repo;
 
-import rw.venus.geosmartmanager.entity.AuditLogEntity;
-import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import rw.venus.geosmartmanager.entity.AuditLogEntity;
 
-public interface AuditLogRepository extends JpaRepository<AuditLogEntity, UUID> {
-    Page<AuditLogEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
-    Page<AuditLogEntity> findByActorIdOrderByCreatedAtDesc(UUID actorId, Pageable pageable);
+import java.util.List;
+import java.util.Optional;
+
+public interface AuditLogRepository extends JpaRepository<AuditLogEntity, Long> {
+    Optional<AuditLogEntity> findTopByOrderByIdDesc();
+    List<AuditLogEntity> findAllByOrderByIdAsc();
+
+    @Query("select coalesce(sum(length(a.details)), 0) from AuditLogEntity a")
+    long sumDetailsSize();
 }

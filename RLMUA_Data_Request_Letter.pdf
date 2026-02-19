@@ -1,0 +1,166 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+5 0 obj
+<< /Length 3640 >>
+BT
+/F1 12 Tf
+72 720 Td
+(Irankunda Badaga Steven) Tj
+0 -14 Td
+(Student ID: 25961) Tj
+0 -14 Td
+(Faculty of Computing and Information Sciences) Tj
+0 -14 Td
+(Adventist University of Central Africa \\(AUCA\\)) Tj
+0 -14 Td
+(Kigali, Rwanda) Tj
+0 -14 Td
+(Email: badagaclass@gmail.com) Tj
+0 -14 Td
+(Phone: +250788883986) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Date: [Day Month Year]) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(To:) Tj
+0 -14 Td
+(Director General / Data Services Office) Tj
+0 -14 Td
+(Rwanda Land Management and Use Authority \\(RLMUA\\)) Tj
+0 -14 Td
+(Kigali, Rwanda) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Subject: Request for Official Geospatial Datasets for Academic Research \\(GeoSmart-Manager Project\\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Dear Sir/Madam,) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(I am a final-year student at Adventist University of Central Africa \\(AUCA\\),) Tj
+0 -14 Td
+(Faculty of Computing and Information Sciences. I am conducting an academic) Tj
+0 -14 Td
+(research project titled:) Tj
+0 -14 Td
+("Design and Implementation of GeoSmart-Manager: An AI-Integrated Geospatial) Tj
+0 -14 Td
+(ERP System for Automated Land Subdivision and Survey Operations.") Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(In order to support accurate, Rwanda-compliant geospatial analysis and) Tj
+0 -14 Td
+(validation, I kindly request access to official datasets for academic use.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Requested datasets \\(latest official version\\):) Tj
+0 -14 Td
+(- Administrative boundaries: Provinces, Districts, Sectors, Cells, Villages) Tj
+0 -14 Td
+(- Kigali City boundary \\(if available separately\\)) Tj
+0 -14 Td
+(- Road network \\(national, district, feeder, local\\) with road class attribute) Tj
+0 -14 Td
+(- National Land Use Master Plan / zoning layers \\(if available\\)) Tj
+0 -14 Td
+(- Urban growth boundary, protected areas, or planning constraint layers) Tj
+0 -14 Td
+(- Cadastral parcels or UPI dataset \\(if permitted for research\\)) Tj
+0 -14 Td
+(- RLMUA subdivision standards and compliance checklist \\(min parcel size,) Tj
+0 -14 Td
+(  road widths, setbacks, and any approval criteria\\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Preferred format:) Tj
+0 -14 Td
+(- GeoJSON \\(preferred for direct integration\\), or) Tj
+0 -14 Td
+(- Shapefile \\(.shp, .shx, .dbf, .prj\\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Requested attributes \\(if available\\):) Tj
+0 -14 Td
+(- name) Tj
+0 -14 Td
+(- code) Tj
+0 -14 Td
+(- type \\(province/district/sector/cell/village\\)) Tj
+0 -14 Td
+(- road_class or highway \\(for road layers\\)) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Metadata requested:) Tj
+0 -14 Td
+(- Coordinate reference system \\(CRS\\)) Tj
+0 -14 Td
+(- Date of last update) Tj
+0 -14 Td
+(- Data source and scale) Tj
+0 -14 Td
+(- License or citation requirements) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(All datasets will be used strictly for academic and research purposes under) Tj
+0 -14 Td
+(AUCA supervision. I am willing to comply with any data use policies,) Tj
+0 -14 Td
+(confidentiality requirements, or citation guidelines provided by RLMUA.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(If additional authorization forms or a university endorsement letter are) Tj
+0 -14 Td
+(required, please let me know and I will provide them promptly.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Thank you for your consideration. Please inform me of the procedure for) Tj
+0 -14 Td
+(access and any required forms.) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Sincerely,) Tj
+0 -14 Td
+() Tj
+0 -14 Td
+(Irankunda Badaga Steven) Tj
+0 -14 Td
+(Final-Year Student, AUCA) Tj
+0 -14 Td
+(badagaclass@gmail.com) Tj
+0 -14 Td
+(+250788883986) Tj
+0 -14 Td
+ET
+xref 6
+0000000000 65535 f 
+0000000010 00000 n 
+0000000054 00000 n 
+0000000106 00000 n 
+0000000227 00000 n 
+0000000292 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+3963
+%%EOF

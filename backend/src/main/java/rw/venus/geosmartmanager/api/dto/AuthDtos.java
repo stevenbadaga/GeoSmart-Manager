@@ -1,83 +1,37 @@
 package rw.venus.geosmartmanager.api.dto;
 
-import rw.venus.geosmartmanager.domain.UserRole;
-import java.time.Instant;
-import java.util.UUID;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import rw.venus.geosmartmanager.domain.Role;
+import rw.venus.geosmartmanager.domain.UserStatus;
 
-public final class AuthDtos {
-    private AuthDtos() {}
+import java.time.Instant;
+
+public class AuthDtos {
+    public record RegisterRequest(
+            @NotBlank String fullName,
+            @Email @NotBlank String email,
+            @NotBlank String password,
+            Role role
+    ) {}
 
     public record LoginRequest(
-            @NotBlank String username,
-            @NotBlank String password,
-            String mfaCode
+            @Email @NotBlank String email,
+            @NotBlank String password
     ) {}
 
-    public record UserDto(
-            UUID id,
-            String username,
+    public record UserResponse(
+            Long id,
+            String fullName,
             String email,
-            UserRole role,
-            String fullName,
-            String phone,
-            String licenseNumber,
-            String certification,
-            String specialization,
-            boolean mfaEnabled,
-            boolean enabled,
-            Instant createdAt
+            Role role,
+            UserStatus status,
+            String professionalLicense,
+            Instant lastActiveAt
     ) {}
 
-    public record RegisterRequest(
-            @NotBlank String username,
-            @NotBlank String email,
-            @NotBlank String password,
-            @NotNull UserRole role,
-            String fullName,
-            String phone,
-            String licenseNumber,
-            String certification,
-            String specialization,
-            String clientName,
-            String clientAddress
-    ) {}
-
-    public record LoginResponse(
+    public record AuthResponse(
             String token,
-            UUID sessionId,
-            UserDto user
-    ) {}
-
-    public record SessionDto(
-            UUID id,
-            Instant createdAt,
-            Instant lastSeenAt,
-            String userAgent,
-            String ipAddress,
-            Instant revokedAt
-    ) {}
-
-    public record MfaSetupResponse(
-            String secret,
-            String otpauthUrl
-    ) {}
-
-    public record MfaVerifyRequest(
-            @NotBlank String code
-    ) {}
-
-    public record UpdateProfileRequest(
-            String fullName,
-            String phone,
-            String licenseNumber,
-            String certification,
-            String specialization
-    ) {}
-
-    public record BootstrapStatusResponse(
-            boolean ready,
-            String adminUsername
+            UserResponse user
     ) {}
 }

@@ -1,46 +1,30 @@
 package rw.venus.geosmartmanager.api.dto;
 
-import rw.venus.geosmartmanager.domain.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.time.Instant;
-import java.util.UUID;
+import rw.venus.geosmartmanager.domain.WorkflowStatus;
 
-public final class WorkflowDtos {
-    private WorkflowDtos() {}
+import java.time.LocalDate;
 
-    public record TaskDto(
-            UUID id,
-            UUID projectId,
+public class WorkflowDtos {
+    public record WorkflowTaskRequest(
+            @NotBlank String title,
+            String description,
+            String assigneeEmail,
+            LocalDate dueDate
+    ) {}
+
+    public record UpdateStatusRequest(
+            @NotNull WorkflowStatus status
+    ) {}
+
+    public record WorkflowTaskResponse(
+            Long id,
+            Long projectId,
             String title,
             String description,
-            TaskStatus status,
-            UUID assignedToUserId,
-            String assignedToUsername,
-            Instant dueAt,
-            Instant createdAt,
-            Instant updatedAt
-    ) {}
-
-    public record CreateTaskRequest(
-            @NotBlank String title,
-            String description,
-            TaskStatus status,
-            UUID assignedToUserId,
-            Instant dueAt
-    ) {}
-
-    public record UpdateTaskRequest(
-            @NotBlank String title,
-            String description,
-            @NotNull TaskStatus status,
-            UUID assignedToUserId,
-            Instant dueAt
-    ) {}
-
-    public record AssignableUserDto(
-            @NotNull UUID id,
-            @NotBlank String username,
-            String role
+            WorkflowStatus status,
+            String assigneeEmail,
+            LocalDate dueDate
     ) {}
 }

@@ -1,81 +1,69 @@
 package rw.venus.geosmartmanager.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import rw.venus.geosmartmanager.api.dto.AuditDtos;
-import rw.venus.geosmartmanager.entity.AuditLogEntity;
-import rw.venus.geosmartmanager.entity.UserEntity;
-import rw.venus.geosmartmanager.repo.AuditLogRepository;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import rw.venus.geosmartmanager.entity.AuditLogEntity;
+import rw.venus.geosmartmanager.repo.AuditLogRepository;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AuditService {
     private final AuditLogRepository auditLogRepository;
-    private final ObjectMapper objectMapper;
 
-    public AuditService(AuditLogRepository auditLogRepository, ObjectMapper objectMapper) {
+    public AuditService(AuditLogRepository auditLogRepository) {
         this.auditLogRepository = auditLogRepository;
-        this.objectMapper = objectMapper;
     }
 
-    public void log(UserEntity actor, String action, String entityType, Object entityId, Object details) {
-        AuditLogEntity log = new AuditLogEntity();
-        log.setActor(actor);
-        log.setAction(action);
-        log.setEntityType(entityType);
-        log.setEntityId(entityId == null ? null : String.valueOf(entityId));
-        log.setDetailsJson(serialize(details));
+    public void log(String actorEmail, String action, String entityType, Long entityId, String details) {
+        Optional<AuditLogEntity> lastLog = auditLogRepository.findTopByOrderByIdDesc();
+        String prevHash = lastLog.map(AuditLogEntity::getHash).orElse("");
+        AuditLogEntity log = AuditLogEntity.builder()
+                .actorEmail(actorEmail)
+                .action(action)
+                .entityType(entityType)
+                .entityId(entityId)
+                .details(details)
+                .prevHash(prevHash)
+                .hash(sha256(prevHash + "|" + actorEmail + "|" + action + "|" + entityType + "|" + entityId + "|" + details))
+                .createdAt(Instant.now())
+                .build();
         auditLogRepository.save(log);
     }
 
-    public void log(UserEntity actor, String action, String entityType, Object entityId) {
-        log(actor, action, entityType, entityId, Map.of());
+    public List<AuditLogEntity> list() {
+        return auditLogRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
-    public List<AuditDtos.AuditLogDto> list(int page, int size) {
-        return auditLogRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size))
-                .stream()
-                .map(a -> new AuditDtos.AuditLogDto(
-                        a.getId(),
-                        a.getActor() == null ? null : a.getActor().getUsername(),
-                        a.getAction(),
-                        a.getEntityType(),
-                        a.getEntityId(),
-                        a.getDetailsJson(),
-                        a.getCreatedAt()
-                ))
-                .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<AuditDtos.AuditLogDto> listForActor(UUID actorId, int page, int size) {
-        return auditLogRepository.findByActorIdOrderByCreatedAtDesc(actorId, PageRequest.of(page, size))
-                .stream()
-                .map(a -> new AuditDtos.AuditLogDto(
-                        a.getId(),
-                        a.getActor() == null ? null : a.getActor().getUsername(),
-                        a.getAction(),
-                        a.getEntityType(),
-                        a.getEntityId(),
-                        a.getDetailsJson(),
-                        a.getCreatedAt()
-                ))
-                .toList();
-    }
-
-    private String serialize(Object details) {
-        if (details == null) {
-            return null;
+    public List<Long> verifyChain() {
+        List<AuditLogEntity> logs = auditLogRepository.findAllByOrderByIdAsc();
+        String prevHash = "";
+        java.util.List<Long> broken = new java.util.ArrayList<>();
+        for (AuditLogEntity log : logs) {
+            String expected = sha256(prevHash + "|" + log.getActorEmail() + "|" + log.getAction() + "|" +
+                    log.getEntityType() + "|" + log.getEntityId() + "|" + log.getDetails());
+            if (!expected.equals(log.getHash()) || (log.getPrevHash() != null && !log.getPrevHash().equals(prevHash))) {
+                broken.add(log.getId());
+            }
+            prevHash = log.getHash() == null ? "" : log.getHash();
         }
+        return broken;
+    }
+
+    private String sha256(String input) {
         try {
-            return objectMapper.writeValueAsString(details);
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
         } catch (Exception ex) {
-            return null;
+            return "";
         }
     }
 }

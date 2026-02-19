@@ -1,8 +1,8 @@
+version: "3.9"
 services:
-  db:
-    image: postgis/postgis:16-3.4
-    container_name: geosmart-db
-    restart: unless-stopped
+  postgres:
+    image: postgres:15
+    container_name: geosmart-postgres
     environment:
       POSTGRES_DB: geosmart
       POSTGRES_USER: geosmart
@@ -10,8 +10,6 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - geosmart_pgdata:/var/lib/postgresql/data
-
+      - geosmart_data:/var/lib/postgresql/data
 volumes:
-  geosmart_pgdata:
-
+  geosmart_data:

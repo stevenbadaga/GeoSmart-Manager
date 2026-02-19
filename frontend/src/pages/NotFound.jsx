@@ -1,18 +1,14 @@
+import React from 'react'
 import { Link } from 'react-router-dom'
-import { Card } from '../components/Card'
-import { Button } from '../components/Button'
+import Card from '../components/Card'
 
-export function NotFoundPage() {
+export default function NotFound() {
   return (
-    <div className="mx-auto max-w-3xl p-6">
-      <Card className="p-6">
-        <div className="text-lg font-semibold text-slate-900">Page not found</div>
-        <p className="mt-2 text-sm text-slate-600">The page you're looking for doesn't exist.</p>
-        <div className="mt-4">
-          <Link to="/">
-            <Button>Go to dashboard</Button>
-          </Link>
-        </div>
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <Card className="max-w-md w-full text-center">
+        <h2 className="text-2xl font-semibold">Page not found</h2>
+        <p className="text-sm text-ink/70 mt-2">The page you are looking for does not exist.</p>
+        <Link className="text-river font-medium mt-4 inline-block" to="/">Return to dashboard</Link>
       </Card>
     </div>
   )

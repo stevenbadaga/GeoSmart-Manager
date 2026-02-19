@@ -1,45 +1,70 @@
 package rw.venus.geosmartmanager.api.controller;
 
-import rw.venus.geosmartmanager.api.dto.UserDtos;
-import rw.venus.geosmartmanager.service.CurrentUserService;
-import rw.venus.geosmartmanager.service.UserService;
-import jakarta.validation.Valid;
-import java.util.List;
-import java.util.UUID;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import rw.venus.geosmartmanager.api.dto.AuthDtos;
+import rw.venus.geosmartmanager.api.dto.UserDtos;
+import rw.venus.geosmartmanager.entity.UserEntity;
+import rw.venus.geosmartmanager.service.UserService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
-@PreAuthorize("hasRole('ADMIN')")
+@Validated
 public class UserController {
     private final UserService userService;
-    private final CurrentUserService currentUserService;
 
-    public UserController(UserService userService, CurrentUserService currentUserService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.currentUserService = currentUserService;
+    }
+
+    @GetMapping("/me")
+    public AuthDtos.UserResponse me() {
+        UserEntity user = userService.getCurrent();
+        return toResponse(user);
+    }
+
+    @PostMapping("/me/offline")
+    public AuthDtos.UserResponse markOffline() {
+        return toResponse(userService.markOffline());
     }
 
     @GetMapping
-    public List<UserDtos.UserDto> list() {
-        return userService.list();
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<AuthDtos.UserResponse> list() {
+        return userService.list().stream().map(this::toResponse).toList();
     }
 
     @PostMapping
-    public UserDtos.UserDto create(@Valid @RequestBody UserDtos.CreateUserRequest req) {
-        return userService.create(currentUserService.requireCurrentUser(), req);
+    @PreAuthorize("hasRole('ADMIN')")
+    public AuthDtos.UserResponse create(@Validated @RequestBody UserDtos.CreateUserRequest request) {
+        return toResponse(userService.create(request));
     }
 
-    @PatchMapping("/{id}/status")
-    public UserDtos.UserDto updateStatus(@PathVariable UUID id, @RequestBody UserDtos.UpdateUserStatusRequest req) {
-        return userService.updateStatus(currentUserService.requireCurrentUser(), id, req);
+    @PutMapping("/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public AuthDtos.UserResponse update(@PathVariable Long userId,
+                                        @Validated @RequestBody UserDtos.UpdateUserRequest request) {
+        return toResponse(userService.update(userId, request));
+    }
+
+    private AuthDtos.UserResponse toResponse(UserEntity user) {
+        return new AuthDtos.UserResponse(
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getStatus(),
+                user.getProfessionalLicense(),
+                user.getLastActiveAt()
+        );
     }
 }
-

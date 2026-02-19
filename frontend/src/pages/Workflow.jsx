@@ -1,467 +1,175 @@
-import { useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import React, { useEffect, useState } from 'react'
+import Card from '../components/Card'
+import Button from '../components/Button'
+import Input from '../components/Input'
 import { api } from '../api/http'
-import { useProject } from '../projects/ProjectContext'
-import { Badge } from '../components/Badge'
-import { Button } from '../components/Button'
-import { Card } from '../components/Card'
-import { Input } from '../components/Input'
-import { Modal } from '../components/Modal'
-import { ConfirmDialog } from '../components/ConfirmDialog'
-import { useToast } from '../components/ToastProvider'
-import { z } from 'zod'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 
-const schema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  status: z.enum(['TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED']).default('TODO'),
-  assignedToUserId: z.string().optional(),
-  dueDate: z.string().optional(),
-})
+const statusOptions = ['TODO', 'IN_PROGRESS', 'DONE']
 
-function tone(status) {
-  if (status === 'DONE') return 'green'
-  if (status === 'IN_PROGRESS') return 'amber'
-  if (status === 'BLOCKED') return 'red'
-  return 'slate'
-}
+export default function Workflow() {
+  const [projects, setProjects] = useState([])
+  const [selectedProject, setSelectedProject] = useState('')
+  const [tasks, setTasks] = useState([])
+  const [error, setError] = useState('')
+  const [form, setForm] = useState({ title: '', description: '', assigneeEmail: '', dueDate: '' })
 
-function toIsoOrNull(dateStr) {
-  if (!dateStr) return null
-  const d = new Date(dateStr)
-  if (Number.isNaN(d.getTime())) return null
-  return d.toISOString()
-}
+  const grouped = {
+    TODO: tasks.filter((task) => task.status === 'TODO'),
+    IN_PROGRESS: tasks.filter((task) => task.status === 'IN_PROGRESS'),
+    DONE: tasks.filter((task) => task.status === 'DONE')
+  }
+  const totalTasks = tasks.length
+  const progressRate = totalTasks ? Math.round((grouped.DONE.length / totalTasks) * 100) : 0
 
-function isoToDateInput(iso) {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
-}
+  useEffect(() => {
+    api.get('/api/projects').then(setProjects).catch((err) => setError(err.message))
+  }, [])
 
-export function WorkflowPage() {
-  const qc = useQueryClient()
-  const { projectId } = useProject()
-  const toast = useToast()
-  const [view, setView] = useState('board')
-  const [open, setOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
-  const [confirmDeleteId, setConfirmDeleteId] = useState('')
-  const [query, setQuery] = useState('')
-  const [updatingTaskId, setUpdatingTaskId] = useState('')
+  useEffect(() => {
+    if (!selectedProject) return
+    api.get(`/api/projects/${selectedProject}/tasks`)
+      .then(setTasks)
+      .catch((err) => setError(err.message))
+  }, [selectedProject])
 
-  const usersQuery = useQuery({
-    enabled: !!projectId,
-    queryKey: ['assignable-users', projectId],
-    queryFn: async () => (await api.get(`/api/projects/${projectId}/assignable-users`)).data,
-  })
-  const users = usersQuery.data || []
-
-  const tasksQuery = useQuery({
-    enabled: !!projectId,
-    queryKey: ['tasks', projectId],
-    queryFn: async () => (await api.get(`/api/projects/${projectId}/tasks`)).data,
-  })
-
-  const tasks = useMemo(() => tasksQuery.data ?? [], [tasksQuery.data])
-
-  const filteredTasks = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return tasks
-    return tasks.filter((t) => {
-      return (
-        (t.title || '').toLowerCase().includes(q) ||
-        (t.description || '').toLowerCase().includes(q) ||
-        (t.assignedToUsername || '').toLowerCase().includes(q) ||
-        String(t.status || '').toLowerCase().includes(q)
-      )
-    })
-  }, [query, tasks])
-
-  const tasksByStatus = useMemo(() => {
-    const cols = { TODO: [], IN_PROGRESS: [], BLOCKED: [], DONE: [] }
-    for (const t of filteredTasks) {
-      cols[t.status] = cols[t.status] ?? []
-      cols[t.status].push(t)
+  const onSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    if (!selectedProject) {
+      setError('Select a project')
+      return
     }
-    return cols
-  }, [filteredTasks])
-
-  const defaultValues = useMemo(
-    () =>
-      editing
-        ? {
-            title: editing.title || '',
-            description: editing.description || '',
-            status: editing.status || 'TODO',
-            assignedToUserId: editing.assignedToUserId || '',
-            dueDate: isoToDateInput(editing.dueAt),
-          }
-        : { title: '', description: '', status: 'TODO', assignedToUserId: '', dueDate: '' },
-    [editing],
-  )
-
-  const form = useForm({ resolver: zodResolver(schema), values: defaultValues })
-
-  const saveMutation = useMutation({
-    mutationFn: async (values) => {
-      const payload = {
-        title: values.title,
-        description: values.description || null,
-        status: values.status,
-        assignedToUserId: values.assignedToUserId ? values.assignedToUserId : null,
-        dueAt: toIsoOrNull(values.dueDate),
-      }
-
-      if (editing?.id) {
-        return (await api.put(`/api/tasks/${editing.id}`, payload)).data
-      }
-      return (await api.post(`/api/projects/${projectId}/tasks`, payload)).data
-    },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['tasks', projectId] })
-      setOpen(false)
-      toast.success('Saved', editing ? 'Task updated successfully.' : 'Task created successfully.')
-      setEditing(null)
-      form.reset({ title: '', description: '', status: 'TODO', assignedToUserId: '', dueDate: '' })
-    },
-    onError: (e) => toast.error('Save failed', e?.response?.data?.message || 'Unable to save task.'),
-  })
-
-  const quickUpdateMutation = useMutation({
-    mutationFn: async ({ task, patch }) => {
-      setUpdatingTaskId(task.id)
-      const payload = {
-        title: task.title,
-        description: task.description || null,
-        status: patch.status ?? task.status,
-        assignedToUserId: patch.assignedToUserId ?? (task.assignedToUserId ? task.assignedToUserId : null),
-        dueAt: patch.dueAt ?? (task.dueAt ? task.dueAt : null),
-      }
-      return (await api.put(`/api/tasks/${task.id}`, payload)).data
-    },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['tasks', projectId] })
-    },
-    onError: (e) => toast.error('Update failed', e?.response?.data?.message || 'Unable to update task.'),
-    onSettled: () => setUpdatingTaskId(''),
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: async (taskId) => {
-      await api.delete(`/api/tasks/${taskId}`)
-    },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ['tasks', projectId] })
-      toast.success('Deleted', 'Task deleted successfully.')
-    },
-    onError: (e) => toast.error('Delete failed', e?.response?.data?.message || 'Unable to delete task.'),
-  })
-
-  function openCreate(status = 'TODO') {
-    setEditing(null)
-    setOpen(true)
-    form.reset({ title: '', description: '', status, assignedToUserId: '', dueDate: '' })
+    try {
+      await api.post(`/api/projects/${selectedProject}/tasks`, {
+        ...form,
+        dueDate: form.dueDate || null
+      })
+      setForm({ title: '', description: '', assigneeEmail: '', dueDate: '' })
+      const updated = await api.get(`/api/projects/${selectedProject}/tasks`)
+      setTasks(updated)
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
-  function openEdit(t) {
-    setEditing(t)
-    setOpen(true)
-    form.reset({
-      title: t.title || '',
-      description: t.description || '',
-      status: t.status || 'TODO',
-      assignedToUserId: t.assignedToUserId || '',
-      dueDate: isoToDateInput(t.dueAt),
-    })
-  }
-
-  if (!projectId) {
-    return (
-      <div className="mx-auto max-w-4xl p-6">
-        <Card className="p-6">
-          <div className="text-lg font-semibold text-slate-900">Select a project</div>
-          <p className="mt-2 text-sm text-slate-600">Choose an Active Project to manage workflow tasks.</p>
-        </Card>
-      </div>
-    )
+  const updateStatus = async (taskId, status) => {
+    setError('')
+    try {
+      await api.patch(`/api/tasks/${taskId}/status`, { status })
+      const updated = await api.get(`/api/projects/${selectedProject}/tasks`)
+      setTasks(updated)
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-4 sm:p-6">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900">Workflow & MIS</h1>
-          <p className="mt-1 text-sm text-slate-600">Track operational tasks, assignment, and progress per project.</p>
-        </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-          <Input
-            className="sm:w-72"
-            placeholder="Search tasks..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <div className="flex gap-2">
-            <Button
-              variant={view === 'board' ? 'secondary' : 'outline'}
-              onClick={() => setView('board')}
-              type="button"
-            >
-              Board
-            </Button>
-            <Button
-              variant={view === 'table' ? 'secondary' : 'outline'}
-              onClick={() => setView('table')}
-              type="button"
-            >
-              Table
-            </Button>
-          </div>
-          <Button onClick={() => openCreate('TODO')}>New task</Button>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Workflow</p>
+        <h1 className="text-2xl font-semibold text-ink mt-2">Field Workflow Board</h1>
+        <p className="text-sm text-ink/60">Track surveying tasks from planning to delivery.</p>
       </div>
 
-      {view === 'board' ? (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
-          {['TODO', 'IN_PROGRESS', 'BLOCKED', 'DONE'].map((status) => {
-            const col = tasksByStatus[status] ?? []
-            return (
-              <Card key={status} className="p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-slate-900">{status.replace('_', ' ')}</div>
-                  <Badge tone={tone(status)}>{col.length}</Badge>
+      <div className="grid md:grid-cols-3 gap-4">
+        <Card className="p-4">
+          <p className="text-xs text-ink/50">Total Tasks</p>
+          <p className="text-2xl font-semibold text-ink mt-2">{totalTasks}</p>
+          <p className="text-xs text-ink/60 mt-2">All workflow items</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs text-ink/50">In Progress</p>
+          <p className="text-2xl font-semibold text-ink mt-2">{grouped.IN_PROGRESS.length}</p>
+          <p className="text-xs text-ink/60 mt-2">Active field operations</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs text-ink/50">Completion</p>
+          <p className="text-2xl font-semibold text-ink mt-2">{progressRate}%</p>
+          <p className="text-xs text-success mt-2">{grouped.DONE.length} tasks delivered</p>
+        </Card>
+      </div>
+
+      <div className="grid lg:grid-cols-[1fr_360px] gap-6">
+        <Card className="p-5">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-semibold">Task Board</h3>
+              <p className="text-sm text-ink/60">Choose a project to view its workflow.</p>
+            </div>
+            <label className="block space-y-2 w-full md:w-72">
+              <span className="text-sm font-medium">Project</span>
+              <select className="input" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
+                <option value="">Select project</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>{project.name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {error && <p className="text-sm text-danger mt-3">{error}</p>}
+          <div className="mt-4 grid md:grid-cols-3 gap-4">
+            {statusOptions.map((status) => (
+              <div key={status} className="rounded-xl border border-clay/60 bg-white/70 p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-semibold text-ink">
+                    {status === 'TODO' ? 'To Do' : status === 'IN_PROGRESS' ? 'In Progress' : 'Done'}
+                  </p>
+                  <span className="text-xs text-ink/50">{grouped[status].length}</span>
                 </div>
-
-                <div className="mt-3 space-y-2">
-                  {tasksQuery.isLoading ? <div className="text-sm text-slate-600">Loading...</div> : null}
-                  {tasksQuery.isError ? <div className="text-sm text-rose-600">Failed to load tasks.</div> : null}
-
-                  {!tasksQuery.isLoading && col.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
-                      No tasks.
-                    </div>
-                  ) : null}
-
-                  {col.map((t) => (
-                    <div key={t.id} className="rounded-xl border border-slate-200 bg-white p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-slate-900">{t.title}</div>
-                          <div className="mt-1 text-xs text-slate-500">
-                            {t.assignedToUsername ? `Assigned: ${t.assignedToUsername}` : 'Unassigned'}
-                            {' - '}
-                            {t.dueAt ? `Due: ${new Date(t.dueAt).toLocaleDateString()}` : 'No due date'}
-                          </div>
-                        </div>
-                        <Badge tone={tone(t.status)}>{t.status}</Badge>
-                      </div>
-
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="space-y-3">
+                  {grouped[status].map((task) => (
+                    <div key={task.id} className="border border-clay/60 rounded-lg p-3 bg-white">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-sm">{task.title}</p>
                         <select
-                          className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                          value={t.status}
-                          disabled={quickUpdateMutation.isPending && updatingTaskId === t.id}
-                          onChange={(e) => quickUpdateMutation.mutate({ task: t, patch: { status: e.target.value } })}
-                          aria-label="Change status"
+                          className="text-xs border border-clay rounded px-2 py-1"
+                          value={task.status}
+                          onChange={(e) => updateStatus(task.id, e.target.value)}
                         >
-                          <option value="TODO">TODO</option>
-                          <option value="IN_PROGRESS">IN_PROGRESS</option>
-                          <option value="BLOCKED">BLOCKED</option>
-                          <option value="DONE">DONE</option>
+                          {statusOptions.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
                         </select>
-                        <Button variant="outline" size="sm" onClick={() => openEdit(t)}>
-                          Edit
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => setConfirmDeleteId(t.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          Delete
-                        </Button>
+                      </div>
+                      <p className="text-xs text-ink/60 mt-2">{task.description || 'No description provided'}</p>
+                      <div className="flex items-center justify-between text-xs text-ink/50 mt-2">
+                        <span>{task.assigneeEmail || 'Unassigned'}</span>
+                        <span>{task.dueDate ? `Due ${task.dueDate}` : 'No due date'}</span>
                       </div>
                     </div>
                   ))}
-
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => openCreate(status)}>
-                    Add task
-                  </Button>
+                  {grouped[status].length === 0 && (
+                    <p className="text-xs text-ink/50">No tasks in this stage.</p>
+                  )}
                 </div>
-              </Card>
-            )
-          })}
-        </div>
-      ) : (
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                <tr>
-                  <th className="px-4 py-3">Title</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Assigned</th>
-                  <th className="px-4 py-3">Due</th>
-                  <th className="px-4 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {tasksQuery.isLoading ? (
-                  <tr>
-                    <td className="px-4 py-4 text-slate-600" colSpan={5}>
-                      Loading...
-                    </td>
-                  </tr>
-                ) : null}
-                {tasksQuery.isError ? (
-                  <tr>
-                    <td className="px-4 py-4 text-rose-600" colSpan={5}>
-                      Failed to load tasks.
-                    </td>
-                  </tr>
-                ) : null}
-                {!tasksQuery.isLoading && tasks.length === 0 ? (
-                  <tr>
-                    <td className="px-4 py-8 text-slate-600" colSpan={5}>
-                      No tasks yet. Create one to start tracking the workflow.
-                    </td>
-                  </tr>
-                ) : null}
-                {!tasksQuery.isLoading && tasks.length > 0 && filteredTasks.length === 0 ? (
-                  <tr>
-                    <td className="px-4 py-8 text-slate-600" colSpan={5}>
-                      No tasks found.
-                    </td>
-                  </tr>
-                ) : null}
-                {filteredTasks.map((t) => (
-                  <tr key={t.id} className="bg-white">
-                    <td className="px-4 py-3 font-medium text-slate-900">{t.title}</td>
-                    <td className="px-4 py-3">
-                      <Badge tone={tone(t.status)}>{t.status}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-slate-700">{t.assignedToUsername || '-'}</td>
-                    <td className="px-4 py-3 text-slate-700">{t.dueAt ? new Date(t.dueAt).toLocaleDateString() : '-'}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" onClick={() => openEdit(t)}>
-                          Edit
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => setConfirmDeleteId(t.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              </div>
+            ))}
           </div>
         </Card>
-      )}
 
-      <Modal
-        open={open}
-        title={editing ? 'Edit task' : 'New task'}
-        onClose={() => {
-          setOpen(false)
-          setEditing(null)
-        }}
-      >
-        <form className="space-y-4" onSubmit={form.handleSubmit((v) => saveMutation.mutate(v))}>
-          <div>
-            <label className="text-sm font-medium text-slate-700">Title</label>
-            <Input {...form.register('title')} />
-            {form.formState.errors.title ? (
-              <div className="mt-1 text-xs text-rose-600">{form.formState.errors.title.message}</div>
-            ) : null}
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-slate-700">Description</label>
-            <Input {...form.register('description')} />
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="text-sm font-medium text-slate-700">Status</label>
-              <select
-                className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                {...form.register('status')}
-              >
-                <option value="TODO">TODO</option>
-                <option value="IN_PROGRESS">IN_PROGRESS</option>
-                <option value="BLOCKED">BLOCKED</option>
-                <option value="DONE">DONE</option>
-              </select>
+        <div className="space-y-6">
+          <Card title="Create Task">
+            <form className="space-y-3" onSubmit={onSubmit}>
+              <Input label="Task title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+              <Input label="Assignee email" type="email" value={form.assigneeEmail} onChange={(e) => setForm({ ...form, assigneeEmail: e.target.value })} />
+              <Input label="Due date" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Description</span>
+                <textarea className="input min-h-[90px]" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </label>
+              {error && <p className="text-sm text-danger">{error}</p>}
+              <Button className="w-full">Add task</Button>
+            </form>
+          </Card>
+          <Card title="Workflow Tips">
+            <div className="space-y-2 text-sm text-ink/70">
+              <p>Assign tasks to specific surveyors to improve accountability.</p>
+              <p>Use due dates to prioritize field deployments and reporting.</p>
+              <p>Move tasks to Done when reports are uploaded and validated.</p>
             </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700">Due date</label>
-              <Input type="date" {...form.register('dueDate')} />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-slate-700">Assign to</label>
-            <select
-              className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-              {...form.register('assignedToUserId')}
-            >
-              <option value="">Unassigned</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.username} ({u.role})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {saveMutation.isError ? (
-            <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
-              {saveMutation.error?.response?.data?.message || 'Save failed.'}
-            </div>
-          ) : null}
-
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => {
-                setOpen(false)
-                setEditing(null)
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      <ConfirmDialog
-        open={!!confirmDeleteId}
-        title="Delete task?"
-        message="This will permanently delete the task."
-        confirmLabel={deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-        danger
-        onClose={() => setConfirmDeleteId('')}
-        onConfirm={() => {
-          deleteMutation.mutate(confirmDeleteId, { onSettled: () => setConfirmDeleteId('') })
-        }}
-      />
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

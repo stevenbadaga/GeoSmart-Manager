@@ -1,32 +1,18 @@
-import { useState } from 'react'
-import { Sidebar } from './Sidebar'
-import { Topbar } from './Topbar'
-import { cn } from '../lib/utils'
+import React from 'react'
+import { Outlet } from 'react-router-dom'
+import Sidebar from './Sidebar'
+import Topbar from './Topbar'
 
-export function AppShell({ children }) {
-  const [open, setOpen] = useState(false)
-
+export default function AppShell() {
   return (
-    <div className="min-h-full">
-      <div className="flex min-h-full">
-        <div className="hidden w-72 flex-shrink-0 border-r border-slate-200 bg-white lg:block">
-          <Sidebar />
-        </div>
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar onMenu={() => setOpen(true)} />
-          <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50">{children}</main>
-        </div>
+    <div className="min-h-screen flex flex-col md:flex-row bg-sand/60">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Topbar />
+        <main className="p-6 space-y-6">
+          <Outlet />
+        </main>
       </div>
-
-      {open ? (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className={cn('absolute left-0 top-0 h-full w-80 bg-white shadow-2xl')}>
-            <Sidebar onNavigate={() => setOpen(false)} />
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }

@@ -1,150 +1,132 @@
 package rw.venus.geosmartmanager.service;
 
-import rw.venus.geosmartmanager.api.dto.ProjectDtos;
-import rw.venus.geosmartmanager.domain.ProjectMemberRole;
-import rw.venus.geosmartmanager.domain.UserRole;
-import rw.venus.geosmartmanager.entity.ClientEntity;
-import rw.venus.geosmartmanager.entity.ProjectMemberEntity;
-import rw.venus.geosmartmanager.entity.ProjectEntity;
-import rw.venus.geosmartmanager.entity.UserEntity;
-import rw.venus.geosmartmanager.exception.ApiException;
-import rw.venus.geosmartmanager.repo.ClientRepository;
-import rw.venus.geosmartmanager.repo.ProjectMemberRepository;
-import rw.venus.geosmartmanager.repo.ProjectRepository;
-import java.util.List;
-import java.util.UUID;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import rw.venus.geosmartmanager.api.dto.ProjectDtos;
+import rw.venus.geosmartmanager.domain.WorkflowStatus;
+import rw.venus.geosmartmanager.entity.ClientEntity;
+import rw.venus.geosmartmanager.entity.ProjectEntity;
+import rw.venus.geosmartmanager.repo.ClientRepository;
+import rw.venus.geosmartmanager.repo.ComplianceCheckRepository;
+import rw.venus.geosmartmanager.repo.DatasetRepository;
+import rw.venus.geosmartmanager.repo.ProjectRepository;
+import rw.venus.geosmartmanager.repo.ReportRepository;
+import rw.venus.geosmartmanager.repo.SubdivisionRunRepository;
+import rw.venus.geosmartmanager.repo.WorkflowTaskRepository;
+
+import java.time.Instant;
+import java.util.List;
 
 @Service
 public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ClientRepository clientRepository;
-    private final ProjectMemberRepository projectMemberRepository;
-    private final ProjectAccessService projectAccessService;
+    private final DatasetRepository datasetRepository;
+    private final SubdivisionRunRepository subdivisionRunRepository;
+    private final ComplianceCheckRepository complianceCheckRepository;
+    private final ReportRepository reportRepository;
+    private final WorkflowTaskRepository workflowTaskRepository;
     private final AuditService auditService;
+    private final CurrentUserService currentUserService;
 
-    public ProjectService(
-            ProjectRepository projectRepository,
-            ClientRepository clientRepository,
-            ProjectMemberRepository projectMemberRepository,
-            ProjectAccessService projectAccessService,
-            AuditService auditService
-    ) {
+    public ProjectService(ProjectRepository projectRepository,
+                          ClientRepository clientRepository,
+                          DatasetRepository datasetRepository,
+                          SubdivisionRunRepository subdivisionRunRepository,
+                          ComplianceCheckRepository complianceCheckRepository,
+                          ReportRepository reportRepository,
+                          WorkflowTaskRepository workflowTaskRepository,
+                          AuditService auditService,
+                          CurrentUserService currentUserService) {
         this.projectRepository = projectRepository;
         this.clientRepository = clientRepository;
-        this.projectMemberRepository = projectMemberRepository;
-        this.projectAccessService = projectAccessService;
+        this.datasetRepository = datasetRepository;
+        this.subdivisionRunRepository = subdivisionRunRepository;
+        this.complianceCheckRepository = complianceCheckRepository;
+        this.reportRepository = reportRepository;
+        this.workflowTaskRepository = workflowTaskRepository;
         this.auditService = auditService;
+        this.currentUserService = currentUserService;
     }
 
-    @Transactional(readOnly = true)
-    public List<ProjectDtos.ProjectDto> list(UserEntity actor, UUID clientId) {
-        List<ProjectEntity> projects = clientId == null
-                ? listAll(actor)
-                : listByClient(actor, clientId);
-        return projects.stream().map(this::toDto).toList();
+    public ProjectEntity create(ProjectDtos.ProjectRequest request) {
+        ClientEntity client = clientRepository.findById(request.clientId())
+                .orElseThrow(() -> new IllegalArgumentException("Client not found"));
+        ProjectEntity entity = ProjectEntity.builder()
+                .code(request.code())
+                .name(request.name())
+                .description(request.description())
+                .status(request.status())
+                .startDate(request.startDate())
+                .endDate(request.endDate())
+                .client(client)
+                .createdAt(Instant.now())
+                .build();
+        projectRepository.save(entity);
+        auditService.log(currentUserService.getCurrentUserEmail(), "CREATE", "Project", entity.getId(), "Project created");
+        return entity;
     }
 
-    @Transactional(readOnly = true)
-    public ProjectDtos.ProjectDto get(UserEntity actor, UUID id) {
-        ProjectEntity project = projectRepository.findById(id)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Project not found"));
-
-        projectAccessService.requireProjectRead(actor, project.getId());
-        return toDto(project);
+    public List<ProjectEntity> list() {
+        return projectRepository.findAll();
     }
 
-    @Transactional
-    public ProjectDtos.ProjectDto create(UserEntity actor, ProjectDtos.CreateProjectRequest req) {
-        if (actor.getRole() == UserRole.CLIENT) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "FORBIDDEN", "Clients cannot create projects");
+    public ProjectEntity update(Long id, ProjectDtos.ProjectRequest request) {
+        ProjectEntity entity = projectRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        ClientEntity client = clientRepository.findById(request.clientId())
+                .orElseThrow(() -> new IllegalArgumentException("Client not found"));
+        entity.setCode(request.code());
+        entity.setName(request.name());
+        entity.setDescription(request.description());
+        entity.setStatus(request.status());
+        entity.setStartDate(request.startDate());
+        entity.setEndDate(request.endDate());
+        entity.setClient(client);
+        projectRepository.save(entity);
+        auditService.log(currentUserService.getCurrentUserEmail(), "UPDATE", "Project", entity.getId(), "Project updated");
+        return entity;
+    }
+
+    public void delete(Long id) {
+        projectRepository.deleteById(id);
+        auditService.log(currentUserService.getCurrentUserEmail(), "DELETE", "Project", id, "Project deleted");
+    }
+
+    public ProjectWorkflowSnapshot workflowSnapshot(Long projectId) {
+        long datasetCount = datasetRepository.countByProjectId(projectId);
+        long subdivisionCount = subdivisionRunRepository.countByProjectId(projectId);
+        long complianceCount = complianceCheckRepository.countByProjectId(projectId);
+        long reportCount = reportRepository.countByProjectId(projectId);
+        long openTasks = workflowTaskRepository.countByProjectIdAndStatusNot(projectId, WorkflowStatus.DONE);
+
+        int completedSteps = 1;
+        if (datasetCount > 0) completedSteps += 1;
+        if (subdivisionCount > 0) completedSteps += 1;
+        if (complianceCount > 0) completedSteps += 1;
+        if (reportCount > 0) completedSteps += 1;
+        int readinessPercent = (int) Math.round((completedSteps / 5.0) * 100.0);
+
+        if (datasetCount == 0) {
+            return new ProjectWorkflowSnapshot("DATA_PREPARATION", "Upload cadastral or UPI dataset", readinessPercent);
         }
-
-        ClientEntity client = clientRepository.findById(req.clientId())
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "INVALID_CLIENT", "Client not found"));
-
-        ProjectEntity project = new ProjectEntity();
-        project.setClient(client);
-        project.setName(req.name());
-        project.setDescription(req.description());
-        project.setType(req.type());
-        project.setLocation(req.location());
-        project.setScope(req.scope());
-        project.setStartDate(req.startDate());
-        project.setEndDate(req.endDate());
-        ProjectEntity saved = projectRepository.save(project);
-
-        ProjectMemberEntity membership = new ProjectMemberEntity();
-        membership.setProject(saved);
-        membership.setUser(actor);
-        membership.setRole(ProjectMemberRole.PROJECT_ADMIN);
-        projectMemberRepository.save(membership);
-
-        auditService.log(actor, "PROJECT_CREATED", "Project", saved.getId());
-        return toDto(saved);
-    }
-
-    @Transactional
-    public ProjectDtos.ProjectDto update(UserEntity actor, UUID id, ProjectDtos.UpdateProjectRequest req) {
-        ProjectEntity project = projectRepository.findById(id)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "NOT_FOUND", "Project not found"));
-
-        projectAccessService.requireProjectAdmin(actor, project.getId());
-
-        project.setName(req.name());
-        project.setDescription(req.description());
-        project.setStatus(req.status());
-        project.setType(req.type());
-        project.setLocation(req.location());
-        project.setScope(req.scope());
-        project.setStartDate(req.startDate());
-        project.setEndDate(req.endDate());
-        project.setArchived(req.archived());
-        ProjectEntity saved = projectRepository.save(project);
-        auditService.log(actor, "PROJECT_UPDATED", "Project", saved.getId());
-        return toDto(saved);
-    }
-
-    private List<ProjectEntity> listAll(UserEntity actor) {
-        if (actor.getRole() == UserRole.ADMIN) {
-            return projectRepository.findAllByOrderByCreatedAtDesc();
+        if (subdivisionCount == 0) {
+            return new ProjectWorkflowSnapshot("SUBDIVISION_PENDING", "Run AI subdivision", readinessPercent);
         }
-        if (actor.getRole() == UserRole.CLIENT) {
-            return projectRepository.findByClient_User_IdOrderByCreatedAtDesc(actor.getId());
+        if (complianceCount == 0) {
+            return new ProjectWorkflowSnapshot("COMPLIANCE_PENDING", "Run compliance validation", readinessPercent);
         }
-        return projectRepository.findAccessibleProjects(actor.getId());
+        if (reportCount == 0) {
+            return new ProjectWorkflowSnapshot("REPORT_PENDING", "Generate project report", readinessPercent);
+        }
+        if (openTasks > 0) {
+            return new ProjectWorkflowSnapshot("WORKFLOW_CLOSURE", "Close " + openTasks + " remaining workflow task(s)", readinessPercent);
+        }
+        return new ProjectWorkflowSnapshot("READY_FOR_SUBMISSION", "Ready for client and regulator submission", 100);
     }
 
-    private List<ProjectEntity> listByClient(UserEntity actor, UUID clientId) {
-        if (actor.getRole() == UserRole.ADMIN) {
-            return projectRepository.findByClientIdOrderByCreatedAtDesc(clientId);
-        }
-        if (actor.getRole() == UserRole.CLIENT) {
-            return projectRepository.findByClient_User_IdOrderByCreatedAtDesc(actor.getId())
-                    .stream()
-                    .filter(p -> p.getClient().getId().equals(clientId))
-                    .toList();
-        }
-        return projectRepository.findAccessibleProjectsByClient(actor.getId(), clientId);
-    }
-
-    private ProjectDtos.ProjectDto toDto(ProjectEntity p) {
-        return new ProjectDtos.ProjectDto(
-                p.getId(),
-                p.getClient().getId(),
-                p.getClient().getName(),
-                p.getName(),
-                p.getDescription(),
-                p.getStatus(),
-                p.getType(),
-                p.getLocation(),
-                p.getScope(),
-                p.getStartDate(),
-                p.getEndDate(),
-                p.isArchived(),
-                p.getCreatedAt()
-        );
-    }
+    public record ProjectWorkflowSnapshot(
+            String stage,
+            String nextAction,
+            int readinessPercent
+    ) {}
 }

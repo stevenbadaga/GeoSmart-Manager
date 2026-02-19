@@ -1,39 +1,25 @@
 package rw.venus.geosmartmanager.api.dto;
 
-import rw.venus.geosmartmanager.domain.UserRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.time.Instant;
-import java.util.UUID;
+import rw.venus.geosmartmanager.domain.Role;
+import rw.venus.geosmartmanager.domain.UserStatus;
 
-public final class UserDtos {
-    private UserDtos() {}
-
-    public record UserDto(
-            UUID id,
-            String username,
-            String email,
-            UserRole role,
-            boolean enabled,
-            Instant createdAt
-    ) {}
-
+public class UserDtos {
     public record CreateUserRequest(
-            @NotBlank String username,
+            @NotBlank String fullName,
             @Email @NotBlank String email,
             @NotBlank String password,
-            @NotNull UserRole role
+            @NotNull Role role,
+            UserStatus status,
+            String professionalLicense
     ) {}
 
-    public record UpdateUserStatusRequest(
-            boolean enabled
-    ) {}
-
-    public record DirectoryUserDto(
-            UUID id,
-            String username,
-            String email,
-            UserRole role
+    public record UpdateUserRequest(
+            String fullName,
+            Role role,
+            UserStatus status,
+            String professionalLicense
     ) {}
 }

@@ -1,43 +1,36 @@
 package rw.venus.geosmartmanager.api.dto;
 
-import rw.venus.geosmartmanager.domain.RunStatus;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import java.time.Instant;
-import java.util.UUID;
+import jakarta.validation.constraints.NotNull;
+import rw.venus.geosmartmanager.domain.SubdivisionOptimizationMode;
+import rw.venus.geosmartmanager.domain.SubdivisionStatus;
 
-public final class SubdivisionDtos {
-    private SubdivisionDtos() {}
-
-    public record RunRequest(
-            @Min(2) @Max(50) int targetParcels,
-            @Min(1) double minParcelArea
+public class SubdivisionDtos {
+    public record RunSubdivisionRequest(
+            @NotNull Long datasetId,
+            @Min(1) int parcelCount,
+            SubdivisionOptimizationMode optimizationMode
     ) {}
 
-    public record SuggestRequest(
-            @Min(1) double minParcelArea,
-            Integer targetParcels
+    public record SubdivisionRunResponse(
+            Long id,
+            Long projectId,
+            Long datasetId,
+            SubdivisionStatus status,
+            SubdivisionOptimizationMode optimizationMode,
+            int parcelCount,
+            double avgParcelAreaSqm,
+            double qualityScore,
+            String resultGeoJson,
+            AiExplanation aiExplanation
     ) {}
 
-    public record SuggestResponse(
-            double boundaryAreaSqm,
-            int maxParcels,
-            Double estimatedParcelAreaSqm
-    ) {}
-
-    public record RunDto(
-            UUID id,
-            UUID projectId,
-            RunStatus status,
-            int targetParcels,
-            double minParcelArea,
-            Instant startedAt,
-            Instant finishedAt
-    ) {}
-
-    public record RunDetailDto(
-            RunDto run,
-            String resultGeojson,
-            String issuesJson
+    public record AiExplanation(
+            double compactnessScore,
+            double areaUniformityScore,
+            double roadAccessScore,
+            double complianceReadinessScore,
+            String recommendation,
+            String rationale
     ) {}
 }

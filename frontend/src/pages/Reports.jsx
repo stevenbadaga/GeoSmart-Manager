@@ -1,249 +1,159 @@
-import { useMemo, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import React, { useEffect, useState } from 'react'
+import Card from '../components/Card'
+import Button from '../components/Button'
 import { api } from '../api/http'
-import { useAuth } from '../auth/AuthContext'
-import { useProject } from '../projects/ProjectContext'
-import { Badge } from '../components/Badge'
-import { Button } from '../components/Button'
-import { Card } from '../components/Card'
-import { useToast } from '../components/ToastProvider'
 
-function tone(type) {
-  if (type === 'SUBDIVISION_SUMMARY') return 'blue'
-  if (type === 'COMPLIANCE_SUMMARY') return 'amber'
-  return 'slate'
-}
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+const reportTypes = ['SURVEY', 'SUBDIVISION', 'COMPLIANCE', 'PROJECT_SUMMARY']
 
-function prettyType(type) {
-  if (type === 'SUBDIVISION_SUMMARY') return 'Subdivision summary'
-  if (type === 'COMPLIANCE_SUMMARY') return 'Compliance summary'
-  return type
-}
+export default function Reports() {
+  const [projects, setProjects] = useState([])
+  const [selectedProject, setSelectedProject] = useState('')
+  const [reports, setReports] = useState([])
+  const [reportType, setReportType] = useState('PROJECT_SUMMARY')
+  const [error, setError] = useState('')
 
-async function downloadBlob(url, filename) {
-  const res = await api.get(url, { responseType: 'blob' })
-  const blobUrl = window.URL.createObjectURL(res.data)
-  const a = document.createElement('a')
-  a.href = blobUrl
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  window.URL.revokeObjectURL(blobUrl)
-}
+  const totalReports = reports.length
+  const activeTypes = new Set(reports.map((report) => report.type)).size
 
-async function openPdf(url) {
-  const res = await api.get(url, { responseType: 'blob' })
-  const blobUrl = window.URL.createObjectURL(res.data)
-  window.open(blobUrl, '_blank', 'noopener,noreferrer')
-  window.setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60_000)
-}
+  useEffect(() => {
+    api.get('/api/projects').then(setProjects).catch((err) => setError(err.message))
+  }, [])
 
-export function ReportsPage() {
-  const qc = useQueryClient()
-  const toast = useToast()
-  const { user } = useAuth()
-  const { projectId } = useProject()
-  const isClient = user?.role === 'CLIENT'
-  const [type, setType] = useState('SUBDIVISION_SUMMARY')
-  const [runId, setRunId] = useState('')
+  useEffect(() => {
+    if (!selectedProject) return
+    api.get(`/api/projects/${selectedProject}/reports`)
+      .then(setReports)
+      .catch((err) => setError(err.message))
+  }, [selectedProject])
 
-  const reportsQuery = useQuery({
-    enabled: !!projectId,
-    queryKey: ['reports', projectId],
-    queryFn: async () => (await api.get(`/api/projects/${projectId}/reports`)).data,
-  })
-
-  const runsQuery = useQuery({
-    enabled: !!projectId && !isClient,
-    queryKey: ['subdivision-runs', projectId],
-    queryFn: async () => (await api.get(`/api/projects/${projectId}/subdivisions`)).data,
-  })
-
-  const runs = runsQuery.data || []
-  const selectedRunId = useMemo(() => runId || '', [runId])
-
-  const generateMutation = useMutation({
-    mutationFn: async ({ openAfter } = { openAfter: false }) => {
-      const report = (
-        await api.post(`/api/projects/${projectId}/reports/generate`, {
-          type,
-          subdivisionRunId: type === 'SUBDIVISION_SUMMARY' ? selectedRunId || null : null,
-        })
-      ).data
-      return { report, openAfter }
-    },
-    onSuccess: async ({ report, openAfter }) => {
-      await qc.invalidateQueries({ queryKey: ['reports', projectId] })
-      toast.success('Report generated', 'PDF report created successfully.')
-      if (openAfter) {
-        try {
-          await openPdf(`/api/reports/${report.id}/download`)
-        } catch {
-          toast.error('Open failed', 'Unable to open PDF.')
-        }
-      }
-    },
-    onError: (e) => toast.error('Report failed', e?.response?.data?.message || 'Unable to generate report.'),
-  })
-
-  if (!projectId) {
-    return (
-      <div className="mx-auto max-w-4xl p-6">
-        <Card className="p-6">
-          <div className="text-lg font-semibold text-slate-900">Select a project</div>
-          <p className="mt-2 text-sm text-slate-600">Choose an Active Project to view reports.</p>
-        </Card>
-      </div>
-    )
+  const onGenerate = async () => {
+    setError('')
+    if (!selectedProject) {
+      setError('Select a project')
+      return
+    }
+    try {
+      await api.post(`/api/projects/${selectedProject}/reports/generate`, { type: reportType })
+      const updated = await api.get(`/api/projects/${selectedProject}/reports`)
+      setReports(updated)
+    } catch (err) {
+      setError(err.message)
+    }
   }
 
-  const reports = reportsQuery.data || []
+  const downloadPdf = async (report) => {
+    setError('')
+    if (!selectedProject) {
+      setError('Select a project')
+      return
+    }
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/api/projects/${selectedProject}/reports/${report.id}/pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+      if (!response.ok) {
+        const message = await response.text()
+        throw new Error(message || 'Failed to download report')
+      }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `GeoSmart-${report.type}-Report-${report.id}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
 
   return (
-    <div className="mx-auto max-w-6xl p-4 sm:p-6">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-900">Reports & Analytics</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {isClient ? 'View and download reports shared by the team.' : 'Generate PDF reports for subdivision and compliance outcomes.'}
-        </p>
+    <div className="space-y-6">
+      <div>
+        <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Reports & Analytics</p>
+        <h1 className="text-2xl font-semibold text-ink mt-2">Reporting Center</h1>
+        <p className="text-sm text-ink/60">Generate project summaries, subdivision outputs, and compliance documentation.</p>
       </div>
 
-      {!isClient ? (
-        <Card className="p-5">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:items-end">
-            <div>
-              <label className="text-sm font-medium text-slate-700">Report type</label>
-              <select
-                className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-              >
-                <option value="SUBDIVISION_SUMMARY">Subdivision summary</option>
-                <option value="COMPLIANCE_SUMMARY">Compliance summary</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-slate-700">Subdivision run (optional)</label>
-              <select
-                className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                value={selectedRunId}
-                onChange={(e) => setRunId(e.target.value)}
-                disabled={type !== 'SUBDIVISION_SUMMARY'}
-              >
-                <option value="">Latest run</option>
-                {runs.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.id.slice(0, 8)} - {r.status}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button
-                variant="outline"
-                disabled={generateMutation.isPending}
-                onClick={() => generateMutation.mutate({ openAfter: true })}
-              >
-                {generateMutation.isPending ? 'Generating...' : 'Generate & view'}
-              </Button>
-              <Button disabled={generateMutation.isPending} onClick={() => generateMutation.mutate({ openAfter: false })}>
-                {generateMutation.isPending ? 'Generating...' : 'Generate PDF'}
-              </Button>
-            </div>
-          </div>
-
-          {generateMutation.isError ? (
-            <div className="mt-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">
-              {generateMutation.error?.response?.data?.message || 'Report generation failed.'}
-            </div>
-          ) : null}
+      <div className="grid md:grid-cols-3 gap-4">
+        <Card className="p-4">
+          <p className="text-xs text-ink/50">Total Reports</p>
+          <p className="text-2xl font-semibold text-ink mt-2">{totalReports}</p>
+          <p className="text-xs text-ink/60 mt-2">Generated for this project</p>
         </Card>
-      ) : (
-        <Card className="p-5">
-          <div className="text-sm font-semibold text-slate-900">Client report portal</div>
-          <div className="mt-1 text-sm text-slate-600">
-            Reports are generated by the project team and shared here for viewing and download.
+        <Card className="p-4">
+          <p className="text-xs text-ink/50">Report Types Used</p>
+          <p className="text-2xl font-semibold text-ink mt-2">{activeTypes}</p>
+          <p className="text-xs text-ink/60 mt-2">Coverage across categories</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs text-ink/50">Downloads</p>
+          <p className="text-2xl font-semibold text-ink mt-2">{Math.max(totalReports, 0)}</p>
+          <p className="text-xs text-success mt-2">Ready for PDF export</p>
+        </Card>
+      </div>
+
+      <div className="grid lg:grid-cols-[1fr_360px] gap-6">
+        <Card title="Reports">
+          <div className="space-y-3">
+            {reports.map((report) => (
+              <div key={report.id} className="border border-clay/60 rounded-xl p-4 bg-white/70">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-ink/50">Report ID #{report.id}</p>
+                    <h4 className="font-semibold">{report.type}</h4>
+                  </div>
+                  <Button variant="secondary" className="text-xs" onClick={() => downloadPdf(report)}>
+                    Download PDF
+                  </Button>
+                </div>
+                <details className="mt-3 text-xs text-ink/70">
+                  <summary className="cursor-pointer text-ink/60">View report content</summary>
+                  <pre className="mt-2 whitespace-pre-wrap">{report.content}</pre>
+                </details>
+              </div>
+            ))}
+            {reports.length === 0 && <p className="text-sm text-ink/70">No reports generated.</p>}
           </div>
         </Card>
-      )}
 
-      <Card className="mt-6 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
-              <tr>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {reportsQuery.isLoading ? (
-                <tr>
-                  <td className="px-4 py-4 text-slate-600" colSpan={3}>
-                    Loading...
-                  </td>
-                </tr>
-              ) : null}
-              {reportsQuery.isError ? (
-                <tr>
-                  <td className="px-4 py-4 text-rose-600" colSpan={3}>
-                    Failed to load reports.
-                  </td>
-                </tr>
-              ) : null}
-              {!reportsQuery.isLoading && reports.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-8 text-slate-600" colSpan={3}>
-                    No reports yet.
-                  </td>
-                </tr>
-              ) : null}
-              {reports.map((r) => (
-                <tr key={r.id} className="bg-white">
-                  <td className="px-4 py-3">
-                    <Badge tone={tone(r.type)}>{prettyType(r.type)}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-slate-700">{r.createdAt ? new Date(r.createdAt).toLocaleString() : '-'}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={async () => {
-                          try {
-                            await openPdf(`/api/reports/${r.id}/download`)
-                          } catch {
-                            toast.error('Open failed', 'Unable to open PDF.')
-                          }
-                        }}
-                      >
-                        View
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={async () => {
-                          try {
-                            await downloadBlob(`/api/reports/${r.id}/download`, `geosmart-${r.type.toLowerCase()}.pdf`)
-                          } catch {
-                            toast.error('Download failed', 'Unable to download report.')
-                          }
-                        }}
-                      >
-                        Download
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-6">
+          <Card title="Generate Report">
+            <div className="space-y-4">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Project</span>
+                <select className="input" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
+                  <option value="">Select project</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>{project.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium">Report type</span>
+                <select className="input" value={reportType} onChange={(e) => setReportType(e.target.value)}>
+                  {reportTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </label>
+              {error && <p className="text-sm text-danger">{error}</p>}
+              <Button className="w-full" onClick={onGenerate}>Generate report</Button>
+            </div>
+          </Card>
+          <Card title="Recommended Usage">
+            <div className="space-y-2 text-sm text-ink/70">
+              <p>Use project summaries for client briefings and contract handover.</p>
+              <p>Generate compliance reports for RLMUA review and audits.</p>
+              <p>Download PDFs to attach to email submissions or printed files.</p>
+            </div>
+          </Card>
         </div>
-      </Card>
+      </div>
     </div>
   )
 }

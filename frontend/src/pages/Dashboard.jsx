@@ -1,292 +1,351 @@
-import { useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { CheckCircle2, Circle, ArrowRight } from 'lucide-react'
-import { api } from '../api/http'
 import { useAuth } from '../auth/AuthContext'
-import { useProject } from '../projects/ProjectContext'
-import { Badge } from '../components/Badge'
-import { Button } from '../components/Button'
-import { Card } from '../components/Card'
+import Card from '../components/Card'
+import Button from '../components/Button'
+import MiniMap from '../components/MiniMap'
+import { api } from '../api/http'
 
-function StatCard({ label, value }) {
-  return (
-    <Card className="p-5">
-      <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-2 text-3xl font-bold text-slate-900">{value}</div>
-    </Card>
+const icons = {
+  projects: (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M4 7h16v11H4z" />
+      <path d="M9 7V5h6v2" />
+    </svg>
+  ),
+  users: (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c2-3 5-4 8-4s6 1 8 4" />
+    </svg>
+  ),
+  alerts: (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <path d="M12 3l9 16H3L12 3z" />
+      <path d="M12 9v4M12 17h.01" />
+    </svg>
+  ),
+  storage: (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <ellipse cx="12" cy="5" rx="7" ry="3" />
+      <path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5" />
+      <path d="M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" />
+    </svg>
   )
 }
 
-function StepRow({ done, title, description, actionLabel, onAction, disabled }) {
-  return (
-    <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
-      <div className="flex min-w-0 gap-3">
-        <div className="mt-0.5">
-          {done ? <CheckCircle2 className="h-5 w-5 text-emerald-600" /> : <Circle className="h-5 w-5 text-slate-300" />}
-        </div>
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-slate-900">{title}</div>
-          <div className="mt-0.5 text-sm text-slate-600">{description}</div>
-        </div>
-      </div>
-      <Button variant="outline" size="sm" onClick={onAction} disabled={disabled}>
-        {actionLabel}
-        <ArrowRight className="h-4 w-4" />
-      </Button>
-    </div>
-  )
+function formatBytes(bytes) {
+  if (!bytes || bytes <= 0) return '0 MB'
+  const units = ['MB', 'GB', 'TB']
+  let size = bytes / (1024 * 1024)
+  let unitIndex = 0
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024
+    unitIndex += 1
+  }
+  return `${size.toFixed(size >= 100 ? 0 : 1)} ${units[unitIndex]}`
 }
 
-export function DashboardPage() {
-  const nav = useNavigate()
+function formatPercent(value) {
+  if (!Number.isFinite(value)) return '0%'
+  return `${Math.round(value)}%`
+}
+
+function formatRelativeTime(value) {
+  if (!value) return '--'
+  const time = new Date(value).getTime()
+  if (Number.isNaN(time)) return '--'
+  const diffMs = Date.now() - time
+  const minutes = Math.floor(diffMs / 60000)
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes} minutes ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} hours ago`
+  const days = Math.floor(hours / 24)
+  return `${days} days ago`
+}
+
+function formatEventTitle(event) {
+  if (!event) return 'System activity recorded'
+  const entity = event.entityType ? event.entityType.replace(/([a-z])([A-Z])/g, '$1 $2') : 'Entity'
+  return `${event.action} ${entity}`
+}
+
+export default function Dashboard() {
   const { user } = useAuth()
-  const { projectId } = useProject()
-  const isClient = user?.role === 'CLIENT'
-
-  const summaryQuery = useQuery({
-    queryKey: ['dashboard-summary'],
-    queryFn: async () => (await api.get('/api/dashboard/summary')).data,
+  const navigate = useNavigate()
+  const [metrics, setMetrics] = useState({
+    totalProjects: 0,
+    activeUsers: 0,
+    complianceAlerts: 0,
+    complianceCritical: 0,
+    workflowBacklog: 0,
+    workflowTotal: 0,
+    storageUsedBytes: 0,
+    storagePercent: 0,
+    projectsCreatedThisMonth: 0,
+    usersCreatedToday: 0,
+    serverLoadPercent: 0,
+    apiLatencyMs: 0
   })
+  const [lastUpdated, setLastUpdated] = useState(null)
+  const [events, setEvents] = useState([])
 
-  const projectsQuery = useQuery({
-    queryKey: ['projects'],
-    queryFn: async () => (await api.get('/api/projects')).data,
-  })
+  const metricCards = useMemo(() => ([
+    {
+      key: 'projects',
+      title: 'Total Projects',
+      value: metrics.totalProjects,
+      meta: `${metrics.projectsCreatedThisMonth} new this month`,
+      metaTone: 'text-success',
+      icon: icons.projects
+    },
+    {
+      key: 'users',
+      title: 'Active Users',
+      value: metrics.activeUsers,
+      meta: `${metrics.usersCreatedToday} new today`,
+      metaTone: 'text-success',
+      icon: icons.users
+    },
+    {
+      key: 'alerts',
+      title: 'Compliance Alerts',
+      value: metrics.complianceAlerts,
+      meta: `${metrics.complianceCritical} critical issues`,
+      metaTone: metrics.complianceCritical > 0 ? 'text-danger' : 'text-success',
+      icon: icons.alerts
+    },
+    {
+      key: 'storage',
+      title: 'Data Storage',
+      value: formatBytes(metrics.storageUsedBytes),
+      meta: `${formatPercent(metrics.storagePercent)} of capacity`,
+      metaTone: 'text-success',
+      icon: icons.storage
+    }
+  ]), [metrics])
 
-  const datasetsQuery = useQuery({
-    enabled: !!projectId && !isClient,
-    queryKey: ['datasets', projectId],
-    queryFn: async () => (await api.get(`/api/projects/${projectId}/datasets`)).data,
-  })
+  useEffect(() => {
+    let active = true
 
-  const runsQuery = useQuery({
-    enabled: !!projectId && !isClient,
-    queryKey: ['subdivision-runs', projectId],
-    queryFn: async () => (await api.get(`/api/projects/${projectId}/subdivisions`)).data,
-  })
+    const loadMetrics = async () => {
+      try {
+        const data = await api.get('/api/metrics/overview')
+        if (!active) return
+        setMetrics((current) => ({ ...current, ...data }))
+        setLastUpdated(new Date())
+      } catch {
+        // ignore
+      }
+    }
 
-  const complianceQuery = useQuery({
-    enabled: !!projectId,
-    queryKey: ['compliance', projectId],
-    queryFn: async () => (await api.get(`/api/projects/${projectId}/compliance`)).data,
-  })
+    const loadEvents = async () => {
+      if (user?.role !== 'ADMIN') return
+      try {
+        const data = await api.get('/api/audit')
+        if (!active) return
+        setEvents((data || []).slice(0, 4))
+      } catch {
+        // ignore
+      }
+    }
 
-  const reportsQuery = useQuery({
-    enabled: !!projectId,
-    queryKey: ['reports', projectId],
-    queryFn: async () => (await api.get(`/api/projects/${projectId}/reports`)).data,
-  })
+    const measureLatency = async () => {
+      const start = performance.now()
+      try {
+        await api.get('/api/health')
+        if (!active) return
+        const latency = Math.round(performance.now() - start)
+        setMetrics((current) => ({ ...current, apiLatencyMs: latency }))
+      } catch {
+        // ignore
+      }
+    }
 
-  const summary = summaryQuery.data
-  const activeProject = useMemo(() => {
-    const list = projectsQuery.data ?? []
-    return list.find((p) => p.id === projectId) ?? null
-  }, [projectsQuery.data, projectId])
+    loadMetrics()
+    loadEvents()
+    measureLatency()
+    const interval = setInterval(() => {
+      loadMetrics()
+      loadEvents()
+      measureLatency()
+    }, 60000)
 
-  const datasets = datasetsQuery.data ?? []
-  const runs = runsQuery.data ?? []
-  const checks = complianceQuery.data ?? []
-  const reports = reportsQuery.data ?? []
-
-  const latestRun = runs[0] ?? null
-  const latestCheck = checks[0] ?? null
-
-  const hasDataset = datasets.length > 0
-  const hasRun = runs.length > 0
-  const hasCompliance = checks.length > 0
-  const hasReport = reports.length > 0
+    return () => {
+      active = false
+      clearInterval(interval)
+    }
+  }, [user?.role])
 
   return (
-    <div className="mx-auto max-w-6xl p-4 sm:p-6">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-slate-600">A quick overview and a guided workflow for GeoSmart-Manager.</p>
+    <div className="space-y-6">
+      <div>
+        <p className="text-xs uppercase tracking-[0.2em] text-ink/40">System Overview</p>
+        <h1 className="text-2xl font-semibold text-ink mt-2">Operational Snapshot</h1>
+        <p className="text-sm text-ink/60">Monitor active geospatial programs, user activity, and compliance readiness.</p>
       </div>
 
-      {summaryQuery.isLoading ? <div className="text-sm text-slate-600">Loading...</div> : null}
-      {summaryQuery.isError ? <div className="text-sm text-rose-600">Failed to load dashboard.</div> : null}
-
-      {summary ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {isClient ? (
-            <>
-              <StatCard label="My Projects" value={summary.projects} />
-              <StatCard label="Compliance Checks" value={summary.complianceChecks} />
-              <StatCard label="Reports" value={summary.reports} />
-            </>
-          ) : (
-            <>
-              <StatCard label="Clients" value={summary.clients} />
-              <StatCard label="Projects" value={summary.projects} />
-              <StatCard label="Datasets" value={summary.datasets} />
-              <StatCard label="Workflow Tasks" value={summary.tasks} />
-              <StatCard label="Subdivision Runs" value={summary.subdivisionRuns} />
-              <StatCard label="Compliance Checks" value={summary.complianceChecks} />
-              <StatCard label="Reports" value={summary.reports} />
-            </>
-          )}
-        </div>
-      ) : null}
-
-      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="p-5 lg:col-span-1">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-sm font-semibold text-slate-900">Active project</div>
-              <div className="mt-1 text-sm text-slate-600">
-                {activeProject ? (
-                  <>
-                    <span className="font-medium text-slate-900">{activeProject.name}</span>
-                    <span className="text-slate-500"> - </span>
-                    <Badge tone={activeProject.status === 'COMPLETED' ? 'green' : activeProject.status === 'IN_PROGRESS' ? 'amber' : 'slate'}>
-                      {activeProject.status}
-                    </Badge>
-                  </>
-                ) : (
-                  <span className="text-slate-500">Select a project in the top bar.</span>
-                )}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {metricCards.map((card) => (
+          <Card key={card.key} className="p-5">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-ink/60">{card.title}</p>
+              <div className="h-8 w-8 rounded-xl bg-sand border border-clay/70 flex items-center justify-center text-ink/60">
+                {card.icon}
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => nav('/projects')}>
-              Manage
-            </Button>
-          </div>
+            <p className="text-2xl font-semibold text-ink mt-3">
+              {card.value}
+            </p>
+            <p className={`text-xs mt-2 ${card.metaTone}`}>
+              {card.meta}
+            </p>
+          </Card>
+        ))}
+      </div>
 
-          {!isClient ? (
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-slate-50 px-3 py-2">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Datasets</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? datasets.length : '-'}</div>
+      <div className="grid lg:grid-cols-[2fr_1fr] gap-6">
+        <div className="space-y-6">
+          <Card className="p-0 overflow-hidden">
+            <div className="flex items-center justify-between px-6 pt-5">
+              <div>
+                <h3 className="text-lg font-semibold">Live Geospatial Activity</h3>
+                <p className="text-sm text-ink/60">Kigali city parcels and subdivision zones</p>
               </div>
-              <div className="rounded-xl bg-slate-50 px-3 py-2">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Runs</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? runs.length : '-'}</div>
+              <Button variant="secondary" className="text-xs px-3 py-1" onClick={() => navigate('/map')}>
+                View Full Map
+              </Button>
+            </div>
+            <div className="relative mt-4 h-72">
+              <MiniMap />
+              <div className="absolute top-4 left-4 bg-white/90 border border-clay/70 rounded-xl px-3 py-2 text-xs text-ink/70">
+                Kigali, Rwanda
               </div>
-              <div className="rounded-xl bg-slate-50 px-3 py-2">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compliance</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? checks.length : '-'}</div>
-              </div>
-              <div className="rounded-xl bg-slate-50 px-3 py-2">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reports</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? reports.length : '-'}</div>
+              <div className="absolute bottom-4 left-4 bg-white/90 border border-clay/70 rounded-xl px-3 py-2 text-xs text-ink/70 flex gap-3">
+                <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-success" />Active Survey</span>
+                <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-danger" />Boundary Conflict</span>
               </div>
             </div>
-          ) : (
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-slate-50 px-3 py-2">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Compliance</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? checks.length : '-'}</div>
-              </div>
-              <div className="rounded-xl bg-slate-50 px-3 py-2">
-                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reports</div>
-                <div className="mt-1 text-lg font-semibold text-slate-900">{projectId ? reports.length : '-'}</div>
-              </div>
-            </div>
-          )}
+          </Card>
 
-          {projectId ? (
-            <div className="mt-4 space-y-2 text-sm text-slate-600">
-              <div className="flex items-center justify-between gap-2">
-                <span>Latest compliance</span>
-                <span className="font-medium text-slate-900">{latestCheck ? latestCheck.status : '-'}</span>
-              </div>
-              {!isClient ? (
-                <div className="flex items-center justify-between gap-2">
-                  <span>Latest subdivision</span>
-                  <span className="font-medium text-slate-900">{latestRun ? latestRun.status : '-'}</span>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between gap-2">
-                  <span>Reports available</span>
-                  <span className="font-medium text-slate-900">{reports.length}</span>
-                </div>
+          <Card title="Recent System Events">
+            <div className="space-y-4 text-sm text-ink/80">
+              {events.length === 0 && (
+                <p className="text-sm text-ink/60">No recent system events available.</p>
               )}
+              {events.map((event) => (
+                <div key={event.id} className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-sand border border-clay/70 flex items-center justify-center text-ink/60">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <path d="M5 12l5 5L19 7" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-ink">{formatEventTitle(event)}</p>
+                    <p className="text-xs text-ink/50">
+                      {event.details || 'Activity recorded'} - {formatRelativeTime(event.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ) : null}
-        </Card>
+          </Card>
+        </div>
 
-        <Card className="p-5 lg:col-span-2">
-          {isClient ? (
-            <>
-              <div className="text-sm font-semibold text-slate-900">Client portal</div>
-              <div className="mt-1 text-sm text-slate-600">View project status, communicate with the team, and download reports.</div>
-
-              <div className="mt-4 space-y-3">
-                <StepRow
-                  done={!!projectId}
-                  title="Open project dashboard"
-                  description="View documents, invoices, and project details."
-                  actionLabel="Open"
-                  onAction={() => nav('/project')}
-                  disabled={!projectId}
-                />
-                <StepRow
-                  done={false}
-                  title="Collaboration portal"
-                  description="Messages, approvals, meeting schedule, and notifications."
-                  actionLabel="Open"
-                  onAction={() => nav('/collaboration')}
-                  disabled={false}
-                />
-                <StepRow
-                  done={hasReport}
-                  title="View reports"
-                  description="Open and download shared PDF reports."
-                  actionLabel="Open"
-                  onAction={() => nav('/reports')}
-                  disabled={!projectId}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-sm font-semibold text-slate-900">Workflow checklist</div>
-              <div className="mt-1 text-sm text-slate-600">Follow these steps to run an end-to-end land subdivision workflow.</div>
-
-              <div className="mt-4 space-y-3">
-                <StepRow
-                  done={hasDataset}
-                  title="Upload cadastral dataset"
-                  description="Upload a boundary GeoJSON in Map Workspace."
-                  actionLabel="Open workspace"
-                  onAction={() => nav('/workspace')}
-                  disabled={!projectId}
-                />
-                <StepRow
-                  done={hasRun}
-                  title="Run AI subdivision"
-                  description="Generate an automated parcel subdivision proposal."
-                  actionLabel="Run subdivision"
-                  onAction={() => nav('/subdivision')}
-                  disabled={!projectId || !hasDataset}
-                />
-                <StepRow
-                  done={hasCompliance}
-                  title="Run compliance checks"
-                  description="Validate the output against project-level rules."
-                  actionLabel="Check compliance"
-                  onAction={() => nav('/compliance')}
-                  disabled={!projectId || !hasRun}
-                />
-                <StepRow
-                  done={hasReport}
-                  title="Generate PDF report"
-                  description="Create professional reports for the project deliverables."
-                  actionLabel="Generate report"
-                  onAction={() => nav('/reports')}
-                  disabled={!projectId}
-                />
-              </div>
-            </>
-          )}
-
-          {!projectId ? (
-            <div className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Select an active project in the top bar to enable workflow steps.
+        <div className="space-y-6">
+          <Card title="Quick Actions">
+            <div className="space-y-3">
+              {[
+                { label: 'Add New User', icon: 'user', path: '/users' },
+                { label: 'Generate Compliance Report', icon: 'shield', path: '/reports' },
+                { label: 'System Configuration', icon: 'settings', path: '/account' }
+              ].map((action) => (
+                <button
+                  key={action.label}
+                  className="w-full flex items-center justify-between gap-3 rounded-xl bg-sand border border-clay/70 px-4 py-3 text-sm font-semibold text-ink/80 hover:bg-white/90 transition"
+                  onClick={() => navigate(action.path)}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="h-8 w-8 rounded-lg bg-white border border-clay/70 flex items-center justify-center text-ink/60">
+                      {action.icon === 'user' && (
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+                          <circle cx="12" cy="8" r="4" />
+                          <path d="M4 20c2-3 5-4 8-4s6 1 8 4" />
+                        </svg>
+                      )}
+                      {action.icon === 'shield' && (
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+                          <path d="M12 3l7 3v6c0 4.2-3 7.4-7 9-4-1.6-7-4.8-7-9V6l7-3z" />
+                        </svg>
+                      )}
+                      {action.icon === 'settings' && (
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+                          <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                          <path d="M4 12l2-1 1-2-1-2 1-2 2-1 2 1 2-1 2 1 2-1 2 1-1 2 1 2-1 2-2 1-2-1-2 1-2-1-2 1-1-2-2-1z" />
+                        </svg>
+                      )}
+                    </span>
+                    {action.label}
+                  </span>
+                  <span className="text-ink/40">{'>'}</span>
+                </button>
+              ))}
             </div>
-          ) : null}
-        </Card>
+          </Card>
+
+          <Card title="System Health">
+            <div className="space-y-4 text-sm text-ink/70">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span>Server Load</span>
+                  <span className="font-semibold text-ink">{formatPercent(metrics.serverLoadPercent)}</span>
+                </div>
+                <div className="h-2 rounded-full bg-sand mt-2">
+                  <div className="h-2 rounded-full bg-success" style={{ width: formatPercent(metrics.serverLoadPercent) }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between">
+                  <span>Database Storage</span>
+                  <span className="font-semibold text-ink">{formatPercent(metrics.storagePercent)}</span>
+                </div>
+                <div className="h-2 rounded-full bg-sand mt-2">
+                  <div className="h-2 rounded-full bg-warning" style={{ width: formatPercent(metrics.storagePercent) }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between">
+                  <span>API Latency</span>
+                  <span className="font-semibold text-ink">{metrics.apiLatencyMs}ms</span>
+                </div>
+                <div className="h-2 rounded-full bg-sand mt-2">
+                  <div className="h-2 rounded-full bg-water" style={{ width: `${Math.min(100, (metrics.apiLatencyMs / 200) * 100)}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between">
+                  <span>Workflow Backlog</span>
+                  <span className="font-semibold text-ink">
+                    {metrics.workflowBacklog}/{metrics.workflowTotal}
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-sand mt-2">
+                  <div
+                    className="h-2 rounded-full bg-river"
+                    style={{
+                      width: `${metrics.workflowTotal > 0 ? Math.min(100, (metrics.workflowBacklog / metrics.workflowTotal) * 100) : 0}%`
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs text-ink/50">
+                <span>Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : 'Just now'}</span>
+                <span className="px-2 py-1 rounded-full bg-success/10 text-success">Operational</span>
+              </div>
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   )

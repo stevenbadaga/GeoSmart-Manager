@@ -1,6 +1,10 @@
-import { cn } from '../lib/utils'
+import React from 'react'
 
-export function Card({ className, ...props }) {
-  return <div className={cn('rounded-2xl border border-slate-200 bg-white shadow-sm', className)} {...props} />
+export default function Card({ title, children, className = '' }) {
+  return (
+    <div className={`card p-5 ${className}`}>
+      {title && <h3 className="text-lg font-semibold mb-3">{title}</h3>}
+      {children}
+    </div>
+  )
 }
-

@@ -1,0 +1,2 @@
+ALTER TABLE subdivision_runs
+ADD COLUMN quality_score DOUBLE PRECISION NOT NULL DEFAULT 0;

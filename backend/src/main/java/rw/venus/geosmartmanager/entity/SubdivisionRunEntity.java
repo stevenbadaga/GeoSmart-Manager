@@ -1,133 +1,56 @@
 package rw.venus.geosmartmanager.entity;
 
-import rw.venus.geosmartmanager.domain.RunStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import rw.venus.geosmartmanager.domain.SubdivisionOptimizationMode;
+import rw.venus.geosmartmanager.domain.SubdivisionStatus;
+
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "subdivision_runs")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class SubdivisionRunEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "project_id", nullable = false)
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "project_id")
     private ProjectEntity project;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "created_by_user_id", nullable = false)
-    private UserEntity createdBy;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "dataset_id")
+    private DatasetEntity dataset;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
-    private RunStatus status = RunStatus.QUEUED;
+    @Column(nullable = false)
+    private SubdivisionStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private SubdivisionOptimizationMode optimizationMode;
 
     @Column(nullable = false)
-    private int targetParcels = 4;
+    private int parcelCount;
 
     @Column(nullable = false)
-    private double minParcelArea = 200.0;
+    private double avgParcelAreaSqm;
 
-    private Instant startedAt;
+    @Column(nullable = false)
+    private double qualityScore;
 
-    private Instant finishedAt;
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String resultGeoJson;
 
-    @Column(length = 1024)
-    private String errorMessage;
-
-    @Column(length = 512)
-    private String resultPath;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public ProjectEntity getProject() {
-        return project;
-    }
-
-    public void setProject(ProjectEntity project) {
-        this.project = project;
-    }
-
-    public UserEntity getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(UserEntity createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public RunStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(RunStatus status) {
-        this.status = status;
-    }
-
-    public int getTargetParcels() {
-        return targetParcels;
-    }
-
-    public void setTargetParcels(int targetParcels) {
-        this.targetParcels = targetParcels;
-    }
-
-    public double getMinParcelArea() {
-        return minParcelArea;
-    }
-
-    public void setMinParcelArea(double minParcelArea) {
-        this.minParcelArea = minParcelArea;
-    }
-
-    public Instant getStartedAt() {
-        return startedAt;
-    }
-
-    public void setStartedAt(Instant startedAt) {
-        this.startedAt = startedAt;
-    }
-
-    public Instant getFinishedAt() {
-        return finishedAt;
-    }
-
-    public void setFinishedAt(Instant finishedAt) {
-        this.finishedAt = finishedAt;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-    public String getResultPath() {
-        return resultPath;
-    }
-
-    public void setResultPath(String resultPath) {
-        this.resultPath = resultPath;
-    }
+    @Column(nullable = false)
+    private Instant createdAt;
 }
-

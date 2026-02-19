@@ -1,15 +1,17 @@
 package rw.venus.geosmartmanager.repo;
 
-import rw.venus.geosmartmanager.entity.UserEntity;
-import rw.venus.geosmartmanager.domain.UserRole;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import rw.venus.geosmartmanager.domain.UserStatus;
+import rw.venus.geosmartmanager.entity.UserEntity;
 
-public interface UserRepository extends JpaRepository<UserEntity, UUID> {
-    Optional<UserEntity> findByUsername(String username);
-    boolean existsByUsername(String username);
-    boolean existsByEmail(String email);
-    List<UserEntity> findByRole(UserRole role);
+import java.time.Instant;
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
+    Optional<UserEntity> findByEmailIgnoreCase(String email);
+    boolean existsByRole(rw.venus.geosmartmanager.domain.Role role);
+
+    long countByStatus(UserStatus status);
+
+    long countByCreatedAtAfter(Instant after);
 }

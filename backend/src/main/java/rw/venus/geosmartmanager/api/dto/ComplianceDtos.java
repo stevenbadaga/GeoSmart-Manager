@@ -1,24 +1,18 @@
 package rw.venus.geosmartmanager.api.dto;
 
-import rw.venus.geosmartmanager.domain.ComplianceStatus;
 import jakarta.validation.constraints.NotNull;
-import java.time.Instant;
-import java.util.UUID;
+import rw.venus.geosmartmanager.domain.ComplianceStatus;
 
-public final class ComplianceDtos {
-    private ComplianceDtos() {}
-
-    public record CheckRequest(
-            @NotNull UUID subdivisionRunId
+public class ComplianceDtos {
+    public record RunComplianceRequest(
+            @NotNull Long subdivisionRunId
     ) {}
 
-    public record ComplianceDto(
-            UUID id,
-            UUID projectId,
-            UUID subdivisionRunId,
+    public record ComplianceResponse(
+            Long id,
+            Long projectId,
+            Long subdivisionRunId,
             ComplianceStatus status,
-            String issuesJson,
-            Instant checkedAt
+            String findings
     ) {}
 }
-

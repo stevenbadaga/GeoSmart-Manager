@@ -1,23 +1,17 @@
 package rw.venus.geosmartmanager.api.dto;
 
-import rw.venus.geosmartmanager.domain.ReportType;
 import jakarta.validation.constraints.NotNull;
-import java.time.Instant;
-import java.util.UUID;
+import rw.venus.geosmartmanager.domain.ReportType;
 
-public final class ReportDtos {
-    private ReportDtos() {}
-
+public class ReportDtos {
     public record GenerateReportRequest(
-            @NotNull ReportType type,
-            UUID subdivisionRunId
+            @NotNull ReportType type
     ) {}
 
-    public record ReportDto(
-            UUID id,
-            UUID projectId,
+    public record ReportResponse(
+            Long id,
+            Long projectId,
             ReportType type,
-            Instant createdAt
+            String content
     ) {}
 }
-

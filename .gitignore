@@ -1,24 +1,21 @@
-# OS / IDE
+# Node
+node_modules/
+dist/
+.vite/
+.npm-cache/
+
+# Java
+backend/target/
+*.log
+
+# Env
+.env
+.env.local
+
+# OS
 .DS_Store
 Thumbs.db
+
+# IDE
 .idea/
 .vscode/
-*.iml
-
-# Java / Maven
-backend/target/
-backend/.classpath
-backend/.project
-backend/.settings/
-
-# Node / Vite
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
-
-# Local env + storage
-.env
-.env.*
-backend/data/
-backend/storage/
-

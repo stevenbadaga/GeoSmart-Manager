@@ -1,63 +1,49 @@
 package rw.venus.geosmartmanager.api.controller;
 
-import rw.venus.geosmartmanager.api.dto.SubdivisionDtos;
-import rw.venus.geosmartmanager.service.CurrentUserService;
-import rw.venus.geosmartmanager.service.SubdivisionService;
 import jakarta.validation.Valid;
-import java.nio.file.Path;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import rw.venus.geosmartmanager.api.dto.SubdivisionDtos;
+import rw.venus.geosmartmanager.entity.SubdivisionRunEntity;
+import rw.venus.geosmartmanager.service.SubdivisionService;
+
 import java.util.List;
-import java.util.UUID;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/projects/{projectId}/subdivisions")
 public class SubdivisionController {
     private final SubdivisionService subdivisionService;
-    private final CurrentUserService currentUserService;
 
-    public SubdivisionController(SubdivisionService subdivisionService, CurrentUserService currentUserService) {
+    public SubdivisionController(SubdivisionService subdivisionService) {
         this.subdivisionService = subdivisionService;
-        this.currentUserService = currentUserService;
     }
 
-    @PostMapping("/projects/{projectId}/subdivisions/run")
-    public SubdivisionDtos.RunDto run(@PathVariable UUID projectId, @Valid @RequestBody SubdivisionDtos.RunRequest req) {
-        return subdivisionService.run(currentUserService.requireCurrentUser(), projectId, req);
+    @PostMapping("/run")
+    @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER','ENGINEER','CIVIL_ENGINEER')")
+    public SubdivisionDtos.SubdivisionRunResponse run(@PathVariable Long projectId, @Valid @RequestBody SubdivisionDtos.RunSubdivisionRequest request) {
+        SubdivisionRunEntity entity = subdivisionService.runSubdivision(projectId, request);
+        return toResponse(entity);
     }
 
-    @PostMapping("/projects/{projectId}/subdivisions/suggest")
-    public SubdivisionDtos.SuggestResponse suggest(@PathVariable UUID projectId, @Valid @RequestBody SubdivisionDtos.SuggestRequest req) {
-        return subdivisionService.suggest(currentUserService.requireCurrentUser(), projectId, req);
+    @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER','SURVEYOR','ENGINEER','CIVIL_ENGINEER','CLIENT')")
+    public List<SubdivisionDtos.SubdivisionRunResponse> list(@PathVariable Long projectId) {
+        return subdivisionService.listRuns(projectId).stream().map(this::toResponse).toList();
     }
 
-    @GetMapping("/projects/{projectId}/subdivisions")
-    public List<SubdivisionDtos.RunDto> list(@PathVariable UUID projectId) {
-        return subdivisionService.list(currentUserService.requireCurrentUser(), projectId);
-    }
-
-    @GetMapping("/subdivisions/{runId}")
-    public SubdivisionDtos.RunDetailDto get(@PathVariable UUID runId) {
-        return subdivisionService.getDetail(currentUserService.requireCurrentUser(), runId);
-    }
-
-    @GetMapping("/subdivisions/{runId}/download")
-    public ResponseEntity<Resource> download(@PathVariable UUID runId) {
-        Path path = subdivisionService.getResultFile(currentUserService.requireCurrentUser(), runId);
-        Resource resource = new FileSystemResource(path);
-        String filename = "subdivision-" + runId + ".geojson";
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.parseMediaType("application/geo+json"))
-                .body(resource);
+    private SubdivisionDtos.SubdivisionRunResponse toResponse(SubdivisionRunEntity entity) {
+        SubdivisionDtos.AiExplanation explanation = subdivisionService.buildAiExplanation(entity);
+        return new SubdivisionDtos.SubdivisionRunResponse(
+                entity.getId(),
+                entity.getProject().getId(),
+                entity.getDataset().getId(),
+                entity.getStatus(),
+                entity.getOptimizationMode(),
+                entity.getParcelCount(),
+                entity.getAvgParcelAreaSqm(),
+                entity.getQualityScore(),
+                entity.getResultGeoJson(),
+                explanation
+        );
     }
 }
