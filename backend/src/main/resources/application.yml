@@ -30,3 +30,5 @@ app:
     default-optimization-mode: BALANCED
   metrics:
     storage-capacity-mb: 10240
+  oauth:
+    google-client-id: ${GOOGLE_CLIENT_ID:}

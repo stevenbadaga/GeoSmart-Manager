@@ -21,7 +21,7 @@ public class AuditController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER','SURVEYOR','ENGINEER','CIVIL_ENGINEER')")
     public List<AuditDtos.AuditLogResponse> list() {
         DateTimeFormatter formatter = DateTimeFormatter.ISO_INSTANT;
         return auditService.list().stream()

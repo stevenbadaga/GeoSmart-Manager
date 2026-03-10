@@ -2,6 +2,7 @@ import React from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/AuthContext'
 import AppShell from './components/AppShell'
+import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -27,11 +28,41 @@ function RequireAuth({ children }) {
   return children
 }
 
+function PublicOnly({ children }) {
+  const { token, loading } = useAuth()
+  if (loading) return <div className="p-10">Loading...</div>
+  if (token) return <Navigate to="/dashboard" replace />
+  return children
+}
+
 export default function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/" element={<Home />} />
+      <Route
+        path="/login"
+        element={(
+          <PublicOnly>
+            <Login />
+          </PublicOnly>
+        )}
+      />
+      <Route
+        path="/register"
+        element={(
+          <PublicOnly>
+            <Register />
+          </PublicOnly>
+        )}
+      />
+      <Route
+        path="/signup"
+        element={(
+          <PublicOnly>
+            <Register />
+          </PublicOnly>
+        )}
+      />
       <Route
         element={
           <RequireAuth>
@@ -39,7 +70,7 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/users" element={<Users />} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/projects" element={<Projects />} />

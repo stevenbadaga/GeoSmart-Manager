@@ -60,6 +60,7 @@ public class MetricsService {
         long fieldWorkProjects = projectRepository.countByStatus(ProjectStatus.IN_PROGRESS);
         long pendingComplianceProjects = projectRepository.countByStatus(ProjectStatus.REVIEW);
 
+        long totalUsers = userRepository.count();
         long activeUsers = userRepository.countByStatus(UserStatus.ACTIVE);
 
         Instant todayStart = LocalDate.now(ZoneId.of("Africa/Kigali")).atStartOfDay(ZoneId.of("Africa/Kigali")).toInstant();
@@ -92,6 +93,7 @@ public class MetricsService {
                 fieldWorkProjects,
                 pendingComplianceProjects,
                 completedProjects,
+                totalUsers,
                 activeUsers,
                 usersCreatedToday,
                 projectsCreatedThisMonth,

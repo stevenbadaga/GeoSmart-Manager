@@ -7,6 +7,7 @@ public class MetricsDtos {
             long fieldWorkProjects,
             long pendingComplianceProjects,
             long completedProjects,
+            long totalUsers,
             long activeUsers,
             long usersCreatedToday,
             long projectsCreatedThisMonth,

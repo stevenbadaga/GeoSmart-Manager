@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 async function parseResponse(response) {
   const text = await response.text()
@@ -31,7 +31,9 @@ export async function apiRequest(path, options = {}) {
     const message = typeof data === 'string'
       ? data
       : data?.error || data?.message || (data ? Object.values(data).join(', ') : 'Request failed')
-    throw new Error(message)
+    const error = new Error(message)
+    error.status = response.status
+    throw error
   }
 
   return parseResponse(response)

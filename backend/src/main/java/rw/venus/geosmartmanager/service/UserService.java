@@ -86,11 +86,27 @@ public class UserService {
         return user;
     }
 
+    public UserEntity markOnline() {
+        UserEntity user = getCurrent();
+        boolean statusChanged = user.getStatus() != UserStatus.ACTIVE;
+        user.setStatus(UserStatus.ACTIVE);
+        user.setLastActiveAt(Instant.now());
+        userRepository.save(user);
+        if (statusChanged) {
+            auditService.log(user.getEmail(), "ONLINE", "User", user.getId(), "User marked online");
+        }
+        return user;
+    }
+
     public UserEntity markOffline() {
         UserEntity user = getCurrent();
+        boolean statusChanged = user.getStatus() != UserStatus.OFFLINE;
         user.setStatus(UserStatus.OFFLINE);
         user.setLastActiveAt(Instant.now());
         userRepository.save(user);
+        if (statusChanged) {
+            auditService.log(user.getEmail(), "OFFLINE", "User", user.getId(), "User marked offline");
+        }
         return user;
     }
 }

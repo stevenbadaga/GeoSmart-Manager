@@ -20,6 +20,15 @@ public class AuthDtos {
             @NotBlank String password
     ) {}
 
+    public record GoogleLoginRequest(
+            @NotBlank String idToken
+    ) {}
+
+    public record GoogleConfigResponse(
+            boolean enabled,
+            String clientId
+    ) {}
+
     public record UserResponse(
             Long id,
             String fullName,

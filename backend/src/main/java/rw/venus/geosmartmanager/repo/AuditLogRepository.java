@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface AuditLogRepository extends JpaRepository<AuditLogEntity, Long> {
     Optional<AuditLogEntity> findTopByOrderByIdDesc();
     List<AuditLogEntity> findAllByOrderByIdAsc();
+    List<AuditLogEntity> findAllByOrderByCreatedAtDesc();
 
     @Query("select coalesce(sum(length(a.details)), 0) from AuditLogEntity a")
     long sumDetailsSize();

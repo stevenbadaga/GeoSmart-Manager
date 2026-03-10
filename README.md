@@ -47,6 +47,27 @@ Faculty of Computing and Information Sciences, AUCA, Kigali, Rwanda
 
 Default API URL: `http://localhost:8080` (copy `frontend/.env.example` to `frontend/.env` to change).
 
+## Google Sign-In (Optional)
+To enable Google login on the sign-in page:
+1. Create an OAuth Client ID in Google Cloud Console (type: Web application).
+2. Add frontend origin(s), e.g. `http://localhost:5173`, in authorized JavaScript origins.
+3. Configure backend with your client ID (frontend can auto-read it from backend).
+
+Frontend (`frontend/.env`):
+```
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+```
+
+Backend environment variable:
+```
+set GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+```
+
+Optional frontend override (`frontend/.env`):
+```
+VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+```
+
 ## Local PostgreSQL Setup (example)
 If you are not using Docker, create a matching user/database:
 ```

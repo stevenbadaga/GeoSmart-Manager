@@ -35,7 +35,7 @@ public class AuditService {
     }
 
     public List<AuditLogEntity> list() {
-        return auditLogRepository.findAll();
+        return auditLogRepository.findAllByOrderByCreatedAtDesc();
     }
 
     public List<Long> verifyChain() {

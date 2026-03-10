@@ -37,6 +37,11 @@ public class UserController {
         return toResponse(userService.markOffline());
     }
 
+    @PostMapping("/me/online")
+    public AuthDtos.UserResponse markOnline() {
+        return toResponse(userService.markOnline());
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<AuthDtos.UserResponse> list() {

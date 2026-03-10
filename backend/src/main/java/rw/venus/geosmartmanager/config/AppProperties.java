@@ -8,6 +8,7 @@ public class AppProperties {
     private final Compliance compliance = new Compliance();
     private final Ai ai = new Ai();
     private final Metrics metrics = new Metrics();
+    private final Oauth oauth = new Oauth();
 
     public Jwt getJwt() {
         return jwt;
@@ -23,6 +24,10 @@ public class AppProperties {
 
     public Metrics getMetrics() {
         return metrics;
+    }
+
+    public Oauth getOauth() {
+        return oauth;
     }
 
     public static class Jwt {
@@ -106,6 +111,18 @@ public class AppProperties {
 
         public void setStorageCapacityMb(double storageCapacityMb) {
             this.storageCapacityMb = storageCapacityMb;
+        }
+    }
+
+    public static class Oauth {
+        private String googleClientId;
+
+        public String getGoogleClientId() {
+            return googleClientId;
+        }
+
+        public void setGoogleClientId(String googleClientId) {
+            this.googleClientId = googleClientId;
         }
     }
 }

@@ -76,6 +76,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [metrics, setMetrics] = useState({
     totalProjects: 0,
+    totalUsers: 0,
     activeUsers: 0,
     complianceAlerts: 0,
     complianceCritical: 0,
@@ -88,6 +89,8 @@ export default function Dashboard() {
     serverLoadPercent: 0,
     apiLatencyMs: 0
   })
+  const [metricsLoaded, setMetricsLoaded] = useState(false)
+  const [metricsError, setMetricsError] = useState('')
   const [lastUpdated, setLastUpdated] = useState(null)
   const [events, setEvents] = useState([])
 
@@ -95,48 +98,67 @@ export default function Dashboard() {
     {
       key: 'projects',
       title: 'Total Projects',
-      value: metrics.totalProjects,
-      meta: `${metrics.projectsCreatedThisMonth} new this month`,
+      value: metricsLoaded ? metrics.totalProjects : '--',
+      meta: metricsLoaded ? `${metrics.projectsCreatedThisMonth} new this month` : 'Loading live data...',
       metaTone: 'text-success',
       icon: icons.projects
     },
     {
       key: 'users',
-      title: 'Active Users',
-      value: metrics.activeUsers,
-      meta: `${metrics.usersCreatedToday} new today`,
+      title: 'Total Users',
+      value: metricsLoaded ? metrics.totalUsers : '--',
+      meta: metricsLoaded ? `${metrics.activeUsers} currently active` : 'Loading live data...',
       metaTone: 'text-success',
       icon: icons.users
     },
     {
       key: 'alerts',
       title: 'Compliance Alerts',
-      value: metrics.complianceAlerts,
-      meta: `${metrics.complianceCritical} critical issues`,
+      value: metricsLoaded ? metrics.complianceAlerts : '--',
+      meta: metricsLoaded ? `${metrics.complianceCritical} critical issues` : 'Loading live data...',
       metaTone: metrics.complianceCritical > 0 ? 'text-danger' : 'text-success',
       icon: icons.alerts
     },
     {
       key: 'storage',
       title: 'Data Storage',
-      value: formatBytes(metrics.storageUsedBytes),
-      meta: `${formatPercent(metrics.storagePercent)} of capacity`,
+      value: metricsLoaded ? formatBytes(metrics.storageUsedBytes) : '--',
+      meta: metricsLoaded ? `${formatPercent(metrics.storagePercent)} of capacity` : 'Loading live data...',
       metaTone: 'text-success',
       icon: icons.storage
     }
-  ]), [metrics])
+  ]), [metrics, metricsLoaded])
 
   useEffect(() => {
     let active = true
+    let refreshing = false
 
     const loadMetrics = async () => {
       try {
         const data = await api.get('/api/metrics/overview')
         if (!active) return
-        setMetrics((current) => ({ ...current, ...data }))
+        let totalUsers = Number.isFinite(data?.totalUsers) ? data.totalUsers : null
+        if (totalUsers === null && user?.role === 'ADMIN') {
+          try {
+            const users = await api.get('/api/users')
+            if (Array.isArray(users)) {
+              totalUsers = users.length
+            }
+          } catch {
+            // ignore
+          }
+        }
+        if (totalUsers === null) {
+          totalUsers = Number.isFinite(data?.activeUsers) ? data.activeUsers : 0
+        }
+
+        setMetrics((current) => ({ ...current, ...data, totalUsers }))
+        setMetricsLoaded(true)
+        setMetricsError('')
         setLastUpdated(new Date())
-      } catch {
-        // ignore
+      } catch (error) {
+        if (!active) return
+        setMetricsError(error?.message || 'Unable to load live dashboard metrics.')
       }
     }
 
@@ -163,18 +185,37 @@ export default function Dashboard() {
       }
     }
 
-    loadMetrics()
-    loadEvents()
-    measureLatency()
-    const interval = setInterval(() => {
-      loadMetrics()
-      loadEvents()
-      measureLatency()
-    }, 60000)
+    const refreshDashboard = async () => {
+      if (!active || refreshing) return
+      refreshing = true
+      try {
+        await Promise.all([loadMetrics(), loadEvents(), measureLatency()])
+      } finally {
+        refreshing = false
+      }
+    }
+
+    refreshDashboard()
+    const interval = setInterval(refreshDashboard, 15000)
+
+    const handleFocus = () => {
+      refreshDashboard()
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshDashboard()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
 
     return () => {
       active = false
       clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [user?.role])
 
@@ -184,6 +225,9 @@ export default function Dashboard() {
         <p className="text-xs uppercase tracking-[0.2em] text-ink/40">System Overview</p>
         <h1 className="text-2xl font-semibold text-ink mt-2">Operational Snapshot</h1>
         <p className="text-sm text-ink/60">Monitor active geospatial programs, user activity, and compliance readiness.</p>
+        {metricsError && (
+          <p className="text-sm text-danger mt-2">{metricsError}</p>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
