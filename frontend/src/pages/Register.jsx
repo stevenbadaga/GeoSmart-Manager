@@ -5,6 +5,15 @@ import Input from '../components/Input'
 import Card from '../components/Card'
 import { useAuth } from '../auth/AuthContext'
 
+const registrationRoleOptions = [
+  { value: 'SURVEYOR', label: 'Surveyor' },
+  { value: 'ENGINEER', label: 'Engineer' },
+  { value: 'CIVIL_ENGINEER', label: 'Civil Engineer' },
+  { value: 'PROJECT_MANAGER', label: 'Project Manager' },
+  { value: 'CLIENT', label: 'Client' },
+  { value: 'ADMIN', label: 'Administrator (first account only)' }
+]
+
 export default function Register() {
   const navigate = useNavigate()
   const { register } = useAuth()
@@ -12,7 +21,11 @@ export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [role, setRole] = useState('ENGINEER')
+  const [role, setRole] = useState('SURVEYOR')
+  const [professionalLicense, setProfessionalLicense] = useState('')
+  const [organization, setOrganization] = useState('')
+  const [specialization, setSpecialization] = useState('')
+  const [certifications, setCertifications] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -21,7 +34,16 @@ export default function Register() {
     setError('')
     setLoading(true)
     try {
-      await register({ fullName, email, password, role })
+      await register({
+        fullName,
+        email,
+        password,
+        role,
+        professionalLicense,
+        organization,
+        specialization,
+        certifications
+      })
       navigate('/dashboard')
     } catch (err) {
       setError(err.message)
@@ -48,13 +70,13 @@ export default function Register() {
             <p className="text-xs uppercase tracking-[0.2em] text-river">Start Here</p>
             <h1 className="mt-2 text-4xl leading-tight text-ink sm:text-5xl">Create your GeoSmart account.</h1>
             <p className="mt-4 max-w-xl text-base text-ink/70">
-              Register once and access operational dashboards, map tools, and project workflows in one secure space.
+              Register once and access operational dashboards, map tools, and project workflows in one secure space with your professional profile attached.
             </p>
           </div>
           <div className="rounded-2xl border border-clay/70 bg-white/80 p-4">
             <p className="text-sm font-semibold text-ink">Account setup note</p>
             <p className="mt-1 text-xs text-ink/65">
-              Use administrator role only for initial system setup or authorized platform management.
+              Survey and engineering roles can include license, specialization, and certifications during sign-up. Administrator is still restricted to the first account.
             </p>
           </div>
         </section>
@@ -87,9 +109,22 @@ export default function Register() {
             <label className="block space-y-2">
               <span className="text-sm font-medium text-ink/80">Role</span>
               <select className="input" value={role} onChange={(e) => setRole(e.target.value)}>
-                <option value="ENGINEER">Engineer</option>
-                <option value="ADMIN">Administrator (first account only)</option>
+                {registrationRoleOptions.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
+            </label>
+            <Input label="Organization" value={organization} onChange={(e) => setOrganization(e.target.value)} />
+            <Input label="Professional license" value={professionalLicense} onChange={(e) => setProfessionalLicense(e.target.value)} />
+            <Input label="Specialization" value={specialization} onChange={(e) => setSpecialization(e.target.value)} />
+            <label className="block space-y-2">
+              <span className="text-sm font-medium text-ink/80">Certifications</span>
+              <textarea
+                className="input min-h-24"
+                value={certifications}
+                onChange={(e) => setCertifications(e.target.value)}
+                placeholder="List certifications, memberships, or registration details"
+              />
             </label>
             {error && <p className="rounded-xl border border-danger/20 bg-danger/5 px-3 py-2 text-sm text-danger">{error}</p>}
             <Button className="w-full" disabled={loading}>{loading ? 'Creating...' : 'Create account'}</Button>

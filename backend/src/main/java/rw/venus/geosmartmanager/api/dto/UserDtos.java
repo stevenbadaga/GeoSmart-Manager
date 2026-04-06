@@ -13,13 +13,43 @@ public class UserDtos {
             @NotBlank String password,
             @NotNull Role role,
             UserStatus status,
-            String professionalLicense
+            String professionalLicense,
+            String organization,
+            String specialization,
+            String certifications
     ) {}
 
     public record UpdateUserRequest(
             String fullName,
             Role role,
             UserStatus status,
-            String professionalLicense
+            String professionalLicense,
+            String organization,
+            String specialization,
+            String certifications
+    ) {}
+
+    public record UpdateProfileRequest(
+            String fullName,
+            String professionalLicense,
+            String organization,
+            String specialization,
+            String certifications
+    ) {}
+
+    public record UserSessionResponse(
+            String sessionId,
+            String deviceLabel,
+            String userAgent,
+            String ipAddress,
+            java.time.Instant createdAt,
+            java.time.Instant lastSeenAt,
+            boolean current,
+            boolean revoked
+    ) {}
+
+    public record SessionActionResponse(
+            boolean currentSessionRevoked,
+            String message
     ) {}
 }

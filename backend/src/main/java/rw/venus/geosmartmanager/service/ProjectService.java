@@ -8,6 +8,8 @@ import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.repo.ClientRepository;
 import rw.venus.geosmartmanager.repo.ComplianceCheckRepository;
 import rw.venus.geosmartmanager.repo.DatasetRepository;
+import rw.venus.geosmartmanager.repo.ProjectCommunicationRepository;
+import rw.venus.geosmartmanager.repo.ProjectDocumentRepository;
 import rw.venus.geosmartmanager.repo.ProjectRepository;
 import rw.venus.geosmartmanager.repo.ReportRepository;
 import rw.venus.geosmartmanager.repo.SubdivisionRunRepository;
@@ -25,6 +27,8 @@ public class ProjectService {
     private final ComplianceCheckRepository complianceCheckRepository;
     private final ReportRepository reportRepository;
     private final WorkflowTaskRepository workflowTaskRepository;
+    private final ProjectDocumentRepository projectDocumentRepository;
+    private final ProjectCommunicationRepository projectCommunicationRepository;
     private final AuditService auditService;
     private final CurrentUserService currentUserService;
 
@@ -35,6 +39,8 @@ public class ProjectService {
                           ComplianceCheckRepository complianceCheckRepository,
                           ReportRepository reportRepository,
                           WorkflowTaskRepository workflowTaskRepository,
+                          ProjectDocumentRepository projectDocumentRepository,
+                          ProjectCommunicationRepository projectCommunicationRepository,
                           AuditService auditService,
                           CurrentUserService currentUserService) {
         this.projectRepository = projectRepository;
@@ -44,6 +50,8 @@ public class ProjectService {
         this.complianceCheckRepository = complianceCheckRepository;
         this.reportRepository = reportRepository;
         this.workflowTaskRepository = workflowTaskRepository;
+        this.projectDocumentRepository = projectDocumentRepository;
+        this.projectCommunicationRepository = projectCommunicationRepository;
         this.auditService = auditService;
         this.currentUserService = currentUserService;
     }
@@ -54,6 +62,9 @@ public class ProjectService {
         ProjectEntity entity = ProjectEntity.builder()
                 .code(request.code())
                 .name(request.name())
+                .projectType(normalizeOptional(request.projectType()))
+                .locationSummary(normalizeOptional(request.locationSummary()))
+                .scopeSummary(normalizeOptional(request.scopeSummary()))
                 .description(request.description())
                 .status(request.status())
                 .startDate(request.startDate())
@@ -66,8 +77,8 @@ public class ProjectService {
         return entity;
     }
 
-    public List<ProjectEntity> list() {
-        return projectRepository.findAll();
+    public List<ProjectEntity> list(boolean includeArchived) {
+        return includeArchived ? projectRepository.findAll() : projectRepository.findByArchivedAtIsNull();
     }
 
     public ProjectEntity update(Long id, ProjectDtos.ProjectRequest request) {
@@ -77,6 +88,9 @@ public class ProjectService {
                 .orElseThrow(() -> new IllegalArgumentException("Client not found"));
         entity.setCode(request.code());
         entity.setName(request.name());
+        entity.setProjectType(normalizeOptional(request.projectType()));
+        entity.setLocationSummary(normalizeOptional(request.locationSummary()));
+        entity.setScopeSummary(normalizeOptional(request.scopeSummary()));
         entity.setDescription(request.description());
         entity.setStatus(request.status());
         entity.setStartDate(request.startDate());
@@ -87,12 +101,57 @@ public class ProjectService {
         return entity;
     }
 
+    public ProjectEntity archive(Long id) {
+        ProjectEntity entity = getProject(id);
+        if (entity.getArchivedAt() == null) {
+            entity.setArchivedAt(Instant.now());
+            projectRepository.save(entity);
+            auditService.log(currentUserService.getCurrentUserEmail(), "ARCHIVE", "Project", entity.getId(), "Project archived");
+        }
+        return entity;
+    }
+
+    public ProjectEntity restore(Long id) {
+        ProjectEntity entity = getProject(id);
+        if (entity.getArchivedAt() != null) {
+            entity.setArchivedAt(null);
+            projectRepository.save(entity);
+            auditService.log(currentUserService.getCurrentUserEmail(), "RESTORE", "Project", entity.getId(), "Project restored");
+        }
+        return entity;
+    }
+
     public void delete(Long id) {
         projectRepository.deleteById(id);
         auditService.log(currentUserService.getCurrentUserEmail(), "DELETE", "Project", id, "Project deleted");
     }
 
+    public ProjectEntity getProject(Long id) {
+        return projectRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+    }
+
+    public ProjectEntity getActiveProject(Long id) {
+        ProjectEntity project = getProject(id);
+        if (project.getArchivedAt() != null) {
+            throw new IllegalArgumentException("Project is archived. Restore it before adding new records.");
+        }
+        return project;
+    }
+
+    public long documentCount(Long projectId) {
+        return projectDocumentRepository.countByProjectId(projectId);
+    }
+
+    public long communicationCount(Long projectId) {
+        return projectCommunicationRepository.countByProjectId(projectId);
+    }
+
     public ProjectWorkflowSnapshot workflowSnapshot(Long projectId) {
+        ProjectEntity project = getProject(projectId);
+        if (project.getArchivedAt() != null) {
+            return new ProjectWorkflowSnapshot("ARCHIVED", "Restore project to resume delivery", 100);
+        }
         long datasetCount = datasetRepository.countByProjectId(projectId);
         long subdivisionCount = subdivisionRunRepository.countByProjectId(projectId);
         long complianceCount = complianceCheckRepository.countByProjectId(projectId);
@@ -129,4 +188,12 @@ public class ProjectService {
             String nextAction,
             int readinessPercent
     ) {}
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
 }

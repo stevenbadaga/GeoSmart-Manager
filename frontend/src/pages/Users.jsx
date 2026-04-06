@@ -38,6 +38,9 @@ const emptyForm = {
   role: 'SURVEYOR',
   status: 'ACTIVE',
   professionalLicense: '',
+  organization: '',
+  specialization: '',
+  certifications: '',
   password: ''
 }
 
@@ -213,6 +216,9 @@ export default function Users() {
       role: user.role || 'SURVEYOR',
       status: user.status || 'ACTIVE',
       professionalLicense: user.professionalLicense || '',
+      organization: user.organization || '',
+      specialization: user.specialization || '',
+      certifications: user.certifications || '',
       password: ''
     })
     setShowForm(true)
@@ -253,7 +259,10 @@ export default function Users() {
           fullName: form.fullName,
           role: form.role,
           status: form.status,
-          professionalLicense: form.professionalLicense
+          professionalLicense: form.professionalLicense,
+          organization: form.organization,
+          specialization: form.specialization,
+          certifications: form.certifications
         })
         setInfo('User updated successfully.')
       } else {
@@ -263,7 +272,10 @@ export default function Users() {
           password: form.password,
           role: form.role,
           status: form.status,
-          professionalLicense: form.professionalLicense
+          professionalLicense: form.professionalLicense,
+          organization: form.organization,
+          specialization: form.specialization,
+          certifications: form.certifications
         })
         setInfo('User created successfully.')
       }
@@ -302,7 +314,10 @@ export default function Users() {
           password: row.password || '',
           role: normalizeEnum(row.role || 'SURVEYOR'),
           status: normalizeEnum(row.status || 'ACTIVE'),
-          professionalLicense: row.professionalLicense || row.license || ''
+          professionalLicense: row.professionalLicense || row.license || '',
+          organization: row.organization || '',
+          specialization: row.specialization || '',
+          certifications: row.certifications || row.certification || ''
         }
         if (!payload.fullName || !payload.email || !payload.password) {
           continue
@@ -322,7 +337,7 @@ export default function Users() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-ink">Team & Users</h1>
-          <p className="text-sm text-ink/60">Manage user access, roles, and professional credentials.</p>
+          <p className="text-sm text-ink/60">Manage user access, roles, and professional profile details.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button variant="secondary" onClick={handleBulkImport}>Bulk Import</Button>
@@ -337,7 +352,7 @@ export default function Users() {
         </div>
       </div>
       <p className="text-xs text-ink/50">
-        Bulk import CSV headers: fullName,email,password,role,status,professionalLicense
+        Bulk import CSV headers: fullName,email,password,role,status,professionalLicense,organization,specialization,certifications
       </p>
 
       <Card className="p-4">
@@ -380,7 +395,7 @@ export default function Users() {
               <tr>
                 <th className="text-left px-6 py-3 font-semibold">User Profile</th>
                 <th className="text-left px-6 py-3 font-semibold">Role</th>
-                <th className="text-left px-6 py-3 font-semibold">Professional Lic</th>
+                <th className="text-left px-6 py-3 font-semibold">Credentials</th>
                 <th className="text-left px-6 py-3 font-semibold">Status</th>
                 <th className="text-left px-6 py-3 font-semibold">Last Active</th>
                 <th className="text-left px-6 py-3 font-semibold">Actions</th>
@@ -400,6 +415,7 @@ export default function Users() {
                       <div>
                         <p className="font-semibold text-ink">{user.fullName}</p>
                         <p className="text-xs text-ink/50">{user.email}</p>
+                        <p className="text-xs text-ink/45">{user.organization || user.specialization || 'No profile details'}</p>
                       </div>
                     </div>
                   </td>
@@ -408,7 +424,10 @@ export default function Users() {
                       {formatRole(user.role)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-ink/70">{user.professionalLicense || 'N/A'}</td>
+                  <td className="px-6 py-4 text-ink/70">
+                    <p>{user.professionalLicense || 'N/A'}</p>
+                    <p className="text-xs text-ink/45 mt-1">{user.specialization || 'No specialization'}</p>
+                  </td>
                   <td className="px-6 py-4">
                     <span className="flex items-center gap-2 text-xs text-ink/70">
                       <span
@@ -514,6 +533,17 @@ export default function Users() {
                 </select>
               </label>
               <Input label="Professional license" value={form.professionalLicense} onChange={(event) => setForm({ ...form, professionalLicense: event.target.value })} />
+              <Input label="Organization" value={form.organization} onChange={(event) => setForm({ ...form, organization: event.target.value })} />
+              <Input label="Specialization" value={form.specialization} onChange={(event) => setForm({ ...form, specialization: event.target.value })} />
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-ink/80">Certifications</span>
+                <textarea
+                  className="input min-h-24"
+                  value={form.certifications}
+                  onChange={(event) => setForm({ ...form, certifications: event.target.value })}
+                  placeholder="List certifications or registration details"
+                />
+              </label>
               <div className="flex items-center justify-end gap-2 pt-2">
                 <Button variant="secondary" type="button" onClick={closeForm}>Cancel</Button>
                 <Button type="submit">{editingUser ? 'Save Changes' : 'Create User'}</Button>

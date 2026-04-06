@@ -44,6 +44,16 @@ public class ClientController {
     }
 
     private ClientDtos.ClientResponse toResponse(ClientEntity entity) {
-        return new ClientDtos.ClientResponse(entity.getId(), entity.getName(), entity.getContactEmail(), entity.getPhone(), entity.getAddress());
+        return new ClientDtos.ClientResponse(
+                entity.getId(),
+                entity.getName(),
+                entity.getContactEmail(),
+                entity.getPhone(),
+                entity.getAddress(),
+                entity.getIdDocumentReference(),
+                entity.getLandOwnershipReference(),
+                entity.getKycStatus(),
+                entity.getReviewerNotes()
+        );
     }
 }

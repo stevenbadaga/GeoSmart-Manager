@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import rw.venus.geosmartmanager.domain.DatasetType;
+import rw.venus.geosmartmanager.domain.DatasetSourceFormat;
 
 import java.time.Instant;
 
@@ -33,9 +34,19 @@ public class DatasetEntity {
     @Column(nullable = false)
     private DatasetType type;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_format", nullable = false)
+    private DatasetSourceFormat sourceFormat;
+
+    @Column(name = "source_file_name")
+    private String sourceFileName;
+
     @Column(columnDefinition = "TEXT", nullable = false)
     private String geoJson;
 
     @Column(nullable = false)
     private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 }

@@ -3,6 +3,7 @@ import Card from '../components/Card'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import { api } from '../api/http'
+import { useAuth } from '../auth/AuthContext'
 
 const optimizationModes = ['BALANCED', 'MAXIMIZE_AREA', 'MINIMIZE_ROADS']
 
@@ -11,7 +12,22 @@ function formatScore(value) {
   return `${Math.round(value)}`
 }
 
+function statusPill(status) {
+  if (status === 'PASS') return 'bg-success/10 text-success'
+  if (status === 'WARN') return 'bg-warning/15 text-warning'
+  return 'bg-danger/10 text-danger'
+}
+
+function formatDateTime(value) {
+  if (!value) return 'N/A'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'N/A'
+  return date.toLocaleString()
+}
+
 export default function Subdivision() {
+  const { user } = useAuth()
+  const canRunLiveCompliance = ['ADMIN', 'PROJECT_MANAGER', 'SURVEYOR', 'ENGINEER', 'CIVIL_ENGINEER'].includes(user?.role || '')
   const [projects, setProjects] = useState([])
   const [datasets, setDatasets] = useState([])
   const [runs, setRuns] = useState([])
@@ -22,6 +38,11 @@ export default function Subdivision() {
   const [result, setResult] = useState('')
   const [lastRun, setLastRun] = useState(null)
   const [isRunning, setIsRunning] = useState(false)
+  const [liveCompliance, setLiveCompliance] = useState(null)
+  const [liveChecking, setLiveChecking] = useState(false)
+  const [liveError, setLiveError] = useState('')
+  const [autoLiveCheck, setAutoLiveCheck] = useState(true)
+  const [pendingDesignChanges, setPendingDesignChanges] = useState(false)
   const [error, setError] = useState('')
 
   const avgParcels = runs.length
@@ -33,23 +54,76 @@ export default function Subdivision() {
   }, [])
 
   useEffect(() => {
-    if (!selectedProject) return
+    if (!selectedProject) {
+      setDatasets([])
+      setRuns([])
+      setSelectedDataset('')
+      setResult('')
+      setLastRun(null)
+      setLiveCompliance(null)
+      setLiveError('')
+      setPendingDesignChanges(false)
+      return
+    }
+    setError('')
+    setDatasets([])
+    setRuns([])
+    setSelectedDataset('')
+    setResult('')
+    setLastRun(null)
+    setLiveCompliance(null)
+    setLiveError('')
+    setPendingDesignChanges(false)
     Promise.all([
       api.get(`/api/projects/${selectedProject}/datasets`),
       api.get(`/api/projects/${selectedProject}/subdivisions`)
     ])
       .then(([datasetData, runData]) => {
         setDatasets(datasetData)
-        setRuns(runData)
+        setSelectedDataset(datasetData[0] ? String(datasetData[0].id) : '')
+        const sortedRuns = [...runData].sort((a, b) => b.id - a.id)
+        setRuns(sortedRuns)
+        setLastRun(sortedRuns[0] || null)
       })
       .catch((err) => setError(err.message))
   }, [selectedProject])
+
+  useEffect(() => {
+    if (!lastRun) return
+    setPendingDesignChanges(true)
+  }, [selectedDataset, parcelCount, optimizationMode])
+
+  const runLiveCompliance = async (runId, { silent = false } = {}) => {
+    if (!selectedProject || !runId || !canRunLiveCompliance) return
+    if (!silent) setLiveChecking(true)
+    setLiveError('')
+    try {
+      const data = await api.get(`/api/projects/${selectedProject}/compliance/live/${runId}`)
+      setLiveCompliance(data)
+    } catch (err) {
+      setLiveError(err.message || 'Unable to run live compliance check.')
+    } finally {
+      if (!silent) setLiveChecking(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!autoLiveCheck || !selectedProject || !lastRun?.id || !canRunLiveCompliance) return
+    runLiveCompliance(lastRun.id, { silent: true })
+    const interval = setInterval(() => {
+      runLiveCompliance(lastRun.id, { silent: true })
+    }, 15000)
+    return () => clearInterval(interval)
+  }, [autoLiveCheck, selectedProject, lastRun?.id, canRunLiveCompliance])
 
   const onRun = async (e) => {
     e.preventDefault()
     setError('')
     setResult('')
     setLastRun(null)
+    setLiveCompliance(null)
+    setLiveError('')
+    setPendingDesignChanges(false)
     if (!selectedProject || !selectedDataset) {
       setError('Select project and dataset')
       return
@@ -64,7 +138,10 @@ export default function Subdivision() {
       setResult(data.resultGeoJson)
       setLastRun(data)
       const updatedRuns = await api.get(`/api/projects/${selectedProject}/subdivisions`)
-      setRuns(updatedRuns)
+      setRuns([...updatedRuns].sort((a, b) => b.id - a.id))
+      if (autoLiveCheck && canRunLiveCompliance) {
+        await runLiveCompliance(data.id)
+      }
     } catch (err) {
       setError(err.message)
     } finally {
@@ -126,6 +203,72 @@ export default function Subdivision() {
           {isRunning ? 'AI engine is processing subdivision...' : 'AI engine idle. Ready for next run.'}
         </div>
       </Card>
+
+      {canRunLiveCompliance && (
+        <Card title="Live Compliance Monitor">
+          <div className="space-y-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <label className="inline-flex items-center gap-2 text-sm text-ink/70">
+                <input
+                  type="checkbox"
+                  checked={autoLiveCheck}
+                  onChange={(event) => setAutoLiveCheck(event.target.checked)}
+                />
+                Auto-validate every 15 seconds
+              </label>
+              <Button
+                variant="secondary"
+                onClick={() => runLiveCompliance(lastRun?.id)}
+                disabled={!lastRun?.id || liveChecking}
+              >
+                {liveChecking ? 'Validating...' : 'Validate current run'}
+              </Button>
+            </div>
+
+            {pendingDesignChanges && (
+              <p className="text-xs text-warning">
+                Design inputs changed since the latest subdivision run. Run subdivision again to validate the updated design.
+              </p>
+            )}
+            {liveError && <p className="text-sm text-danger">{liveError}</p>}
+            {!lastRun && <p className="text-sm text-ink/60">Run a subdivision to start live compliance monitoring.</p>}
+
+            {liveCompliance && (
+              <div className="rounded-xl border border-clay/70 bg-white/70 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-semibold text-ink">Compliance status</p>
+                  <span className={`text-xs px-2 py-1 rounded-full ${statusPill(liveCompliance.status)}`}>
+                    {liveCompliance.status}
+                  </span>
+                </div>
+                <p className="text-xs text-ink/55 mt-2">
+                  Check #{liveCompliance.id} | Framework: {liveCompliance.frameworkVersion || 'N/A'} | Checked: {formatDateTime(liveCompliance.checkedAt)}
+                </p>
+                <p className="text-sm text-ink/70 mt-2">{liveCompliance.findings}</p>
+                <div className="mt-3 space-y-2">
+                  {(liveCompliance.ruleResults || []).map((rule) => (
+                    <div key={`${liveCompliance.id}-${rule.ruleCode}`} className="rounded-lg border border-clay/60 bg-white p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-semibold text-ink">{rule.ruleName}</p>
+                          <p className="text-xs text-ink/55">{rule.ruleCode} | Clause: {rule.clauseReference}</p>
+                        </div>
+                        <span className={`text-[11px] px-2 py-1 rounded-full ${statusPill(rule.status)}`}>
+                          {rule.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-ink/70 mt-2">{rule.detail}</p>
+                      {rule.suggestion && (
+                        <p className="text-xs text-ink/65 mt-1"><span className="font-semibold">Suggestion:</span> {rule.suggestion}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       <Card title="Subdivision Inputs">
         <form className="grid md:grid-cols-2 gap-4" onSubmit={onRun}>

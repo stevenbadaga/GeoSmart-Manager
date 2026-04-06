@@ -37,6 +37,12 @@ public class ComplianceCheckEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String findings;
 
+    @Column(columnDefinition = "TEXT")
+    private String detailsJson;
+
+    @Column(length = 120)
+    private String frameworkVersion;
+
     @Column(nullable = false)
     private Instant checkedAt;
 }

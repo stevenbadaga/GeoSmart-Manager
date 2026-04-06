@@ -9,6 +9,8 @@ import java.time.Instant;
 
 public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
     List<ProjectEntity> findByClientId(Long clientId);
+    List<ProjectEntity> findByArchivedAtIsNull();
+    List<ProjectEntity> findByArchivedAtIsNotNull();
 
     long countByStatus(ProjectStatus status);
 

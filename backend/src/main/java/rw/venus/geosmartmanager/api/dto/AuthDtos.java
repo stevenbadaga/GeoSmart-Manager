@@ -12,7 +12,11 @@ public class AuthDtos {
             @NotBlank String fullName,
             @Email @NotBlank String email,
             @NotBlank String password,
-            Role role
+            Role role,
+            String professionalLicense,
+            String organization,
+            String specialization,
+            String certifications
     ) {}
 
     public record LoginRequest(
@@ -36,6 +40,9 @@ public class AuthDtos {
             Role role,
             UserStatus status,
             String professionalLicense,
+            String organization,
+            String specialization,
+            String certifications,
             Instant lastActiveAt
     ) {}
 

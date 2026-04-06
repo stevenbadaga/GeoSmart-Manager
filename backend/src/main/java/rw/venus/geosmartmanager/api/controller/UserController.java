@@ -32,6 +32,11 @@ public class UserController {
         return toResponse(user);
     }
 
+    @PutMapping("/me")
+    public AuthDtos.UserResponse updateCurrentProfile(@Validated @RequestBody UserDtos.UpdateProfileRequest request) {
+        return toResponse(userService.updateCurrentProfile(request));
+    }
+
     @PostMapping("/me/offline")
     public AuthDtos.UserResponse markOffline() {
         return toResponse(userService.markOffline());
@@ -40,6 +45,26 @@ public class UserController {
     @PostMapping("/me/online")
     public AuthDtos.UserResponse markOnline() {
         return toResponse(userService.markOnline());
+    }
+
+    @PostMapping("/me/logout")
+    public UserDtos.SessionActionResponse logout() {
+        return userService.logoutCurrentSession();
+    }
+
+    @GetMapping("/me/sessions")
+    public List<UserDtos.UserSessionResponse> listMySessions() {
+        return userService.listCurrentSessions();
+    }
+
+    @PostMapping("/me/sessions/revoke-others")
+    public UserDtos.SessionActionResponse revokeOtherSessions() {
+        return userService.revokeOtherSessions();
+    }
+
+    @PostMapping("/me/sessions/{sessionId}/revoke")
+    public UserDtos.SessionActionResponse revokeSession(@PathVariable String sessionId) {
+        return userService.revokeSession(sessionId);
     }
 
     @GetMapping
@@ -69,6 +94,9 @@ public class UserController {
                 user.getRole(),
                 user.getStatus(),
                 user.getProfessionalLicense(),
+                user.getOrganization(),
+                user.getSpecialization(),
+                user.getCertifications(),
                 user.getLastActiveAt()
         );
     }

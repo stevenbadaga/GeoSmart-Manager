@@ -50,6 +50,15 @@ public class UserEntity implements UserDetails {
     @Column(name = "professional_license")
     private String professionalLicense;
 
+    @Column(length = 200)
+    private String organization;
+
+    @Column(length = 200)
+    private String specialization;
+
+    @Column(columnDefinition = "TEXT")
+    private String certifications;
+
     @Column(name = "last_active_at")
     private Instant lastActiveAt;
 

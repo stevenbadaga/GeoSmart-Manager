@@ -17,6 +17,12 @@ export function AuthProvider({ children }) {
     setPresenceNotice(null)
   }
 
+  const refreshUser = async () => {
+    const data = await api.get('/api/users/me')
+    setUser(data)
+    return data
+  }
+
   useEffect(() => {
     if (!token) {
       setUser(null)
@@ -141,9 +147,13 @@ export function AuthProvider({ children }) {
     storeSession(data, 'Signed in with Google.')
   }
 
-  const logout = () => {
+  const logout = async () => {
     if (token) {
-      api.post('/api/users/me/offline').catch(() => {})
+      try {
+        await api.post('/api/users/me/logout', {})
+      } catch {
+        // ignore
+      }
     }
     localStorage.removeItem('token')
     setToken(null)
@@ -160,6 +170,7 @@ export function AuthProvider({ children }) {
       register,
       googleLogin,
       logout,
+      refreshUser,
       presenceNotice,
       clearPresenceNotice
     }),

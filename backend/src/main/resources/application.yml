@@ -26,6 +26,23 @@ app:
     max-parcel-area-sqm: 100000
     max-parcel-count: 200
     max-parcel-aspect-ratio: 6
+    framework-version: "RLMUA Subdivision Framework 2026.1"
+    updates:
+      - id: "RLMUA-2026-01"
+        title: "Subdivision evidence package tightened"
+        clause-reference: "RLMUA-LS 8.4"
+        effective-date: "2026-01-15"
+        summary: "Submission packages must include parcel geometry summary and traceable compliance findings."
+      - id: "RLMUA-2025-11"
+        title: "Minimum frontage clarification"
+        clause-reference: "RLMUA-LS 5.3"
+        effective-date: "2025-11-01"
+        summary: "Irregular parcel designs require documented frontage and access rationale."
+      - id: "NMP-2025-09"
+        title: "Master plan boundary submission alignment"
+        clause-reference: "NMP-CAD 3.2"
+        effective-date: "2025-09-20"
+        summary: "Submissions outside approved master-plan extents are automatically escalated for review."
   ai:
     default-optimization-mode: BALANCED
   metrics:

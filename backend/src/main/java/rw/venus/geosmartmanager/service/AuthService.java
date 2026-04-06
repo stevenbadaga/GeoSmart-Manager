@@ -25,19 +25,22 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuditService auditService;
     private final GoogleTokenVerifierService googleTokenVerifierService;
+    private final UserSessionService userSessionService;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        AuthenticationManager authenticationManager,
                        JwtService jwtService,
                        AuditService auditService,
-                       GoogleTokenVerifierService googleTokenVerifierService) {
+                       GoogleTokenVerifierService googleTokenVerifierService,
+                       UserSessionService userSessionService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.auditService = auditService;
         this.googleTokenVerifierService = googleTokenVerifierService;
+        this.userSessionService = userSessionService;
     }
 
     public AuthDtos.AuthResponse register(AuthDtos.RegisterRequest request) {
@@ -57,6 +60,10 @@ public class AuthService {
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(role)
                 .status(UserStatus.ACTIVE)
+                .professionalLicense(normalizeOptional(request.professionalLicense()))
+                .organization(normalizeOptional(request.organization()))
+                .specialization(normalizeOptional(request.specialization()))
+                .certifications(normalizeOptional(request.certifications()))
                 .createdAt(now)
                 .lastActiveAt(now)
                 .build();
@@ -118,7 +125,11 @@ public class AuthService {
     }
 
     private AuthDtos.AuthResponse buildAuthResponse(UserEntity user) {
-        String token = jwtService.generateToken(user.getEmail(), Map.of("role", user.getRole().name()));
+        var session = userSessionService.createSession(user);
+        String token = jwtService.generateToken(user.getEmail(), Map.of(
+                "role", user.getRole().name(),
+                "sid", session.getSessionId()
+        ));
         return new AuthDtos.AuthResponse(token, new AuthDtos.UserResponse(
                 user.getId(),
                 user.getFullName(),
@@ -126,7 +137,18 @@ public class AuthService {
                 user.getRole(),
                 user.getStatus(),
                 user.getProfessionalLicense(),
+                user.getOrganization(),
+                user.getSpecialization(),
+                user.getCertifications(),
                 user.getLastActiveAt()
         ));
+    }
+
+    private String normalizeOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

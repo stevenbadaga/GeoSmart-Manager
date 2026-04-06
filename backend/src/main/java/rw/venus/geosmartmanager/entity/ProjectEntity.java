@@ -29,6 +29,15 @@ public class ProjectEntity {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "project_type", length = 120)
+    private String projectType;
+
+    @Column(name = "location_summary")
+    private String locationSummary;
+
+    @Column(name = "scope_summary", columnDefinition = "TEXT")
+    private String scopeSummary;
+
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -42,6 +51,9 @@ public class ProjectEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "client_id")
     private ClientEntity client;
+
+    @Column(name = "archived_at")
+    private Instant archivedAt;
 
     @Column(nullable = false)
     private Instant createdAt;

@@ -2,6 +2,9 @@ package rw.venus.geosmartmanager.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
     private final Jwt jwt = new Jwt();
@@ -56,6 +59,8 @@ public class AppProperties {
         private double maxParcelAreaSqm;
         private int maxParcelCount;
         private double maxParcelAspectRatio;
+        private String frameworkVersion = "RLMUA-Default";
+        private List<RegulatoryUpdate> updates = new ArrayList<>();
 
         public double getMinParcelAreaSqm() {
             return minParcelAreaSqm;
@@ -87,6 +92,70 @@ public class AppProperties {
 
         public void setMaxParcelAspectRatio(double maxParcelAspectRatio) {
             this.maxParcelAspectRatio = maxParcelAspectRatio;
+        }
+
+        public String getFrameworkVersion() {
+            return frameworkVersion;
+        }
+
+        public void setFrameworkVersion(String frameworkVersion) {
+            this.frameworkVersion = frameworkVersion;
+        }
+
+        public List<RegulatoryUpdate> getUpdates() {
+            return updates;
+        }
+
+        public void setUpdates(List<RegulatoryUpdate> updates) {
+            this.updates = updates;
+        }
+    }
+
+    public static class RegulatoryUpdate {
+        private String id;
+        private String title;
+        private String clauseReference;
+        private String effectiveDate;
+        private String summary;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getClauseReference() {
+            return clauseReference;
+        }
+
+        public void setClauseReference(String clauseReference) {
+            this.clauseReference = clauseReference;
+        }
+
+        public String getEffectiveDate() {
+            return effectiveDate;
+        }
+
+        public void setEffectiveDate(String effectiveDate) {
+            this.effectiveDate = effectiveDate;
+        }
+
+        public String getSummary() {
+            return summary;
+        }
+
+        public void setSummary(String summary) {
+            this.summary = summary;
         }
     }
 

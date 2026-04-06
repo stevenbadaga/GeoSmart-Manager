@@ -12,6 +12,7 @@ import rw.venus.geosmartmanager.api.dto.ReportDtos;
 import rw.venus.geosmartmanager.api.dto.SubdivisionDtos;
 import rw.venus.geosmartmanager.api.dto.WorkflowDtos;
 import rw.venus.geosmartmanager.domain.DatasetType;
+import rw.venus.geosmartmanager.domain.KycStatus;
 import rw.venus.geosmartmanager.domain.ProjectStatus;
 import rw.venus.geosmartmanager.domain.ReportType;
 import rw.venus.geosmartmanager.domain.SubdivisionOptimizationMode;
@@ -66,19 +67,30 @@ public class SampleDataSeeder implements CommandLineRunner {
                     "Umutekano Cooperative",
                     "contact@umutekano.rw",
                     "+250780123456",
-                    "Kigali, Gasabo"
+                    "Kigali, Gasabo",
+                    "NID-UMU-001",
+                    "LAND-UMU-001",
+                    KycStatus.VERIFIED,
+                    "Core cooperative documents verified"
             ));
 
             ClientEntity client2 = clientService.create(new ClientDtos.ClientRequest(
                     "Nyumba Developers",
                     "projects@nyumba.rw",
                     "+250785445566",
-                    "Kigali, Kicukiro"
+                    "Kigali, Kicukiro",
+                    "NID-NYU-002",
+                    "LAND-NYU-002",
+                    KycStatus.PENDING,
+                    "Awaiting land title cross-check"
             ));
 
             ProjectEntity project1 = projectService.create(new ProjectDtos.ProjectRequest(
                     "GS-001",
                     "Kigali Parcel Subdivision",
+                    "Land Subdivision",
+                    "Gasabo District, Kigali",
+                    "Subdivision planning for residential parcels",
                     "Subdivision planning for residential parcels",
                     ProjectStatus.IN_PROGRESS,
                     LocalDate.now().minusDays(14),
@@ -89,6 +101,9 @@ public class SampleDataSeeder implements CommandLineRunner {
             ProjectEntity project2 = projectService.create(new ProjectDtos.ProjectRequest(
                     "GS-002",
                     "Urban Expansion Survey",
+                    "Survey",
+                    "Kicukiro District, Kigali",
+                    "Boundary and UPI validation",
                     "Boundary and UPI validation",
                     ProjectStatus.PLANNING,
                     LocalDate.now().minusDays(3),

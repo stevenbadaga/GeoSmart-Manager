@@ -26,8 +26,8 @@ public class ProjectController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER','SURVEYOR','ENGINEER','CIVIL_ENGINEER','CLIENT')")
-    public List<ProjectDtos.ProjectResponse> list() {
-        return projectService.list().stream().map(this::toResponse).toList();
+    public List<ProjectDtos.ProjectResponse> list(@RequestParam(defaultValue = "false") boolean includeArchived) {
+        return projectService.list(includeArchived).stream().map(this::toResponse).toList();
     }
 
     @PutMapping("/{id}")
@@ -42,18 +42,37 @@ public class ProjectController {
         projectService.delete(id);
     }
 
+    @PostMapping("/{id}/archive")
+    @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER')")
+    public ProjectDtos.ProjectResponse archive(@PathVariable Long id) {
+        return toResponse(projectService.archive(id));
+    }
+
+    @PostMapping("/{id}/restore")
+    @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER')")
+    public ProjectDtos.ProjectResponse restore(@PathVariable Long id) {
+        return toResponse(projectService.restore(id));
+    }
+
     private ProjectDtos.ProjectResponse toResponse(ProjectEntity entity) {
         ProjectService.ProjectWorkflowSnapshot workflow = projectService.workflowSnapshot(entity.getId());
         return new ProjectDtos.ProjectResponse(
                 entity.getId(),
                 entity.getCode(),
                 entity.getName(),
+                entity.getProjectType(),
+                entity.getLocationSummary(),
+                entity.getScopeSummary(),
                 entity.getDescription(),
                 entity.getStatus(),
                 entity.getStartDate(),
                 entity.getEndDate(),
                 entity.getClient().getId(),
                 entity.getClient().getName(),
+                entity.getArchivedAt() != null,
+                entity.getArchivedAt(),
+                projectService.documentCount(entity.getId()),
+                projectService.communicationCount(entity.getId()),
                 workflow.stage(),
                 workflow.nextAction(),
                 workflow.readinessPercent()
