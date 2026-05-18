@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import rw.venus.geosmartmanager.api.dto.DatasetDtos;
 import rw.venus.geosmartmanager.entity.DatasetEntity;
 import rw.venus.geosmartmanager.entity.ProjectEntity;
+import rw.venus.geosmartmanager.domain.DatasetSourceFormat;
 import rw.venus.geosmartmanager.repo.DatasetRepository;
 import rw.venus.geosmartmanager.repo.ProjectRepository;
 
@@ -32,7 +33,11 @@ public class DatasetService {
                 .name(request.name())
                 .type(request.type())
                 .geoJson(request.geoJson())
+                .sourceFormat(DatasetSourceFormat.GEOJSON) // default source format for manual GeoJSON input
+                .sourceFileName(request.name().replaceAll("\\s+", "_") + ".geojson")
+                .metadataJson("{}")
                 .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
         datasetRepository.save(entity);
         auditService.log(currentUserService.getCurrentUserEmail(), "CREATE", "Dataset", entity.getId(), "Dataset created");

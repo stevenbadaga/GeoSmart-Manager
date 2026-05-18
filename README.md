@@ -2,6 +2,15 @@
 
 AI-integrated geospatial ERP system for automated land subdivision and survey operations, aligned with Rwanda Land Management and Use Authority (RLMUA) standards and the National Master Plan.
 
+## Impact Highlights
+- Faster, fairer land delivery: automated parcel layouts cut review cycles from weeks to minutes.
+- Built-in compliance: encodes RLMUA standards (min lot size, road width, setbacks) to reduce rework and disputes.
+- Transparent decisions: repeatable efficiency scoring makes layouts explainable to communities and authorities.
+- Housing & equity: scenario testing for affordable housing while keeping regulatory standards intact.
+- Stronger local economy: compliant titled parcels reach the market sooner, expanding the tax base.
+- Resilience & infrastructure: geospatial layers (flood, slope, utilities) help avoid risky areas and plan roads/utilities up front.
+- Open collaboration: GeoJSON/API-first design lets NGOs, startups, and civic-tech apps plug in without format friction.
+
 ## Partner Organization
 Venus Surveying and Engineering Ltd, Kigali, Rwanda
 
@@ -85,6 +94,39 @@ set DB_URL=jdbc:postgresql://localhost:5432/your_db
 ## Sample Data
 On first boot, the backend seeds demo clients, projects, datasets, subdivision runs, compliance checks, workflow tasks, and reports if the database is empty.
 If you already seeded data and want Rwanda-based sample geometry, clear the `clients` table and restart the backend.
+
+## Demo Accounts
+The backend now ensures stable demo user accounts on every startup. Missing demo accounts are created automatically and existing demo accounts keep their current password while being refreshed to active status with the expected role.
+
+Default password when the demo account is first created:
+`GeoSmart@2026`
+
+- `admin@geomart.rw` - `ADMIN`
+- `manager@geomart.rw` - `PROJECT_MANAGER`
+- `surveyor@geomart.rw` - `SURVEYOR`
+- `engineer@geomart.rw` - `ENGINEER`
+- `civil@geomart.rw` - `CIVIL_ENGINEER`
+- `client@geomart.rw` - `CLIENT`
+
+If a user forgets the password, use the `Forgot password?` flow on the sign-in page.
+
+## Forgot Password Email Setup
+Password reset emails are sent by the backend through SMTP. For Gmail, use an app password rather than your normal account password.
+
+Windows example:
+```powershell
+set MAIL_HOST=smtp.gmail.com
+set MAIL_PORT=587
+set MAIL_USERNAME=youraddress@gmail.com
+set MAIL_PASSWORD=your-16-char-app-password
+set APP_MAIL_FROM_ADDRESS=youraddress@gmail.com
+set APP_AUTH_PASSWORD_RESET_URL_BASE=http://localhost:5173/reset-password
+```
+
+Then start the backend normally. The login page now supports:
+- requesting a reset link from `/forgot-password`
+- opening the emailed link on `/reset-password?token=...`
+- changing the password and revoking old sessions automatically
 
 ## Map Visualization
 Use the `Map` page to preview dataset polygons or subdivision results on a Rwanda-centered basemap. Professional survey tools include draw/edit polygons and lines, snapping, buffering, parcel labels, coordinate readout, UTM grid (35S/36S), and GeoJSON export. Rwanda administrative layers and roads can be uploaded and styled via `properties.type` or `properties.admin_level` (e.g., district, sector, cell, village) and `properties.road_class` or `properties.highway`.

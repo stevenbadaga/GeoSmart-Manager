@@ -8,6 +8,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(false)
   const [presenceNotice, setPresenceNotice] = useState(null)
+  const statusValue = (user?.status || '').toString().toUpperCase()
+  const isApproved = ['APPROVED', 'ACTIVE'].includes(statusValue)
 
   const showPresenceNotice = (message, tone) => {
     setPresenceNotice({ id: Date.now(), message, tone })
@@ -166,6 +168,7 @@ export function AuthProvider({ children }) {
       token,
       user,
       loading,
+      isApproved,
       login,
       register,
       googleLogin,
@@ -174,7 +177,7 @@ export function AuthProvider({ children }) {
       presenceNotice,
       clearPresenceNotice
     }),
-    [token, user, loading, presenceNotice]
+    [token, user, loading, presenceNotice, isApproved]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

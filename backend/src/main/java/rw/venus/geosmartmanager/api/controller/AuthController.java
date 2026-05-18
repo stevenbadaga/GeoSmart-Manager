@@ -5,16 +5,21 @@ import org.springframework.web.bind.annotation.*;
 import rw.venus.geosmartmanager.api.dto.AuthDtos;
 import rw.venus.geosmartmanager.config.AppProperties;
 import rw.venus.geosmartmanager.service.AuthService;
+import rw.venus.geosmartmanager.service.PasswordResetService;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
     private final AuthService authService;
     private final AppProperties appProperties;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(AuthService authService, AppProperties appProperties) {
+    public AuthController(AuthService authService,
+                          AppProperties appProperties,
+                          PasswordResetService passwordResetService) {
         this.authService = authService;
         this.appProperties = appProperties;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/register")
@@ -30,6 +35,21 @@ public class AuthController {
     @PostMapping("/google")
     public AuthDtos.AuthResponse loginWithGoogle(@Valid @RequestBody AuthDtos.GoogleLoginRequest request) {
         return authService.loginWithGoogle(request);
+    }
+
+    @PostMapping("/password/forgot")
+    public AuthDtos.MessageResponse forgotPassword(@Valid @RequestBody AuthDtos.ForgotPasswordRequest request) {
+        return passwordResetService.requestPasswordReset(request);
+    }
+
+    @GetMapping("/password/reset/validate")
+    public AuthDtos.ResetTokenValidationResponse validateResetToken(@RequestParam String token) {
+        return passwordResetService.validateResetToken(token);
+    }
+
+    @PostMapping("/password/reset")
+    public AuthDtos.MessageResponse resetPassword(@Valid @RequestBody AuthDtos.ResetPasswordRequest request) {
+        return passwordResetService.resetPassword(request);
     }
 
     @GetMapping("/google/config")

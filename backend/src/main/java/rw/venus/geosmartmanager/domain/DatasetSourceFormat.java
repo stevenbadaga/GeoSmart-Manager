@@ -6,5 +6,6 @@ public enum DatasetSourceFormat {
     GPX,
     CSV,
     DXF,
-    SHAPEFILE
+    SHAPEFILE,
+    GEOPACKAGE
 }

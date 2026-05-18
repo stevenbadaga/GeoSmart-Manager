@@ -2,6 +2,7 @@ package rw.venus.geosmartmanager.api.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import rw.venus.geosmartmanager.domain.Role;
 import rw.venus.geosmartmanager.domain.UserStatus;
 
@@ -24,6 +25,16 @@ public class AuthDtos {
             @NotBlank String password
     ) {}
 
+    public record ForgotPasswordRequest(
+            @Email @NotBlank String email
+    ) {}
+
+    public record ResetPasswordRequest(
+            @NotBlank String token,
+            @NotBlank @Size(min = 8, max = 120) String newPassword,
+            @NotBlank @Size(min = 8, max = 120) String confirmPassword
+    ) {}
+
     public record GoogleLoginRequest(
             @NotBlank String idToken
     ) {}
@@ -31,6 +42,15 @@ public class AuthDtos {
     public record GoogleConfigResponse(
             boolean enabled,
             String clientId
+    ) {}
+
+    public record MessageResponse(
+            String message
+    ) {}
+
+    public record ResetTokenValidationResponse(
+            boolean valid,
+            String message
     ) {}
 
     public record UserResponse(

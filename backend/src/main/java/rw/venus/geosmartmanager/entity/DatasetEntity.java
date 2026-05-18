@@ -44,6 +44,9 @@ public class DatasetEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String geoJson;
 
+    @Column(name = "metadata_json", columnDefinition = "TEXT", nullable = false)
+    private String metadataJson;
+
     @Column(nullable = false)
     private Instant createdAt;
 

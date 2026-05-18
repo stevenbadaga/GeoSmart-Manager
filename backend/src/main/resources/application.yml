@@ -6,6 +6,20 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/geosmart}
     username: ${DB_USER:geosmart}
     password: ${DB_PASSWORD:geosmart}
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
   jpa:
     hibernate:
       ddl-auto: validate
@@ -21,6 +35,9 @@ app:
   jwt:
     secret: "geosmartmanager-secret-key-please-change-32bytes"
     expiration-ms: 86400000
+  auth:
+    password-reset-url-base: ${APP_AUTH_PASSWORD_RESET_URL_BASE:http://localhost:5173/reset-password}
+    password-reset-token-expiration-minutes: ${APP_AUTH_PASSWORD_RESET_TOKEN_EXPIRATION_MINUTES:30}
   compliance:
     min-parcel-area-sqm: 150
     max-parcel-area-sqm: 100000
@@ -49,3 +66,5 @@ app:
     storage-capacity-mb: 10240
   oauth:
     google-client-id: ${GOOGLE_CLIENT_ID:}
+  mail:
+    from-address: ${APP_MAIL_FROM_ADDRESS:${MAIL_USERNAME:}}

@@ -8,10 +8,12 @@ import java.util.List;
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
     private final Jwt jwt = new Jwt();
+    private final Auth auth = new Auth();
     private final Compliance compliance = new Compliance();
     private final Ai ai = new Ai();
     private final Metrics metrics = new Metrics();
     private final Oauth oauth = new Oauth();
+    private final Mail mail = new Mail();
 
     public Jwt getJwt() {
         return jwt;
@@ -19,6 +21,10 @@ public class AppProperties {
 
     public Compliance getCompliance() {
         return compliance;
+    }
+
+    public Auth getAuth() {
+        return auth;
     }
 
     public Ai getAi() {
@@ -31,6 +37,10 @@ public class AppProperties {
 
     public Oauth getOauth() {
         return oauth;
+    }
+
+    public Mail getMail() {
+        return mail;
     }
 
     public static class Jwt {
@@ -51,6 +61,27 @@ public class AppProperties {
 
         public void setExpirationMs(long expirationMs) {
             this.expirationMs = expirationMs;
+        }
+    }
+
+    public static class Auth {
+        private String passwordResetUrlBase;
+        private int passwordResetTokenExpirationMinutes = 30;
+
+        public String getPasswordResetUrlBase() {
+            return passwordResetUrlBase;
+        }
+
+        public void setPasswordResetUrlBase(String passwordResetUrlBase) {
+            this.passwordResetUrlBase = passwordResetUrlBase;
+        }
+
+        public int getPasswordResetTokenExpirationMinutes() {
+            return passwordResetTokenExpirationMinutes;
+        }
+
+        public void setPasswordResetTokenExpirationMinutes(int passwordResetTokenExpirationMinutes) {
+            this.passwordResetTokenExpirationMinutes = passwordResetTokenExpirationMinutes;
         }
     }
 
@@ -192,6 +223,18 @@ public class AppProperties {
 
         public void setGoogleClientId(String googleClientId) {
             this.googleClientId = googleClientId;
+        }
+    }
+
+    public static class Mail {
+        private String fromAddress;
+
+        public String getFromAddress() {
+            return fromAddress;
+        }
+
+        public void setFromAddress(String fromAddress) {
+            this.fromAddress = fromAddress;
         }
     }
 }

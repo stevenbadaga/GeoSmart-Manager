@@ -5,6 +5,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import rw.venus.geosmartmanager.api.dto.SubdivisionDtos;
 import rw.venus.geosmartmanager.entity.SubdivisionRunEntity;
+import rw.venus.geosmartmanager.service.SubdivisionModuleService;
 import rw.venus.geosmartmanager.service.SubdivisionService;
 
 import java.util.List;
@@ -13,9 +14,12 @@ import java.util.List;
 @RequestMapping("/api/projects/{projectId}/subdivisions")
 public class SubdivisionController {
     private final SubdivisionService subdivisionService;
+    private final SubdivisionModuleService subdivisionModuleService;
 
-    public SubdivisionController(SubdivisionService subdivisionService) {
+    public SubdivisionController(SubdivisionService subdivisionService,
+                                 SubdivisionModuleService subdivisionModuleService) {
         this.subdivisionService = subdivisionService;
+        this.subdivisionModuleService = subdivisionModuleService;
     }
 
     @PostMapping("/run")
@@ -31,6 +35,19 @@ public class SubdivisionController {
         return subdivisionService.listRuns(projectId).stream().map(this::toResponse).toList();
     }
 
+    @GetMapping("/demo-bundle")
+    @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER','SURVEYOR','ENGINEER','CIVIL_ENGINEER','CLIENT')")
+    public SubdivisionDtos.DemoBundleResponse demoBundle(@PathVariable Long projectId) {
+        return subdivisionModuleService.getDemoBundle(projectId);
+    }
+
+    @PostMapping("/validate")
+    @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER','SURVEYOR','ENGINEER','CIVIL_ENGINEER')")
+    public SubdivisionDtos.SubdivisionRunResponse validate(@PathVariable Long projectId,
+                                                           @Valid @RequestBody SubdivisionDtos.ValidateSubdivisionRequest request) {
+        return toResponse(subdivisionModuleService.validateSubdivision(projectId, request));
+    }
+
     private SubdivisionDtos.SubdivisionRunResponse toResponse(SubdivisionRunEntity entity) {
         SubdivisionDtos.AiExplanation explanation = subdivisionService.buildAiExplanation(entity);
         return new SubdivisionDtos.SubdivisionRunResponse(
@@ -43,7 +60,12 @@ public class SubdivisionController {
                 entity.getAvgParcelAreaSqm(),
                 entity.getQualityScore(),
                 entity.getResultGeoJson(),
-                explanation
+                explanation,
+                entity.getParentUpi(),
+                entity.getProposedLandUse(),
+                entity.getParentParcelGeoJson(),
+                subdivisionModuleService.readValidationSummary(entity.getValidationSummaryJson()),
+                entity.getCreatedAt()
         );
     }
 }

@@ -231,6 +231,11 @@ export default function Login() {
                 </button>
               </div>
             </label>
+            <div className="flex justify-end">
+              <Link className="text-sm font-semibold text-river hover:text-moss transition-colors" to="/forgot-password">
+                Forgot password?
+              </Link>
+            </div>
             {error && <p className="rounded-xl border border-danger/20 bg-danger/5 px-3 py-2 text-sm text-danger">{error}</p>}
             <Button className="w-full" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</Button>
           </form>

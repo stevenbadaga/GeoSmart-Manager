@@ -93,6 +93,16 @@ public class UserSessionService {
         return revoked;
     }
 
+    public int revokeAllSessions(Long userId) {
+        int revoked = 0;
+        for (UserSessionEntity session : userSessionRepository.findByUserIdAndRevokedAtIsNull(userId)) {
+            session.setRevokedAt(Instant.now());
+            userSessionRepository.save(session);
+            revoked += 1;
+        }
+        return revoked;
+    }
+
     private HttpServletRequest getCurrentRequest() {
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         if (attributes instanceof ServletRequestAttributes servletRequestAttributes) {

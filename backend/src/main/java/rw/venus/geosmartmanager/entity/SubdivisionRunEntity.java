@@ -51,6 +51,21 @@ public class SubdivisionRunEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String resultGeoJson;
 
+    @Column(name = "parent_upi")
+    private String parentUpi;
+
+    @Column(name = "parent_parcel_geo_json", columnDefinition = "TEXT")
+    private String parentParcelGeoJson;
+
+    @Column(name = "proposed_land_use")
+    private String proposedLandUse;
+
+    @Column(name = "validation_summary_json", columnDefinition = "TEXT")
+    private String validationSummaryJson;
+
+    @Column(name = "layer_snapshot_json", columnDefinition = "TEXT")
+    private String layerSnapshotJson;
+
     @Column(nullable = false)
     private Instant createdAt;
 }

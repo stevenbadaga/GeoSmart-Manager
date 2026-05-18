@@ -10,6 +10,7 @@ import rw.venus.geosmartmanager.service.DatasetAnalysisService;
 import rw.venus.geosmartmanager.service.DatasetService;
 
 import java.util.List;
+import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/projects/{projectId}/datasets")
@@ -42,6 +43,18 @@ public class DatasetController {
     }
 
     private DatasetDtos.DatasetResponse toResponse(DatasetEntity entity) {
-        return new DatasetDtos.DatasetResponse(entity.getId(), entity.getName(), entity.getType(), entity.getGeoJson(), entity.getProject().getId());
+        return new DatasetDtos.DatasetResponse(
+                entity.getId(),
+                entity.getName(),
+                entity.getType(),
+                entity.getSourceFormat(),
+                entity.getSourceFileName(),
+                entity.getGeoJson(),
+                entity.getProject().getId(),
+                0, // featureCount placeholder (not calculated here)
+                "UNKNOWN", // geometryTypeSummary placeholder
+                Collections.emptyList(), // propertyKeys placeholder
+                entity.getUpdatedAt() != null ? entity.getUpdatedAt() : entity.getCreatedAt()
+        );
     }
 }

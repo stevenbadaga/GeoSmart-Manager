@@ -6,6 +6,8 @@ public enum DatasetType {
     TOPOGRAPHIC,
     BOUNDARY,
     MASTER_PLAN,
+    ZONING,
     ADMIN_BOUNDARY,
-    ROAD_NETWORK
+    ROAD_NETWORK,
+    CONSTRAINTS
 }

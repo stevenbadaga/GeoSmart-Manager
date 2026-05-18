@@ -5,6 +5,13 @@ import AppShell from './components/AppShell'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import About from './pages/About'
+import Contact from './pages/Contact'
+import Solutions from './pages/Solutions'
+import Resources from './pages/Resources'
+import PendingApproval from './pages/PendingApproval'
 import Dashboard from './pages/Dashboard'
 import Users from './pages/Users'
 import Clients from './pages/Clients'
@@ -21,17 +28,19 @@ import NotFound from './pages/NotFound'
 import MapView from './pages/Map'
 import RwandaLayers from './pages/RwandaLayers'
 
+
 function RequireAuth({ children }) {
-  const { token, loading } = useAuth()
+  const { token, loading, isApproved } = useAuth()
   if (loading) return <div className="p-10">Loading...</div>
   if (!token) return <Navigate to="/login" replace />
+  if (!isApproved) return <Navigate to="/pending-approval" replace />
   return children
 }
 
 function PublicOnly({ children }) {
-  const { token, loading } = useAuth()
+  const { token, loading, isApproved } = useAuth()
   if (loading) return <div className="p-10">Loading...</div>
-  if (token) return <Navigate to="/dashboard" replace />
+  if (token) return <Navigate to={isApproved ? '/dashboard' : '/pending-approval'} replace />
   return children
 }
 
@@ -39,6 +48,11 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/solutions" element={<Solutions />} />
+      <Route path="/resources" element={<Resources />} />
+      <Route path="/pending-approval" element={<PendingApproval />} />
       <Route
         path="/login"
         element={(
@@ -62,6 +76,18 @@ export default function App() {
             <Register />
           </PublicOnly>
         )}
+      />
+      <Route
+        path="/forgot-password"
+        element={(
+          <PublicOnly>
+            <ForgotPassword />
+          </PublicOnly>
+        )}
+      />
+      <Route
+        path="/reset-password"
+        element={<ResetPassword />}
       />
       <Route
         element={
