@@ -1,0 +1,1553 @@
+{
+  "generated_at": "2026-05-26T22:14:22.434628Z",
+  "requested_data_root": "Requested Data",
+  "summary": {
+    "vector_layer_count": 8,
+    "raster_layer_count": 1,
+    "pdf_count": 1,
+    "error_count": 0
+  },
+  "key_layers": {
+    "parcels": {
+      "path": "Requested Data\\Kigali 05.22.2026\\Kigali_Parcels.shp",
+      "feature_count": 101981,
+      "non_empty_upi_count": 101981,
+      "duplicate_upi_feature_count": 2846,
+      "duplicate_upi_value_count": 1420,
+      "top_status_values": {
+        "Actual": 100934,
+        "Provisional": 1047
+      },
+      "top_accuracy_values": {
+        "C": 101871,
+        "A": 110
+      },
+      "admin_fields_present": [
+        "province",
+        "district",
+        "sector",
+        "cell",
+        "village"
+      ]
+    },
+    "masterplan": {
+      "path": "Requested Data\\Kigali Masterplan\\Kigali_Masterplan.shp",
+      "feature_count": 2310,
+      "zone_codes": [
+        "A1",
+        "C1",
+        "C3",
+        "I1",
+        "P1",
+        "P2",
+        "P3B",
+        "P3C",
+        "PA",
+        "PF1",
+        "PF2",
+        "PF3",
+        "PF5",
+        "R1",
+        "R1A",
+        "R1B",
+        "R2",
+        "R3",
+        "R4",
+        "T",
+        "U",
+        "W2",
+        "W3",
+        "W4",
+        "W5"
+      ],
+      "zone_code_count": 25,
+      "top_general_land_use": {
+        "Forest and Open Spaces": 1238,
+        "Residential": 384,
+        "Agriculture": 302,
+        "Commercial": 248,
+        "Wetlands": 63,
+        "Public Facility": 38,
+        "Public Utility": 14,
+        "Industrial": 12,
+        "Public Administration": 6,
+        "Transportation": 5
+      },
+      "expected_codes_present": [
+        "R1",
+        "R1A",
+        "R1B",
+        "R2",
+        "R3",
+        "R4",
+        "C1",
+        "C3",
+        "A1",
+        "W2",
+        "W3",
+        "W4",
+        "W5",
+        "T",
+        "U"
+      ],
+      "expected_codes_missing": [
+        "C4",
+        "A2",
+        "W1A",
+        "W1B",
+        "WB",
+        "B1",
+        "B2",
+        "B3",
+        "B4"
+      ]
+    },
+    "building_footprints": {
+      "path": "Requested Data\\Building Footprint\\Building_Footprints.shp",
+      "feature_count": 134197,
+      "top_confidence_values": {
+        "0": 134197
+      }
+    },
+    "dem": {
+      "path": "Requested Data\\DEM_30\\DEM30.img",
+      "crs": "EPSG:21036",
+      "epsg": 21036,
+      "bounding_box": [
+        -57027.824,
+        9667134.206,
+        277726.78,
+        9889427.594
+      ],
+      "resolution": [
+        30.93,
+        30.93
+      ],
+      "readable": true
+    }
+  },
+  "vector_layers": [
+    {
+      "type": "vector",
+      "path": "Requested Data\\Administrative Boundaries\\Cell_Boundary.shp",
+      "file_name": "Cell_Boundary.shp",
+      "layer_name": "Cell_Boundary",
+      "driver": "ESRI Shapefile",
+      "feature_count": 2147,
+      "geometry_type": "Polygon Z",
+      "geometry_type_samples": [
+        "Polygon"
+      ],
+      "crs": "PROJCS[\"TM_Rwanda\",GEOGCS[\"ITRF2005\",DATUM[\"International_Terrestrial_Reference_Frame_2005\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6896\"]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",30],PARAMETER[\"scale_factor\",0.9999],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",5000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+      "epsg": null,
+      "encoding": "UTF-8",
+      "bounding_box": [
+        373412.747,
+        4685981.857,
+        600013.095,
+        4884186.853
+      ],
+      "field_names": [
+        "OBJECTID_1",
+        "Code_cell_",
+        "SUM_Popula",
+        "SUM_Househ",
+        "Code_Prov",
+        "Province",
+        "code_Dist",
+        "District",
+        "Code_Sect",
+        "Sector_1",
+        "Cellule_1",
+        "Prov_Enlgi",
+        "Shape_Leng",
+        "Shape_Area"
+      ],
+      "field_types": [
+        {
+          "name": "OBJECTID_1",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "Code_cell_",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "SUM_Popula",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "SUM_Househ",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Code_Prov",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Province",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "code_Dist",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "District",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Code_Sect",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Sector_1",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Cellule_1",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Prov_Enlgi",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Shape_Leng",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Shape_Area",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        }
+      ],
+      "sample_records": [
+        {
+          "OBJECTID_1": 1,
+          "Code_cell_": "110101",
+          "SUM_Popula": 7802.0,
+          "SUM_Househ": 1915.0,
+          "Code_Prov": "1",
+          "Province": "Umujyi wa Kigali",
+          "code_Dist": "11",
+          "District": "Nyarugenge",
+          "Code_Sect": "1101",
+          "Sector_1": "Gitega",
+          "Cellule_1": "Akabahizi",
+          "Prov_Enlgi": "Kigali Town",
+          "Shape_Leng": 3556.811,
+          "Shape_Area": 358193.525
+        },
+        {
+          "OBJECTID_1": 2,
+          "Code_cell_": "110102",
+          "SUM_Popula": 2903.0,
+          "SUM_Househ": 725.0,
+          "Code_Prov": "1",
+          "Province": "Umujyi wa Kigali",
+          "code_Dist": "11",
+          "District": "Nyarugenge",
+          "Code_Sect": "1101",
+          "Sector_1": "Gitega",
+          "Cellule_1": "Akabeza",
+          "Prov_Enlgi": "Kigali Town",
+          "Shape_Leng": 1783.6,
+          "Shape_Area": 148088.721
+        },
+        {
+          "OBJECTID_1": 3,
+          "Code_cell_": "110103",
+          "SUM_Popula": 4133.0,
+          "SUM_Househ": 997.0,
+          "Code_Prov": "1",
+          "Province": "Umujyi wa Kigali",
+          "code_Dist": "11",
+          "District": "Nyarugenge",
+          "Code_Sect": "1101",
+          "Sector_1": "Gitega",
+          "Cellule_1": "Gacyamo",
+          "Prov_Enlgi": "Kigali Town",
+          "Shape_Leng": 1698.884,
+          "Shape_Area": 144704.735
+        }
+      ],
+      "loaded_successfully": true
+    },
+    {
+      "type": "vector",
+      "path": "Requested Data\\Administrative Boundaries\\District_Boundary.shp",
+      "file_name": "District_Boundary.shp",
+      "layer_name": "District_Boundary",
+      "driver": "ESRI Shapefile",
+      "feature_count": 30,
+      "geometry_type": "Polygon Z",
+      "geometry_type_samples": [
+        "MultiPolygon",
+        "Polygon"
+      ],
+      "crs": "PROJCS[\"ITRF_2005\",GEOGCS[\"ITRF2005\",DATUM[\"International_Terrestrial_Reference_Frame_2005\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6896\"]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",30],PARAMETER[\"scale_factor\",0.9999],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",5000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+      "epsg": null,
+      "encoding": "UTF-8",
+      "bounding_box": [
+        373412.747,
+        4685981.857,
+        600013.095,
+        4884186.853
+      ],
+      "field_names": [
+        "Province",
+        "District",
+        "Prov_Engl",
+        "Area"
+      ],
+      "field_types": [
+        {
+          "name": "Province",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "District",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Prov_Engl",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Area",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        }
+      ],
+      "sample_records": [
+        {
+          "Province": "Umujyi wa Kigali",
+          "District": "Nyarugenge",
+          "Prov_Engl": "Kigali City",
+          "Area": 13243.484
+        },
+        {
+          "Province": "Umujyi wa Kigali",
+          "District": "Gasabo",
+          "Prov_Engl": "Kigali City",
+          "Area": 42917.772
+        },
+        {
+          "Province": "Umujyi wa Kigali",
+          "District": "Kicukiro",
+          "Prov_Engl": "Kigali City",
+          "Area": 16698.681
+        }
+      ],
+      "loaded_successfully": true
+    },
+    {
+      "type": "vector",
+      "path": "Requested Data\\Administrative Boundaries\\Province_Boundary.shp",
+      "file_name": "Province_Boundary.shp",
+      "layer_name": "Province_Boundary",
+      "driver": "ESRI Shapefile",
+      "feature_count": 5,
+      "geometry_type": "Polygon Z",
+      "geometry_type_samples": [
+        "Polygon"
+      ],
+      "crs": "PROJCS[\"TM_Rwanda\",GEOGCS[\"ITRF2005\",DATUM[\"International_Terrestrial_Reference_Frame_2005\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6896\"]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",30],PARAMETER[\"scale_factor\",0.9999],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",5000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+      "epsg": null,
+      "encoding": "UTF-8",
+      "bounding_box": [
+        373412.747,
+        4685981.857,
+        600013.095,
+        4884186.853
+      ],
+      "field_names": [
+        "Province",
+        "Prov_Engl",
+        "Area"
+      ],
+      "field_types": [
+        {
+          "name": "Province",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Prov_Engl",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Area",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        }
+      ],
+      "sample_records": [
+        {
+          "Province": "Umujyi wa Kigali",
+          "Prov_Engl": "Kigali City",
+          "Area": 728.599
+        },
+        {
+          "Province": "Amajyepfo",
+          "Prov_Engl": "South",
+          "Area": 5956.441
+        },
+        {
+          "Province": "Iburengerazuba",
+          "Prov_Engl": "West",
+          "Area": 5877.159
+        }
+      ],
+      "loaded_successfully": true
+    },
+    {
+      "type": "vector",
+      "path": "Requested Data\\Administrative Boundaries\\Sector_Boundary.shp",
+      "file_name": "Sector_Boundary.shp",
+      "layer_name": "Sector_Boundary",
+      "driver": "ESRI Shapefile",
+      "feature_count": 415,
+      "geometry_type": "Polygon Z",
+      "geometry_type_samples": [
+        "Polygon"
+      ],
+      "crs": "PROJCS[\"TM_Rwanda\",GEOGCS[\"ITRF2005\",DATUM[\"International_Terrestrial_Reference_Frame_2005\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6896\"]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",30],PARAMETER[\"scale_factor\",0.9999],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",5000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+      "epsg": null,
+      "encoding": "UTF-8",
+      "bounding_box": [
+        373412.747,
+        4685981.857,
+        600013.095,
+        4884186.853
+      ],
+      "field_names": [
+        "OBJECTID_1",
+        "SUM_Popula",
+        "SUM_Househ",
+        "Province",
+        "District",
+        "Code_Sect_",
+        "Sector",
+        "Prov_Engl",
+        "ProvName",
+        "Shape_Leng",
+        "Shape_Area",
+        "Area"
+      ],
+      "field_types": [
+        {
+          "name": "OBJECTID_1",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "SUM_Popula",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "SUM_Househ",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Province",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "District",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Code_Sect_",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Sector",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Prov_Engl",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "ProvName",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Shape_Leng",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Shape_Area",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Area",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        }
+      ],
+      "sample_records": [
+        {
+          "OBJECTID_1": 1,
+          "SUM_Popula": 28158.0,
+          "SUM_Househ": 7012.0,
+          "Province": "Umujyi wa Kigali",
+          "District": "Nyarugenge",
+          "Code_Sect_": "1101",
+          "Sector": "Gitega",
+          "Prov_Engl": "Kigali City",
+          "ProvName": "Kigali City /Umujyi wa Kigali",
+          "Shape_Leng": 7150.746,
+          "Shape_Area": 1173433.524,
+          "Area": 1.173
+        },
+        {
+          "OBJECTID_1": 2,
+          "SUM_Popula": 13816.0,
+          "SUM_Househ": 3194.0,
+          "Province": "Umujyi wa Kigali",
+          "District": "Nyarugenge",
+          "Code_Sect_": "1102",
+          "Sector": "Kanyinya",
+          "Prov_Engl": "Kigali City",
+          "ProvName": "Kigali City /Umujyi wa Kigali",
+          "Shape_Leng": 37126.894,
+          "Shape_Area": 24169606.981,
+          "Area": 24.17
+        },
+        {
+          "OBJECTID_1": 3,
+          "SUM_Popula": 22926.0,
+          "SUM_Househ": 4818.0,
+          "Province": "Umujyi wa Kigali",
+          "District": "Nyarugenge",
+          "Code_Sect_": "1103",
+          "Sector": "Kigali",
+          "Prov_Engl": "Kigali City",
+          "ProvName": "Kigali City /Umujyi wa Kigali",
+          "Shape_Leng": 33313.979,
+          "Shape_Area": 29376039.524,
+          "Area": 29.376
+        }
+      ],
+      "loaded_successfully": true
+    },
+    {
+      "type": "vector",
+      "path": "Requested Data\\Administrative Boundaries\\Village_Boundary.shp",
+      "file_name": "Village_Boundary.shp",
+      "layer_name": "Village_Boundary",
+      "driver": "ESRI Shapefile",
+      "feature_count": 14815,
+      "geometry_type": "Polygon Z",
+      "geometry_type_samples": [
+        "Polygon"
+      ],
+      "crs": "PROJCS[\"GCS_WGS_1984\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",30],PARAMETER[\"scale_factor\",0.9999],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",5000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+      "epsg": null,
+      "encoding": "UTF-8",
+      "bounding_box": [
+        373412.747,
+        4685981.857,
+        600013.095,
+        4884186.853
+      ],
+      "field_names": [
+        "OBJECTID_1",
+        "Code_vill_",
+        "SUM_Popula",
+        "SUM_Househ",
+        "Zones_Code",
+        "EA_Code",
+        "Code_Prov",
+        "Province",
+        "code_Dist",
+        "District",
+        "Code_Sect",
+        "Sector_1",
+        "Code_cell_",
+        "Cellule_1",
+        "Code_vill1",
+        "Population",
+        "Household",
+        "Shape_Leng",
+        "Shape_Area",
+        "Status",
+        "Prov_Enlgi",
+        "Prov_ID",
+        "District_I",
+        "Sect_ID1",
+        "Sect_ID2",
+        "Cell_ID1",
+        "Cell_ID2",
+        "Village_ID",
+        "Village__1",
+        "Prov_name",
+        "Village",
+        "Shape_Le_1",
+        "Shape_Ar_1",
+        "Vill_ID"
+      ],
+      "field_types": [
+        {
+          "name": "OBJECTID_1",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "Code_vill_",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "SUM_Popula",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "SUM_Househ",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Zones_Code",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "EA_Code",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Code_Prov",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Province",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "code_Dist",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "District",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Code_Sect",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Sector_1",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Code_cell_",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Cellule_1",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Code_vill1",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Population",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Household",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Shape_Leng",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Shape_Area",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Status",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Prov_Enlgi",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Prov_ID",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "District_I",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "Sect_ID1",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "Sect_ID2",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "Cell_ID1",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "Cell_ID2",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "Village_ID",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "Village__1",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "Prov_name",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Village",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Shape_Le_1",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Shape_Ar_1",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Vill_ID",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        }
+      ],
+      "sample_records": [
+        {
+          "OBJECTID_1": 1,
+          "Code_vill_": 11010102.0,
+          "SUM_Popula": 730.0,
+          "SUM_Househ": 151.0,
+          "Zones_Code": "1101013",
+          "EA_Code": "1101010201",
+          "Code_Prov": "1",
+          "Province": "Umujyi wa Kigali",
+          "code_Dist": "11",
+          "District": "Nyarugenge",
+          "Code_Sect": "1101",
+          "Sector_1": "Gitega",
+          "Code_cell_": "110101",
+          "Cellule_1": "Akabahizi",
+          "Code_vill1": 11010102.0,
+          "Population": 730.0,
+          "Household": 151.0,
+          "Shape_Leng": 0.007,
+          "Shape_Area": 0.0,
+          "Status": "Urban",
+          "Prov_Enlgi": "Kigali Town",
+          "Prov_ID": 1,
+          "District_I": 1,
+          "Sect_ID1": 0,
+          "Sect_ID2": 1,
+          "Cell_ID1": 0,
+          "Cell_ID2": 1,
+          "Village_ID": 0,
+          "Village__1": 2,
+          "Prov_name": "Kigali Town/Umujyi wa Kigali",
+          "Village": "Gihanga",
+          "Shape_Le_1": 0.007,
+          "Shape_Ar_1": 0.0,
+          "Vill_ID": "11010102"
+        },
+        {
+          "OBJECTID_1": 2,
+          "Code_vill_": 11010103.0,
+          "SUM_Popula": 667.0,
+          "SUM_Househ": 187.0,
+          "Zones_Code": "1101012",
+          "EA_Code": "1101010301",
+          "Code_Prov": "1",
+          "Province": "Umujyi wa Kigali",
+          "code_Dist": "11",
+          "District": "Nyarugenge",
+          "Code_Sect": "1101",
+          "Sector_1": "Gitega",
+          "Code_cell_": "110101",
+          "Cellule_1": "Akabahizi",
+          "Code_vill1": 11010103.0,
+          "Population": 334.0,
+          "Household": 97.0,
+          "Shape_Leng": 0.006,
+          "Shape_Area": 0.0,
+          "Status": "Rural",
+          "Prov_Enlgi": "Kigali Town",
+          "Prov_ID": 1,
+          "District_I": 1,
+          "Sect_ID1": 0,
+          "Sect_ID2": 1,
+          "Cell_ID1": 0,
+          "Cell_ID2": 1,
+          "Village_ID": 0,
+          "Village__1": 3,
+          "Prov_name": "Kigali Town/Umujyi wa Kigali",
+          "Village": "Iterambere",
+          "Shape_Le_1": 0.006,
+          "Shape_Ar_1": 0.0,
+          "Vill_ID": "11010103"
+        },
+        {
+          "OBJECTID_1": 3,
+          "Code_vill_": 11010104.0,
+          "SUM_Popula": 670.0,
+          "SUM_Househ": 160.0,
+          "Zones_Code": "1101011",
+          "EA_Code": "1101010401",
+          "Code_Prov": "1",
+          "Province": "Umujyi wa Kigali",
+          "code_Dist": "11",
+          "District": "Nyarugenge",
+          "Code_Sect": "1101",
+          "Sector_1": "Gitega",
+          "Code_cell_": "110101",
+          "Cellule_1": "Akabahizi",
+          "Code_vill1": 11010104.0,
+          "Population": 670.0,
+          "Household": 160.0,
+          "Shape_Leng": 0.004,
+          "Shape_Area": 0.0,
+          "Status": "Urban",
+          "Prov_Enlgi": "Kigali Town",
+          "Prov_ID": 1,
+          "District_I": 1,
+          "Sect_ID1": 0,
+          "Sect_ID2": 1,
+          "Cell_ID1": 0,
+          "Cell_ID2": 1,
+          "Village_ID": 0,
+          "Village__1": 4,
+          "Prov_name": "Kigali Town/Umujyi wa Kigali",
+          "Village": "Izuba",
+          "Shape_Le_1": 0.004,
+          "Shape_Ar_1": 0.0,
+          "Vill_ID": "11010104"
+        }
+      ],
+      "loaded_successfully": true
+    },
+    {
+      "type": "vector",
+      "path": "Requested Data\\Building Footprint\\Building_Footprints.shp",
+      "file_name": "Building_Footprints.shp",
+      "layer_name": "Building_Footprints",
+      "driver": "ESRI Shapefile",
+      "feature_count": 134197,
+      "geometry_type": "Polygon",
+      "geometry_type_samples": [
+        "Polygon"
+      ],
+      "crs": "EPSG:4326",
+      "epsg": 4326,
+      "encoding": "UTF-8",
+      "bounding_box": [
+        29.978,
+        -2.067,
+        30.082,
+        -1.867
+      ],
+      "field_names": [
+        "latitude",
+        "longitude",
+        "area_in_me",
+        "confidence",
+        "full_plus_"
+      ],
+      "field_types": [
+        {
+          "name": "latitude",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "longitude",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "area_in_me",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "confidence",
+          "ogr_type": "OFTInteger",
+          "dtype": "int32"
+        },
+        {
+          "name": "full_plus_",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        }
+      ],
+      "sample_records": [
+        {
+          "latitude": -2.037,
+          "longitude": 30.05,
+          "area_in_me": null,
+          "confidence": 0,
+          "full_plus_": "6G9GX372+75QG"
+        },
+        {
+          "latitude": -1.949,
+          "longitude": 30.048,
+          "area_in_me": null,
+          "confidence": 0,
+          "full_plus_": "6GCG322X+97PX"
+        },
+        {
+          "latitude": -1.966,
+          "longitude": 30.054,
+          "area_in_me": null,
+          "confidence": 0,
+          "full_plus_": "6GCG23M3+MCW9"
+        }
+      ],
+      "loaded_successfully": true
+    },
+    {
+      "type": "vector",
+      "path": "Requested Data\\Kigali 05.22.2026\\Kigali_Parcels.shp",
+      "file_name": "Kigali_Parcels.shp",
+      "layer_name": "Kigali_Parcels",
+      "driver": "ESRI Shapefile",
+      "feature_count": 101981,
+      "geometry_type": "Polygon Z",
+      "geometry_type_samples": [
+        "Polygon"
+      ],
+      "crs": "PROJCS[\"ITRF_2005\",GEOGCS[\"ITRF2005\",DATUM[\"International_Terrestrial_Reference_Frame_2005\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6896\"]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",30],PARAMETER[\"scale_factor\",0.9999],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",5000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+      "epsg": null,
+      "encoding": "UTF-8",
+      "bounding_box": [
+        497499.053,
+        4770536.947,
+        509641.211,
+        4793586.773
+      ],
+      "field_names": [
+        "OBJECTID_1",
+        "parcel_num",
+        "village",
+        "province",
+        "district",
+        "sector",
+        "cell",
+        "cell_code",
+        "upi",
+        "change_id",
+        "start_date",
+        "end_date",
+        "status",
+        "transactio",
+        "accuracy",
+        "area_in_we",
+        "x",
+        "y",
+        "village_co",
+        "globalid",
+        "st_area_sh",
+        "st_length_",
+        "Shape_Leng",
+        "Shape_Area"
+      ],
+      "field_types": [
+        {
+          "name": "OBJECTID_1",
+          "ogr_type": "OFTInteger64",
+          "dtype": "int64"
+        },
+        {
+          "name": "parcel_num",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "village",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "province",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "district",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "sector",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "cell",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "cell_code",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "upi",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "change_id",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "start_date",
+          "ogr_type": "OFTDate",
+          "dtype": "datetime64[D]"
+        },
+        {
+          "name": "end_date",
+          "ogr_type": "OFTDate",
+          "dtype": "datetime64[D]"
+        },
+        {
+          "name": "status",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "transactio",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "accuracy",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "area_in_we",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "x",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "y",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "village_co",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "globalid",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "st_area_sh",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "st_length_",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Shape_Leng",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Shape_Area",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        }
+      ],
+      "sample_records": [
+        {
+          "OBJECTID_1": 5912513,
+          "parcel_num": 3041.0,
+          "village": "Rubungo",
+          "province": "Kigali City",
+          "district": "Nyarugenge",
+          "sector": "Mageregere",
+          "cell": "Ntungamo",
+          "cell_code": "1010504",
+          "upi": "1/01/05/04/3041",
+          "change_id": "DP",
+          "start_date": "2024-04-03T00:00:00",
+          "end_date": "NaT",
+          "status": "Provisional",
+          "transactio": "TRN13584091",
+          "accuracy": "C",
+          "area_in_we": 0.0,
+          "x": 501732.855,
+          "y": 4772137.676,
+          "village_co": "101050405",
+          "globalid": "{5B043CF4-49DB-466C-8CB2-49EFC94AFDD4}",
+          "st_area_sh": 26845.919,
+          "st_length_": 856.867,
+          "Shape_Leng": 856.867,
+          "Shape_Area": 26845.919
+        },
+        {
+          "OBJECTID_1": 5946165,
+          "parcel_num": 3373.0,
+          "village": "Akanakamageragere",
+          "province": "Kigali City",
+          "district": "Nyarugenge",
+          "sector": "Mageregere",
+          "cell": "Ntungamo",
+          "cell_code": "1010504",
+          "upi": "1/01/05/04/3373",
+          "change_id": "DP",
+          "start_date": "2024-04-03T00:00:00",
+          "end_date": "NaT",
+          "status": "Provisional",
+          "transactio": "TRN14275526",
+          "accuracy": "C",
+          "area_in_we": 0.0,
+          "x": 500612.87,
+          "y": 4772712.558,
+          "village_co": "101050401",
+          "globalid": "{7D6AA994-14F7-4867-86F6-DCB87B379010}",
+          "st_area_sh": 20332.034,
+          "st_length_": 755.795,
+          "Shape_Leng": 755.795,
+          "Shape_Area": 20332.035
+        },
+        {
+          "OBJECTID_1": 5953581,
+          "parcel_num": 925.0,
+          "village": "Akanakamageragere",
+          "province": "Kigali City",
+          "district": "Nyarugenge",
+          "sector": "Mageregere",
+          "cell": "Ntungamo",
+          "cell_code": "1010504",
+          "upi": "1/01/05/04/925",
+          "change_id": "BC",
+          "start_date": "1800-01-01T00:00:00",
+          "end_date": "NaT",
+          "status": "Provisional",
+          "transactio": "TRN14216446",
+          "accuracy": "C",
+          "area_in_we": 0.0,
+          "x": 499673.621,
+          "y": 4773123.129,
+          "village_co": "101050401",
+          "globalid": "{054336B8-A389-4323-9E43-0DACBD20B279}",
+          "st_area_sh": 11285.976,
+          "st_length_": 488.972,
+          "Shape_Leng": 488.972,
+          "Shape_Area": 11285.976
+        }
+      ],
+      "loaded_successfully": true
+    },
+    {
+      "type": "vector",
+      "path": "Requested Data\\Kigali Masterplan\\Kigali_Masterplan.shp",
+      "file_name": "Kigali_Masterplan.shp",
+      "layer_name": "Kigali_Masterplan",
+      "driver": "ESRI Shapefile",
+      "feature_count": 2310,
+      "geometry_type": "Polygon Z",
+      "geometry_type_samples": [
+        "Polygon"
+      ],
+      "crs": "PROJCS[\"ITRF_2005\",GEOGCS[\"ITRF2005\",DATUM[\"International_Terrestrial_Reference_Frame_2005\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6896\"]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",30],PARAMETER[\"scale_factor\",0.9999],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",5000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+      "epsg": null,
+      "encoding": "UTF-8",
+      "bounding_box": [
+        497499.053,
+        4770495.333,
+        509660.041,
+        4793602.772
+      ],
+      "field_names": [
+        "zone_code",
+        "area_ha",
+        "gen_lu",
+        "zoning",
+        "phasing",
+        "globalid",
+        "Shape_Leng",
+        "Shape_Le_1",
+        "Shape_Area"
+      ],
+      "field_types": [
+        {
+          "name": "zone_code",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "area_ha",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "gen_lu",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "zoning",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "phasing",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "globalid",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "Shape_Leng",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Shape_Le_1",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "Shape_Area",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        }
+      ],
+      "sample_records": [
+        {
+          "zone_code": "P3C",
+          "area_ha": 0.055,
+          "gen_lu": "Forest and Open Spaces",
+          "zoning": "P3C-Steep slopes (> 30%) zone",
+          "phasing": "Phase-4",
+          "globalid": "{8CA4F626-0D0C-4FF5-AE88-F47D82E0DC1B}",
+          "Shape_Leng": 211.813,
+          "Shape_Le_1": 211.813,
+          "Shape_Area": 552.192
+        },
+        {
+          "zone_code": "P3C",
+          "area_ha": 0.059,
+          "gen_lu": "Forest and Open Spaces",
+          "zoning": "P3C-Steep slopes (> 30%) zone",
+          "phasing": "Phase-4",
+          "globalid": "{8663FBDA-ACCA-4B1D-9481-49A0C2449F88}",
+          "Shape_Leng": 213.108,
+          "Shape_Le_1": 213.108,
+          "Shape_Area": 588.487
+        },
+        {
+          "zone_code": "P3B",
+          "area_ha": 0.118,
+          "gen_lu": "Forest and Open Spaces",
+          "zoning": "P3B-Forest zone",
+          "phasing": "Phase-4",
+          "globalid": "{D04CC7F6-1546-4EA8-8441-7601C3C65519}",
+          "Shape_Leng": 184.577,
+          "Shape_Le_1": 184.577,
+          "Shape_Area": 1175.502
+        }
+      ],
+      "loaded_successfully": true
+    }
+  ],
+  "raster_layers": [
+    {
+      "type": "raster",
+      "path": "Requested Data\\DEM_30\\DEM30.img",
+      "file_name": "DEM30.img",
+      "driver": "HFA",
+      "width": 10823,
+      "height": 7187,
+      "band_count": 1,
+      "bands": [
+        1
+      ],
+      "dtypes": [
+        "int32"
+      ],
+      "crs": "EPSG:21036",
+      "epsg": 21036,
+      "bounding_box": [
+        -57027.824,
+        9667134.206,
+        277726.78,
+        9889427.594
+      ],
+      "resolution": [
+        30.93,
+        30.93
+      ],
+      "nodata": 2147483647.0,
+      "sample_statistics": {
+        "min": 627.0,
+        "max": 5089.0,
+        "mean": 1561.3
+      },
+      "loaded_successfully": true
+    }
+  ],
+  "pdf_documents": [
+    {
+      "type": "pdf",
+      "path": "Requested Data\\Land_Use_Plans_Zoning_Regulations_-_Guiding_tool_for_the_implementation_of_land_use_plans_in_Rwanda_.pdf",
+      "file_name": "Land_Use_Plans_Zoning_Regulations_-_Guiding_tool_for_the_implementation_of_land_use_plans_in_Rwanda_.pdf",
+      "page_count": 97,
+      "extractable_text_characters": 164703,
+      "non_empty_pages": 96,
+      "zone_token_pages": {
+        "R1": [
+          4,
+          10,
+          13,
+          14,
+          15,
+          16,
+          75
+        ],
+        "R1A": [
+          4,
+          10,
+          14,
+          16,
+          17,
+          75
+        ],
+        "R1B": [
+          4,
+          10,
+          17,
+          18,
+          19,
+          76
+        ],
+        "R2": [
+          4,
+          10,
+          18,
+          19,
+          20,
+          21,
+          22,
+          24,
+          25,
+          28,
+          75,
+          76
+        ],
+        "R3": [
+          4,
+          10,
+          21,
+          22,
+          24,
+          75,
+          76
+        ],
+        "R4": [
+          4,
+          10,
+          24,
+          26,
+          75
+        ],
+        "C1": [
+          4,
+          10,
+          27,
+          29,
+          30,
+          31,
+          33,
+          34
+        ],
+        "C3": [
+          4,
+          10,
+          29,
+          30,
+          32
+        ],
+        "C4": [
+          4,
+          10,
+          32
+        ],
+        "A1": [
+          5,
+          11,
+          59
+        ],
+        "A2": [
+          5,
+          11,
+          60
+        ],
+        "W1A": [
+          5,
+          11,
+          61
+        ],
+        "W1B": [
+          5,
+          11,
+          61,
+          62
+        ],
+        "W2": [
+          5,
+          11,
+          61,
+          63
+        ],
+        "W3": [
+          5,
+          12,
+          61,
+          64,
+          65
+        ],
+        "W5": [
+          5,
+          12,
+          61,
+          66,
+          67
+        ],
+        "B4": [
+          6,
+          12,
+          72,
+          89,
+          90
+        ],
+        "Slope": [
+          6,
+          8,
+          11,
+          13,
+          74,
+          83,
+          84
+        ],
+        "W4": [
+          12,
+          61,
+          65
+        ],
+        "WB": [
+          12,
+          67,
+          68
+        ],
+        "B1": [
+          12
+        ],
+        "B2": [
+          12
+        ],
+        "B3": [
+          12
+        ]
+      },
+      "text_preview": "LAND USE PLANS ZONING REGULATIONS Guiding tool for the implementation of land use plans in Rwanda ii TABLE OF CONTENTS Table of Contents ............................................................................................................................................................ ii 1 OBJECTIVES, DEFINITION AND FOUNDING PRINCIPLES OF ZONING PLAN AND REGULATIONS .......................................................... 1 1.1 Objective of the Zoning Plan and Regulations ................................................................................................................. 1 1.2 Zoning Plan ............................................................................................................................................................ 1 1.3 Principle Guiding the Zoning Requirements ......................................................................................................... 2 1.3.1 Integrated Development and Urban Resiliency ............................................................................................. 2 1.3.2 Inclusivity and Community Involvement in the Planning ............................................................................... 2 1.3.3 Incrementality and Flexibility ......................................................................................................................... 2 1.3.4 Mixed Land Use .............................................................................................................................................. 2 1.3.5 Pedestrian First ............................................................................................................................................... 2 1.3.6 Transit Oriented Development (TOD) ............................................................................................................ 3 1.3.7 Sustainabl",
+      "loaded_successfully": true
+    }
+  ],
+  "errors": []
+}

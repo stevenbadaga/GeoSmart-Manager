@@ -48,9 +48,9 @@ public class AuthService {
             throw new IllegalArgumentException("Email already registered");
         }
 
-        Role role = request.role() != null ? request.role() : Role.ENGINEER;
-        if (role == Role.ADMIN && userRepository.existsByRole(Role.ADMIN)) {
-            role = Role.ENGINEER;
+        Role role = request.role() != null ? request.role() : Role.SURVEYOR;
+        if (role != Role.ADMIN && role != Role.SURVEYOR && role != Role.CLIENT) {
+            role = Role.SURVEYOR;
         }
 
         Instant now = Instant.now();
@@ -117,7 +117,7 @@ public class AuthService {
                 .fullName(googleProfile.fullName())
                 .email(googleProfile.email().toLowerCase())
                 .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
-                .role(Role.ENGINEER)
+                .role(Role.SURVEYOR)
                 .status(UserStatus.ACTIVE)
                 .createdAt(now)
                 .lastActiveAt(now)

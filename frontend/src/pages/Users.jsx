@@ -8,18 +8,14 @@ import { useAuth } from '../auth/AuthContext'
 
 const roleTabs = [
   { label: 'All Users', value: 'ALL', roles: [] },
-  { label: 'Surveyors', value: 'SURVEYOR', roles: ['SURVEYOR'] },
-  { label: 'Engineers', value: 'ENGINEER', roles: ['ENGINEER', 'CIVIL_ENGINEER'] },
-  { label: 'Managers', value: 'MANAGER', roles: ['PROJECT_MANAGER', 'ADMIN'] },
+  { label: 'Admins', value: 'ADMIN', roles: ['ADMIN'] },
+  { label: 'Land Surveyors', value: 'SURVEYOR', roles: ['SURVEYOR'] },
   { label: 'Clients', value: 'CLIENT', roles: ['CLIENT'] }
 ]
 
 const roleOptions = [
-  { value: 'ADMIN', label: 'System Admin' },
-  { value: 'SURVEYOR', label: 'Surveyor' },
-  { value: 'ENGINEER', label: 'Engineer' },
-  { value: 'CIVIL_ENGINEER', label: 'Civil Engineer' },
-  { value: 'PROJECT_MANAGER', label: 'Project Manager' },
+  { value: 'ADMIN', label: 'Admin' },
+  { value: 'SURVEYOR', label: 'Land Surveyor' },
   { value: 'CLIENT', label: 'Client' }
 ]
 
@@ -53,10 +49,6 @@ function roleBadge(role) {
   switch (role) {
     case 'ADMIN':
       return 'bg-water/10 text-water'
-    case 'PROJECT_MANAGER':
-      return 'bg-parcel/15 text-parcel'
-    case 'CIVIL_ENGINEER':
-      return 'bg-moss/10 text-moss'
     case 'SURVEYOR':
       return 'bg-success/10 text-success'
     case 'CLIENT':

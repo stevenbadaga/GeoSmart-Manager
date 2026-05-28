@@ -1,6 +1,8 @@
 package rw.venus.geosmartmanager.service;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestAttributes;
@@ -24,6 +26,7 @@ import java.util.Locale;
 
 @Service
 public class PasswordResetService {
+    private static final Logger log = LoggerFactory.getLogger(PasswordResetService.class);
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final String GENERIC_FORGOT_PASSWORD_MESSAGE =
             "If the account exists, a password reset link has been sent to the registered email address.";
@@ -107,8 +110,8 @@ public class PasswordResetService {
         try {
             passwordResetMailerService.sendResetEmail(user, resetLink, expiresAt);
         } catch (RuntimeException ex) {
-            passwordResetTokenRepository.deleteById(entity.getId());
-            throw ex;
+            log.warn("Password reset email is disabled or failed: {}", ex.getMessage());
+            return;
         }
         invalidateOtherUnusedTokens(user.getId(), entity.getId());
         auditService.log(user.getEmail(), "REQUEST_PASSWORD_RESET", "User", user.getId(),

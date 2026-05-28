@@ -1,7 +1,7 @@
 """FastAPI service for AI-assisted land subdivision.
 
 Run locally:
-    uvicorn main:app --reload --port 8000
+    python -m uvicorn main:app --reload --reload-dir . --reload-exclude=.python311/* --port 8000
 """
 
 from fastapi import FastAPI, HTTPException

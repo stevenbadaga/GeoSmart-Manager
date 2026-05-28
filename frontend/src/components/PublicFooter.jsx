@@ -1,47 +1,40 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
-const social = [
-  { label: 'LinkedIn', href: 'https://www.linkedin.com', icon: 'in' },
-  { label: 'Twitter', href: 'https://twitter.com', icon: 'tw' },
-  { label: 'GitHub', href: 'https://github.com', icon: 'gh' },
-  { label: 'YouTube', href: 'https://youtube.com', icon: 'yt' }
-]
-
 const columns = [
   {
-    title: 'Platform',
+    title: 'GeoSmart Manager',
     links: [
-      { text: 'AI Subdivision', to: '/subdivision' },
-      { text: 'Compliance Checks', to: '/compliance' },
-      { text: 'Project Hub', to: '/projects' },
-      { text: 'Map Workspace', to: '/map' }
+      { text: 'Home', to: '/' },
+      { text: 'Features', to: '/features' },
+      { text: 'How It Works', to: '/how-it-works' },
+      { text: 'Login', to: '/login' }
     ]
   },
   {
-    title: 'Solutions',
+    title: 'Planning Support',
     links: [
-      { text: 'Urban Planning', to: '/solutions#urban-planning' },
-      { text: 'Land Tenure Digitization', to: '/solutions#land-tenure' },
-      { text: 'Municipal Review', to: '/solutions#municipal-review' },
-      { text: 'Geospatial Analytics', to: '/solutions#geospatial-analytics' }
+      { text: 'Data & Compliance', to: '/data-compliance' },
+      { text: 'Data Limitations', to: '/data-compliance' },
+      { text: 'About', to: '/about' },
+      { text: 'Contact', to: '/contact' }
     ]
   },
   {
     title: 'Resources',
     links: [
-      { text: 'Product Guide', to: '/resources#product-guide' },
-      { text: 'Security Brief', to: '/resources#security' },
-      { text: 'Release Notes', to: '/resources#release-notes' },
-      { text: 'Support Center', to: '/resources#support' }
+      { text: 'Academic prototype', href: '#' },
+      { text: 'Rwanda land planning support', href: '#' },
+      { text: 'Preliminary assessment only', href: '#' },
+      { text: 'Official approval remains separate', href: '#' }
     ]
   },
   {
     title: 'Contact',
     links: [
       { text: 'Kigali, Rwanda', icon: 'pin', href: 'https://maps.google.com/?q=Kigali,Rwanda' },
-      { text: 'hello@geosmart.rw', icon: 'mail', href: 'mailto:hello@geosmart.rw' },
-      { text: '0788883986', icon: 'phone', href: 'tel:0788883986' },
+      { text: 'contact@example.com', icon: 'mail', href: 'mailto:contact@example.com' },
+      { text: '+250 000 000 000', icon: 'phone', href: 'tel:+250000000000' },
       { text: 'Mon-Fri, 08:00-18:00 CAT', icon: 'clock', href: '#' }
     ]
   }
@@ -108,24 +101,13 @@ export default function PublicFooter() {
               </div>
               <div className="min-w-0">
                 <p className="text-lg font-semibold leading-tight">GeoSmart Manager</p>
-                <p className="text-sm text-white/70">Building digital land systems for Africa.</p>
+                <p className="text-sm text-white/70">Academic prototype for Rwanda land planning support.</p>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {social.map((item) => (
-                <a
-                  key={item.label}
-                  className={`flex h-7 w-7 items-center justify-center rounded-md border border-white/10 text-white/50 transition-colors duration-200 hover:text-white/80 ${focusedLinkClass}`}
-                  href={item.href}
-                  aria-label={item.label}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {iconMap[item.icon]}
-                </a>
-              ))}
-            </div>
+            <p className="max-w-sm text-xs leading-6 text-white/45">
+              Preliminary planning and compliance support only. Official approval remains with competent institutions and licensed professionals.
+            </p>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -171,7 +153,7 @@ export default function PublicFooter() {
         </div>
 
         <div className="mt-8 flex flex-col gap-2 border-t border-white/[0.06] pt-4 text-[11px] text-white/20 sm:flex-row sm:items-center sm:justify-between">
-          <span>(c) {new Date().getFullYear()} GeoSmart. All rights reserved.</span>
+          <span>(c) {new Date().getFullYear()} GeoSmart Manager. Academic prototype.</span>
           <div className="flex items-center gap-3">
             <a className={`transition-colors hover:text-white/50 ${focusedLinkClass}`} href="#">Privacy</a>
             <span aria-hidden="true">&middot;</span>

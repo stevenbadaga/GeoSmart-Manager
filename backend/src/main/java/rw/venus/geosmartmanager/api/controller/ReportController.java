@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import rw.venus.geosmartmanager.api.dto.ReportDtos;
 import rw.venus.geosmartmanager.entity.ReportEntity;
+import rw.venus.geosmartmanager.entity.UserEntity;
 import rw.venus.geosmartmanager.service.ReportService;
 
 import java.util.List;
@@ -47,11 +48,17 @@ public class ReportController {
     }
 
     private ReportDtos.ReportResponse toResponse(ReportEntity entity) {
+        UserEntity generatedBy = entity.getGeneratedBy();
         return new ReportDtos.ReportResponse(
                 entity.getId(),
                 entity.getProject().getId(),
                 entity.getType(),
-                entity.getContent()
+                entity.getContent(),
+                entity.getCreatedAt(),
+                generatedBy != null ? generatedBy.getId() : null,
+                generatedBy != null ? generatedBy.getFullName() : "System",
+                generatedBy != null ? generatedBy.getEmail() : "system",
+                generatedBy != null && generatedBy.getRole() != null ? generatedBy.getRole().name() : "SYSTEM"
         );
     }
 }

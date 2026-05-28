@@ -20,7 +20,7 @@ export default function ForgotPassword() {
       const data = await api.post('/api/auth/password/forgot', { email })
       setMessage(data?.message || 'If the account exists, a reset email has been sent.')
     } catch (err) {
-      setError(err.message || 'Unable to send reset email.')
+      setMessage('If this email exists, a reset link has been sent.')
     } finally {
       setLoading(false)
     }

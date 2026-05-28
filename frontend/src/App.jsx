@@ -9,6 +9,9 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import About from './pages/About'
 import Contact from './pages/Contact'
+import Features from './pages/Features'
+import HowItWorks from './pages/HowItWorks'
+import DataCompliance from './pages/DataCompliance'
 import Solutions from './pages/Solutions'
 import Resources from './pages/Resources'
 import PendingApproval from './pages/PendingApproval'
@@ -24,6 +27,9 @@ import Reports from './pages/Reports'
 import Audit from './pages/Audit'
 import Permissions from './pages/Permissions'
 import Account from './pages/Account'
+import Documents from './pages/Documents'
+import DataLimitations from './pages/DataLimitations'
+import Settings from './pages/Settings'
 import NotFound from './pages/NotFound'
 import MapView from './pages/Map'
 import RwandaLayers from './pages/RwandaLayers'
@@ -44,12 +50,21 @@ function PublicOnly({ children }) {
   return children
 }
 
+function RequireRole({ allowed, children }) {
+  const { user } = useAuth()
+  if (!allowed.includes(user?.role)) return <Navigate to="/dashboard" replace />
+  return children
+}
+
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/features" element={<Features />} />
+      <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/data-compliance" element={<DataCompliance />} />
       <Route path="/solutions" element={<Solutions />} />
       <Route path="/resources" element={<Resources />} />
       <Route path="/pending-approval" element={<PendingApproval />} />
@@ -97,18 +112,21 @@ export default function App() {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/users" element={<Users />} />
+        <Route path="/users" element={<RequireRole allowed={['ADMIN']}><Users /></RequireRole>} />
         <Route path="/clients" element={<Clients />} />
         <Route path="/projects" element={<Projects />} />
-        <Route path="/datasets" element={<Datasets />} />
+        <Route path="/datasets" element={<RequireRole allowed={['ADMIN', 'SURVEYOR']}><Datasets /></RequireRole>} />
         <Route path="/map" element={<MapView />} />
         <Route path="/rwanda-layers" element={<RwandaLayers />} />
-        <Route path="/subdivision" element={<Subdivision />} />
+        <Route path="/subdivision" element={<RequireRole allowed={['ADMIN', 'SURVEYOR']}><Subdivision /></RequireRole>} />
         <Route path="/compliance" element={<Compliance />} />
         <Route path="/workflow" element={<Workflow />} />
         <Route path="/reports" element={<Reports />} />
-        <Route path="/audit" element={<Audit />} />
-        <Route path="/permissions" element={<Permissions />} />
+        <Route path="/documents" element={<Documents />} />
+        <Route path="/data-limitations" element={<DataLimitations />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/audit" element={<RequireRole allowed={['ADMIN']}><Audit /></RequireRole>} />
+        <Route path="/permissions" element={<RequireRole allowed={['ADMIN']}><Permissions /></RequireRole>} />
         <Route path="/account" element={<Account />} />
       </Route>
       <Route path="*" element={<NotFound />} />

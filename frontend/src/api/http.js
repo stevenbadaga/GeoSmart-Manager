@@ -12,12 +12,13 @@ async function parseResponse(response) {
 
 export async function apiRequest(path, options = {}) {
   const token = localStorage.getItem('token')
+  const isPublicAuthRoute = path.startsWith('/api/auth/')
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {})
   }
 
-  if (token) {
+  if (token && !isPublicAuthRoute) {
     headers.Authorization = `Bearer ${token}`
   }
 

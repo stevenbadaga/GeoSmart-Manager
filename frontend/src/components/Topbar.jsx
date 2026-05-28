@@ -3,17 +3,20 @@ import { useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
 const pageEntries = [
-  { match: '/dashboard', crumb: 'Dashboard', title: 'Operations Dashboard', subtitle: 'Live overview of projects, users, and system health.' },
+  { match: '/dashboard', crumb: 'Planning Dashboard', title: 'Subdivision Planning Dashboard', subtitle: 'Live overview of Kigali GIS readiness, parcel checks, and compliance reports.' },
   { match: '/users', crumb: 'Administration', title: 'User Management', subtitle: 'Manage identity, status, and role-based access.' },
-  { match: '/projects', crumb: 'Operations', title: 'Project Management', subtitle: 'Plan and monitor projects with clear ownership.' },
+  { match: '/projects', crumb: 'Planning Cases', title: 'Project Case Management', subtitle: 'Manage parcel-planning case files, clients, documents, communications, and delivery readiness.' },
   { match: '/clients', crumb: 'Operations', title: 'Client Management', subtitle: 'Maintain client records and engagement activity.' },
-  { match: '/datasets', crumb: 'Data', title: 'Geospatial Data', subtitle: 'Upload, inspect, and analyze spatial datasets.' },
-  { match: '/map', crumb: 'Workspace', title: 'Map Workspace', subtitle: 'Visualize boundaries and map-based operations.' },
+  { match: '/datasets', crumb: 'GIS Data', title: 'Geospatial Data Center', subtitle: 'Monitor the operational GIS layers powering parcel search, zoning checks, constraints, slope review, and reports.' },
+  { match: '/map', crumb: 'GIS Workspace', title: 'Kigali GIS Layer Workspace', subtitle: 'Preview imported layers, subdivision outputs, sketches, and spatial context.' },
   { match: '/rwanda-layers', crumb: 'Workspace', title: 'Rwanda Layers', subtitle: 'Reference official administrative map layers.' },
   { match: '/subdivision', crumb: 'AI Tools', title: 'AI Subdivision', subtitle: 'Generate optimized parcel subdivision outputs.' },
   { match: '/compliance', crumb: 'Governance', title: 'Compliance', subtitle: 'Run policy checks and review validation findings.' },
   { match: '/workflow', crumb: 'Operations', title: 'Workflow', subtitle: 'Coordinate tasks and monitor execution status.' },
-  { match: '/reports', crumb: 'Analytics', title: 'Reports & Analytics', subtitle: 'Generate operational and compliance reports.' },
+  { match: '/reports', crumb: 'Reports', title: 'Compliance Report Center', subtitle: 'Generate project summaries and export professional subdivision compliance PDFs.' },
+  { match: '/documents', crumb: 'Documents', title: 'Project Document Center', subtitle: 'Track supporting maps, parcel documents, zoning extracts, and report files.' },
+  { match: '/data-limitations', crumb: 'Transparency', title: 'Data Limitations', subtitle: 'Understand available GIS data, missing layers, and preliminary-check limitations.' },
+  { match: '/settings', crumb: 'Settings', title: 'Settings', subtitle: 'Manage profile context, notifications, email readiness, and system disclaimer.' },
   { match: '/permissions', crumb: 'Administration', title: 'Role Permissions', subtitle: 'Review the access matrix and governance controls.' },
   { match: '/audit', crumb: 'Governance', title: 'Audit Logs', subtitle: 'Trace critical actions across the platform.' },
   { match: '/account', crumb: 'Profile', title: 'Account', subtitle: 'Manage your personal profile and security settings.' }

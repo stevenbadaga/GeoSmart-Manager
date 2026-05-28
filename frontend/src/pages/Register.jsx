@@ -6,12 +6,9 @@ import Card from '../components/Card'
 import { useAuth } from '../auth/AuthContext'
 
 const registrationRoleOptions = [
-  { value: 'SURVEYOR', label: 'Surveyor' },
-  { value: 'ENGINEER', label: 'Engineer' },
-  { value: 'CIVIL_ENGINEER', label: 'Civil Engineer' },
-  { value: 'PROJECT_MANAGER', label: 'Project Manager' },
-  { value: 'CLIENT', label: 'Client' },
-  { value: 'ADMIN', label: 'Administrator (first account only)' }
+  { value: 'ADMIN', label: 'Admin' },
+  { value: 'SURVEYOR', label: 'Land Surveyor' },
+  { value: 'CLIENT', label: 'Client' }
 ]
 
 export default function Register() {
@@ -70,13 +67,13 @@ export default function Register() {
             <p className="text-xs uppercase tracking-[0.2em] text-river">Start Here</p>
             <h1 className="mt-2 text-4xl leading-tight text-ink sm:text-5xl">Create your GeoSmart account.</h1>
             <p className="mt-4 max-w-xl text-base text-ink/70">
-              Register once and access operational dashboards, map tools, and project workflows in one secure space with your professional profile attached.
+              Register once to access preliminary parcel planning tools, project records, GIS layer status, and compliance support workflows.
             </p>
           </div>
           <div className="rounded-2xl border border-clay/70 bg-white/80 p-4">
             <p className="text-sm font-semibold text-ink">Account setup note</p>
             <p className="mt-1 text-xs text-ink/65">
-              Survey and engineering roles can include license, specialization, and certifications during sign-up. Administrator is still restricted to the first account.
+              GeoSmart Manager supports three simple account types for this prototype: Admin, Land Surveyor, and Client.
             </p>
           </div>
         </section>

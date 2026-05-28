@@ -211,16 +211,16 @@ select.input {
 }
 
 .leaflet-tooltip.map-label {
-  background: #1f6f5f;
+  background: transparent;
   border: none;
-  color: #fff;
-  border-radius: 999px;
-  padding: 2px 8px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  color: #000;
+  font-weight: 800;
+  padding: 0;
+  box-shadow: none;
 }
 
 .leaflet-tooltip.map-label::before {
-  border-top-color: #1f6f5f;
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

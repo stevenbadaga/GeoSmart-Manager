@@ -17,6 +17,10 @@ __pycache__/
 *.pyc
 backend/ai_subdivision/.python311/
 
+# Local GIS source/cache data
+Requested Data/
+backend/data/
+
 # OS
 .DS_Store
 Thumbs.db

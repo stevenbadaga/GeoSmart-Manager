@@ -7,10 +7,10 @@ spring:
     username: ${DB_USER:geosmart}
     password: ${DB_PASSWORD:geosmart}
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    host: ${SMTP_HOST:${MAIL_HOST:smtp.gmail.com}}
+    port: ${SMTP_PORT:${MAIL_PORT:587}}
+    username: ${SMTP_USERNAME:${MAIL_USERNAME:}}
+    password: ${SMTP_PASSWORD:${MAIL_PASSWORD:}}
     properties:
       mail:
         smtp:
@@ -67,4 +67,6 @@ app:
   oauth:
     google-client-id: ${GOOGLE_CLIENT_ID:}
   mail:
-    from-address: ${APP_MAIL_FROM_ADDRESS:${MAIL_USERNAME:}}
+    from-address: ${SMTP_FROM:${APP_MAIL_FROM_ADDRESS:${MAIL_USERNAME:}}}
+  demo:
+    default-test-password: ${DEFAULT_TEST_PASSWORD:ChangeMe123!}

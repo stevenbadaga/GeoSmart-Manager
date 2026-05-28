@@ -517,7 +517,7 @@ export default function MapView() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `geosmart-rwanda-sketch-${Date.now()}.geojson`
+    link.download = `geosmart-kigali-sketch-${Date.now()}.geojson`
     document.body.appendChild(link)
     link.click()
     link.remove()
@@ -539,10 +539,16 @@ export default function MapView() {
 
   return (
     <div className="space-y-6">
-      <Card title="Rwanda Map Workspace">
+      <Card title="Kigali GIS Layer Workspace">
+        <div className="mb-5 rounded-[1.5rem] border border-[#124E44]/15 bg-[#F6F1E7] p-4">
+          <p className="text-sm font-semibold text-[#124E44]">Layer review and sketch support</p>
+          <p className="mt-1 max-w-4xl text-sm leading-6 text-ink/62">
+            Use this page to preview project datasets, imported subdivision results, administrative overlays, and quick survey sketches. Main compliance checking remains in the Subdivision Planner.
+          </p>
+        </div>
         <div className="grid md:grid-cols-6 gap-4">
           <label className="block space-y-2">
-            <span className="text-sm font-medium">Project</span>
+            <span className="text-sm font-medium">Workspace project</span>
             <select className="input" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
               <option value="">Select project</option>
               {projects.map((project) => (
@@ -551,15 +557,15 @@ export default function MapView() {
             </select>
           </label>
           <label className="block space-y-2">
-            <span className="text-sm font-medium">Layer</span>
+            <span className="text-sm font-medium">View mode</span>
             <select className="input" value={mode} onChange={(e) => setMode(e.target.value)}>
-              <option value="dataset">Dataset</option>
-              <option value="subdivision">Subdivision result</option>
+              <option value="dataset">GIS dataset</option>
+              <option value="subdivision">Subdivision output</option>
             </select>
           </label>
           {mode === 'dataset' ? (
             <label className="block space-y-2">
-              <span className="text-sm font-medium">Dataset</span>
+              <span className="text-sm font-medium">Imported GIS layer</span>
               <select className="input" value={selectedDataset} onChange={(e) => setSelectedDataset(e.target.value)}>
                 <option value="">Select dataset</option>
                 {datasets.map((dataset) => (
@@ -569,7 +575,7 @@ export default function MapView() {
             </label>
           ) : (
             <label className="block space-y-2">
-              <span className="text-sm font-medium">Run</span>
+              <span className="text-sm font-medium">Subdivision run</span>
               <select className="input" value={selectedRun} onChange={(e) => setSelectedRun(e.target.value)}>
                 <option value="">Select run</option>
                 {runs.map((run) => (
@@ -586,7 +592,7 @@ export default function MapView() {
             </select>
           </label>
           <label className="block space-y-2">
-            <span className="text-sm font-medium">Snap (meters)</span>
+            <span className="text-sm font-medium">Sketch snap (m)</span>
             <input
               className="input"
               type="number"
@@ -597,7 +603,7 @@ export default function MapView() {
             />
           </label>
           <label className="block space-y-2">
-            <span className="text-sm font-medium">UTM grid</span>
+            <span className="text-sm font-medium">Reference grid</span>
             <select className="input" value={utmSpacing} onChange={(e) => setUtmSpacing(Number(e.target.value))}>
               <option value={1000}>1 km</option>
               <option value={2000}>2 km</option>
@@ -610,7 +616,7 @@ export default function MapView() {
       </Card>
 
       <div className="grid lg:grid-cols-[2fr_1fr] gap-6">
-        <Card title="GeoSpatial Map">
+        <Card title="GIS Layer Preview">
           <GeoJsonMap
             geoJson={geoJson}
             basemap={basemap}
@@ -622,7 +628,7 @@ export default function MapView() {
             extraSnapGeoJson={extraSnapGeoJson}
           />
           <div className="mt-3 text-xs text-ink/60 flex flex-wrap gap-4">
-            <span>Rwanda CRS: WGS84 (lat, lon)</span>
+            <span>Map CRS: WGS84 (lat, lon)</span>
             <span>Cursor: {formatCoord(cursor?.lat)}, {formatCoord(cursor?.lng)}</span>
             {utmCursor && (
               <span>UTM Zone {utmCursor.zone}S: {utmCursor.easting.toFixed(1)} E, {utmCursor.northing.toFixed(1)} N</span>
@@ -631,7 +637,7 @@ export default function MapView() {
         </Card>
 
         <div className="space-y-6">
-          <Card title="Rwanda Admin Layers">
+          <Card title="Administrative Context">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={showProvinces} onChange={(e) => setShowProvinces(e.target.checked)} />
@@ -662,30 +668,31 @@ export default function MapView() {
               <input type="checkbox" checked={showAdminLabels} onChange={(e) => setShowAdminLabels(e.target.checked)} />
               Show admin labels
             </label>
-            <p className="text-xs text-ink/60 mt-2">Upload official Rwanda admin GeoJSON layers to populate these overlays.</p>
+            <p className="text-xs text-ink/60 mt-2">Uses loaded province, district, sector, cell, and village layers where available from the project datasets.</p>
           </Card>
 
-          <Card title="Road Hierarchy">
+          <Card title="Access Context">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={showRoads} onChange={(e) => setShowRoads(e.target.checked)} />
-              Show roads layer
+              Show roads or transportation features
             </label>
             <label className="flex items-center gap-2 text-sm mt-2">
               <input type="checkbox" checked={showRoadLabels} onChange={(e) => setShowRoadLabels(e.target.checked)} />
               Show road labels
             </label>
             <div className="mt-3 text-xs text-ink/60 space-y-1">
-              <p>National/Primary: orange</p>
-              <p>District/Secondary: gold</p>
-              <p>Feeder/Tertiary: green</p>
-              <p>Local/Path: gray</p>
+              <p>Primary / national: orange</p>
+              <p>Secondary / district: gold</p>
+              <p>Feeder / tertiary: green</p>
+              <p>Local / path: gray</p>
+              <p className="pt-1">Access remains preliminary unless confirmed by survey or official road-reserve data.</p>
             </div>
           </Card>
 
-          <Card title="Survey Tools">
+          <Card title="Sketch And Export Tools">
             <div className="space-y-3 text-sm text-ink/80">
-              <p>Draw parcels, roads, or boundaries using the map toolbar. Snapping aligns sketches with existing Rwanda layers.</p>
-              <p>Measurements are calculated in meters and kilometers.</p>
+              <p>Draw temporary polygons or lines for quick review before using the Subdivision Planner for compliance checks.</p>
+              <p>Measurements are approximate and should be confirmed by a licensed surveyor.</p>
             </div>
             <div className="mt-4 space-y-2 text-sm">
               <p><span className="font-semibold">Sketch polygons:</span> {sketch.summary.polygonCount}</p>
@@ -714,8 +721,8 @@ export default function MapView() {
               </label>
             </div>
             <div className="mt-4 flex flex-col gap-2">
-              <Button onClick={downloadSketch} disabled={!sketch.features.length}>Download GeoJSON</Button>
-              <Button variant="secondary" onClick={copySketch} disabled={!sketch.features.length}>Copy GeoJSON</Button>
+              <Button onClick={downloadSketch} disabled={!sketch.features.length}>Download Sketch GeoJSON</Button>
+              <Button variant="secondary" onClick={copySketch} disabled={!sketch.features.length}>Copy Sketch GeoJSON</Button>
               {copyMessage && <p className="text-xs text-ink/60">{copyMessage}</p>}
             </div>
           </Card>

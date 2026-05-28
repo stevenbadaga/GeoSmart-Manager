@@ -103,7 +103,7 @@ function SketchTools({ onSketchChange, snapTolerance, snapTargets }) {
       draw: {
         polygon: {
           allowIntersection: false,
-          showArea: true
+          showArea: false
         },
         polyline: true,
         rectangle: true,

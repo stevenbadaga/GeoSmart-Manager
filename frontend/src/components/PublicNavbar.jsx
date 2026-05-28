@@ -3,10 +3,11 @@ import { Link, useLocation } from 'react-router-dom'
 
 const navItems = [
   { label: 'Home', to: '/' },
-  { label: 'Solutions', to: '/solutions' },
-  { label: 'Products', to: '/resources' },
+  { label: 'Features', to: '/features' },
+  { label: 'How It Works', to: '/how-it-works' },
+  { label: 'Data & Compliance', to: '/data-compliance' },
   { label: 'About', to: '/about' },
-  { label: 'Case Studies', to: '/resources#release-notes' }
+  { label: 'Contact', to: '/contact' }
 ]
 
 function isActive(pathname, target) {

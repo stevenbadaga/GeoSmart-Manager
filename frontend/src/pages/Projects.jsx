@@ -320,14 +320,49 @@ export default function Projects() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Project Delivery</p>
-          <h1 className="text-2xl font-semibold text-ink mt-2">Projects & Client Delivery</h1>
-          <p className="text-sm text-ink/60">Track active work, archive completed engagements, and keep delivery records attached to each project.</p>
+      <section className="overflow-hidden rounded-[2rem] border border-[#124E44]/20 bg-white shadow-[0_28px_70px_-52px_rgba(15,23,42,0.85)]">
+        <div className="grid lg:grid-cols-[1.12fr_0.88fr]">
+          <div className="relative overflow-hidden bg-[#123E36] p-6 text-white sm:p-8">
+            <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-[#E8C46A]/18 blur-2xl" />
+            <div className="relative">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#E8C46A]">GeoSmart Case Files</p>
+              <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] sm:text-4xl">
+                Project Case Management
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/78">
+                Manage parcel-planning projects, clients, documents, communications, and delivery readiness for subdivision review and professional reporting.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button type="button" className="bg-[#E8C46A] text-[#123E36] hover:bg-[#f0d783]" onClick={openCreate} disabled={!clients.length}>
+                  New Planning Case
+                </Button>
+                <Button type="button" variant="secondary" className="border-white/25 bg-white/10 text-white hover:bg-white/15" onClick={() => setArchiveFilter('ACTIVE')}>
+                  View Active Cases
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="bg-[#F6F1E7] p-6 sm:p-8">
+            <div className="grid gap-3">
+              <div className="rounded-2xl border border-[#124E44]/15 bg-white p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/42">Selected Case</p>
+                <p className="mt-2 text-xl font-black text-ink">{selectedProject?.name || 'No project selected'}</p>
+                <p className="mt-1 text-sm text-ink/55">{selectedProject?.locationSummary || 'Select a planning case to review records.'}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-ink/42">Active</p>
+                  <p className="mt-2 text-2xl font-black text-[#124E44]">{metrics.active}</p>
+                </div>
+                <div className="rounded-2xl bg-white p-4">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-ink/42">Compliance</p>
+                  <p className="mt-2 text-2xl font-black text-warning">{metrics.pendingCompliance}</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <Button onClick={openCreate} disabled={!clients.length}>New Project</Button>
-      </div>
+      </section>
 
       {!clients.length && (
         <Card className="p-4">

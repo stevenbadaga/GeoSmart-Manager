@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public interface ReportRepository extends JpaRepository<ReportEntity, Long> {
     List<ReportEntity> findByProjectId(Long projectId);
+    List<ReportEntity> findByProjectIdOrderByCreatedAtDesc(Long projectId);
+    List<ReportEntity> findByGeneratedById(Long generatedById);
     long countByProjectId(Long projectId);
 
     Optional<ReportEntity> findByIdAndProjectId(Long id, Long projectId);

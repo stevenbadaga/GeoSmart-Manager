@@ -1,396 +1,292 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../auth/AuthContext'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import MiniMap from '../components/MiniMap'
 import { api } from '../api/http'
+import { useAuth } from '../auth/AuthContext'
 
-const icons = {
-  projects: (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <path d="M4 7h16v11H4z" />
-      <path d="M9 7V5h6v2" />
-    </svg>
-  ),
-  users: (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 20c2-3 5-4 8-4s6 1 8 4" />
-    </svg>
-  ),
-  alerts: (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <path d="M12 3l9 16H3L12 3z" />
-      <path d="M12 9v4M12 17h.01" />
-    </svg>
-  ),
-  storage: (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <ellipse cx="12" cy="5" rx="7" ry="3" />
-      <path d="M5 5v6c0 1.7 3.1 3 7 3s7-1.3 7-3V5" />
-      <path d="M5 11v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" />
-    </svg>
-  )
+const workflowSteps = [
+  { title: 'Search Parcel', detail: 'Find parent parcel by UPI and load cadastral geometry.' },
+  { title: 'Read Zoning', detail: 'Intersect the parcel with Kigali Masterplan zones.' },
+  { title: 'Generate Plots', detail: 'Draw, upload, or generate proposed subdivision polygons.' },
+  { title: 'Run Checks', detail: 'Validate area, overlaps, buildings, constraints, slope, and land use.' },
+  { title: 'Export Report', detail: 'Download PDF with layout, measurements, recommendation, and disclaimer.' }
+]
+
+const quickActions = [
+  { label: 'Start New Subdivision Check', detail: 'Search UPI and run preliminary checks', path: '/subdivision', primary: true, roles: ['ADMIN', 'SURVEYOR'] },
+  { label: 'Create Project', detail: 'Open a planning case file', path: '/projects', roles: ['ADMIN', 'SURVEYOR'] },
+  { label: 'View GIS Layers', detail: 'Check parcels, zoning, DEM, and constraints', path: '/datasets', roles: ['ADMIN', 'SURVEYOR'] },
+  { label: 'Open Reports', detail: 'Review generated report outputs', path: '/reports', roles: ['ADMIN', 'SURVEYOR', 'CLIENT'] },
+  { label: 'Upload Document', detail: 'Store reference documents for a project', path: '/documents', roles: ['ADMIN', 'SURVEYOR', 'CLIENT'] },
+  { label: 'Data Limitations', detail: 'Review missing data warnings', path: '/data-limitations', roles: ['ADMIN', 'SURVEYOR', 'CLIENT'] }
+]
+
+const demoParcels = [
+  { upi: '1/01/08/02/941', zone: 'R1A', note: 'Good residential demo parcel' },
+  { upi: '1/01/08/01/706', zone: 'R2', note: 'Lot-size rule demo parcel' },
+  { upi: '1/01/05/04/3041', zone: 'A1 / P3C', note: 'Constraint and slope warning demo' }
+]
+
+function formatNumber(value) {
+  if (!Number.isFinite(value)) return '0'
+  return Math.round(value).toLocaleString()
 }
 
-function formatBytes(bytes) {
-  if (!bytes || bytes <= 0) return '0 MB'
-  const units = ['MB', 'GB', 'TB']
-  let size = bytes / (1024 * 1024)
-  let unitIndex = 0
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024
-    unitIndex += 1
-  }
-  return `${size.toFixed(size >= 100 ? 0 : 1)} ${units[unitIndex]}`
+function statusTone(loaded) {
+  return loaded ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
 }
 
-function formatPercent(value) {
-  if (!Number.isFinite(value)) return '0%'
-  return `${Math.round(value)}%`
-}
-
-function formatRelativeTime(value) {
-  if (!value) return '--'
-  const time = new Date(value).getTime()
-  if (Number.isNaN(time)) return '--'
-  const diffMs = Date.now() - time
-  const minutes = Math.floor(diffMs / 60000)
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes} minutes ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} hours ago`
-  const days = Math.floor(hours / 24)
-  return `${days} days ago`
-}
-
-function formatEventTitle(event) {
-  if (!event) return 'System activity recorded'
-  const entity = event.entityType ? event.entityType.replace(/([a-z])([A-Z])/g, '$1 $2') : 'Entity'
-  return `${event.action} ${entity}`
+function layerLabel(layerKey) {
+  return layerKey
+    ?.replaceAll('_', ' ')
+    ?.replace(/\b\w/g, (letter) => letter.toUpperCase()) || 'GIS Layer'
 }
 
 export default function Dashboard() {
-  const { user } = useAuth()
   const navigate = useNavigate()
-  const [metrics, setMetrics] = useState({
-    totalProjects: 0,
-    totalUsers: 0,
-    activeUsers: 0,
-    complianceAlerts: 0,
-    complianceCritical: 0,
-    workflowBacklog: 0,
-    workflowTotal: 0,
-    storageUsedBytes: 0,
-    storagePercent: 0,
-    projectsCreatedThisMonth: 0,
-    usersCreatedToday: 0,
-    serverLoadPercent: 0,
-    apiLatencyMs: 0
-  })
-  const [metricsLoaded, setMetricsLoaded] = useState(false)
-  const [metricsError, setMetricsError] = useState('')
+  const { user } = useAuth()
+  const [layerStatus, setLayerStatus] = useState([])
+  const [metrics, setMetrics] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [lastUpdated, setLastUpdated] = useState(null)
-  const [events, setEvents] = useState([])
-
-  const metricCards = useMemo(() => ([
-    {
-      key: 'projects',
-      title: 'Total Projects',
-      value: metricsLoaded ? metrics.totalProjects : '--',
-      meta: metricsLoaded ? `${metrics.projectsCreatedThisMonth} new this month` : 'Loading live data...',
-      metaTone: 'text-success',
-      icon: icons.projects
-    },
-    {
-      key: 'users',
-      title: 'Total Users',
-      value: metricsLoaded ? metrics.totalUsers : '--',
-      meta: metricsLoaded ? `${metrics.activeUsers} currently active` : 'Loading live data...',
-      metaTone: 'text-success',
-      icon: icons.users
-    },
-    {
-      key: 'alerts',
-      title: 'Compliance Alerts',
-      value: metricsLoaded ? metrics.complianceAlerts : '--',
-      meta: metricsLoaded ? `${metrics.complianceCritical} critical issues` : 'Loading live data...',
-      metaTone: metrics.complianceCritical > 0 ? 'text-danger' : 'text-success',
-      icon: icons.alerts
-    },
-    {
-      key: 'storage',
-      title: 'Data Storage',
-      value: metricsLoaded ? formatBytes(metrics.storageUsedBytes) : '--',
-      meta: metricsLoaded ? `${formatPercent(metrics.storagePercent)} of capacity` : 'Loading live data...',
-      metaTone: 'text-success',
-      icon: icons.storage
-    }
-  ]), [metrics, metricsLoaded])
 
   useEffect(() => {
     let active = true
-    let refreshing = false
 
-    const loadMetrics = async () => {
+    const loadDashboard = async () => {
+      setLoading(true)
+      setError('')
       try {
-        const data = await api.get('/api/metrics/overview')
+        const [layers, metricData] = await Promise.all([
+          api.get('/api/layers/status'),
+          api.get('/api/metrics/overview').catch(() => null)
+        ])
         if (!active) return
-        let totalUsers = Number.isFinite(data?.totalUsers) ? data.totalUsers : null
-        if (totalUsers === null && user?.role === 'ADMIN') {
-          try {
-            const users = await api.get('/api/users')
-            if (Array.isArray(users)) {
-              totalUsers = users.length
-            }
-          } catch {
-            // ignore
-          }
-        }
-        if (totalUsers === null) {
-          totalUsers = Number.isFinite(data?.activeUsers) ? data.activeUsers : 0
-        }
-
-        setMetrics((current) => ({ ...current, ...data, totalUsers }))
-        setMetricsLoaded(true)
-        setMetricsError('')
+        setLayerStatus(Array.isArray(layers) ? layers : [])
+        setMetrics(metricData)
         setLastUpdated(new Date())
-      } catch (error) {
+      } catch (err) {
         if (!active) return
-        setMetricsError(error?.message || 'Unable to load live dashboard metrics.')
-      }
-    }
-
-    const loadEvents = async () => {
-      if (user?.role !== 'ADMIN') return
-      try {
-        const data = await api.get('/api/audit')
-        if (!active) return
-        setEvents((data || []).slice(0, 4))
-      } catch {
-        // ignore
-      }
-    }
-
-    const measureLatency = async () => {
-      const start = performance.now()
-      try {
-        await api.get('/api/health')
-        if (!active) return
-        const latency = Math.round(performance.now() - start)
-        setMetrics((current) => ({ ...current, apiLatencyMs: latency }))
-      } catch {
-        // ignore
-      }
-    }
-
-    const refreshDashboard = async () => {
-      if (!active || refreshing) return
-      refreshing = true
-      try {
-        await Promise.all([loadMetrics(), loadEvents(), measureLatency()])
+        setError(err.message || 'Unable to load dashboard data.')
       } finally {
-        refreshing = false
+        if (active) setLoading(false)
       }
     }
 
-    refreshDashboard()
-    const interval = setInterval(refreshDashboard, 15000)
-
-    const handleFocus = () => {
-      refreshDashboard()
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        refreshDashboard()
-      }
-    }
-
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
+    loadDashboard()
     return () => {
       active = false
-      clearInterval(interval)
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [user?.role])
+  }, [])
+
+  const loadedLayers = useMemo(
+    () => layerStatus.filter((layer) => layer.loadedSuccessfully),
+    [layerStatus]
+  )
+
+  const failedLayers = useMemo(
+    () => layerStatus.filter((layer) => !layer.loadedSuccessfully),
+    [layerStatus]
+  )
+
+  const totalFeatures = useMemo(
+    () => loadedLayers.reduce((sum, layer) => sum + (Number(layer.featureCount) || 0), 0),
+    [loadedLayers]
+  )
+
+  const importantLayers = useMemo(() => {
+    const wanted = ['PARCELS', 'ZONING', 'BUILDING_FOOTPRINTS', 'CONSTRAINTS', 'DEM']
+    return wanted.map((key) => {
+      const exact = layerStatus.find((layer) => layer.layerKey === key)
+      const fuzzy = layerStatus.find((layer) => layer.layerKey?.includes(key))
+      return exact || fuzzy || { layerKey: key, loadedSuccessfully: false, featureCount: 0, notes: 'Layer not found in status report.' }
+    })
+  }, [layerStatus])
+
+  const readinessScore = layerStatus.length
+    ? Math.round((loadedLayers.length / layerStatus.length) * 100)
+    : 0
+  const role = user?.role || 'CLIENT'
+  const visibleQuickActions = quickActions.filter((action) => !action.roles || action.roles.includes(role))
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-ink/40">System Overview</p>
-        <h1 className="text-2xl font-semibold text-ink mt-2">Operational Snapshot</h1>
-        <p className="text-sm text-ink/60">Monitor active geospatial programs, user activity, and compliance readiness.</p>
-        {metricsError && (
-          <p className="text-sm text-danger mt-2">{metricsError}</p>
-        )}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {metricCards.map((card) => (
-          <Card key={card.key} className="p-5">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-ink/60">{card.title}</p>
-              <div className="h-8 w-8 rounded-xl bg-sand border border-clay/70 flex items-center justify-center text-ink/60">
-                {card.icon}
+      <section className="overflow-hidden rounded-[2rem] border border-[#124E44]/20 bg-white shadow-[0_28px_70px_-52px_rgba(15,23,42,0.85)]">
+        <div className="grid lg:grid-cols-[1.25fr_0.75fr]">
+          <div className="relative overflow-hidden bg-[#123E36] p-6 text-white sm:p-8">
+            <div className="absolute -right-16 -top-20 h-52 w-52 rounded-full bg-[#E8C46A]/18 blur-2xl" />
+            <div className="absolute bottom-0 right-0 h-28 w-52 rounded-tl-full bg-white/8" />
+            <div className="relative">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#E8C46A]">GeoSmart Manager</p>
+              <h1 className="mt-3 max-w-3xl text-3xl font-black tracking-[-0.04em] sm:text-4xl">
+                Kigali Subdivision Planning Dashboard
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/78">
+                Monitor real GIS data readiness, launch parcel subdivision checks, and export preliminary zoning compliance reports with measured plot layouts.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button type="button" className="bg-[#E8C46A] text-[#123E36] hover:bg-[#f0d783]" onClick={() => navigate('/subdivision')}>
+                  Start Subdivision Check
+                </Button>
+                <Button type="button" variant="secondary" className="border-white/25 bg-white/10 text-white hover:bg-white/15" onClick={() => navigate('/datasets')}>
+                  View GIS Layer Status
+                </Button>
               </div>
             </div>
-            <p className="text-2xl font-semibold text-ink mt-3">
-              {card.value}
-            </p>
-            <p className={`text-xs mt-2 ${card.metaTone}`}>
-              {card.meta}
-            </p>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid lg:grid-cols-[2fr_1fr] gap-6">
-        <div className="space-y-6">
-          <Card className="p-0 overflow-hidden">
-            <div className="flex items-center justify-between px-6 pt-5">
-              <div>
-                <h3 className="text-lg font-semibold">Live Geospatial Activity</h3>
-                <p className="text-sm text-ink/60">Kigali city parcels and subdivision zones</p>
+          </div>
+          <div className="bg-[#F6F1E7] p-6 sm:p-8">
+            <div className="rounded-[1.5rem] border border-[#124E44]/15 bg-white p-5 shadow-[0_18px_45px_-38px_rgba(15,23,42,0.65)]">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#124E44]/65">Data Readiness</p>
+              <div className="mt-4 flex items-end gap-3">
+                <p className="text-5xl font-black tracking-[-0.05em] text-[#123E36]">{readinessScore}%</p>
+                <p className="pb-2 text-sm font-semibold text-ink/58">loaded successfully</p>
               </div>
-              <Button variant="secondary" className="text-xs px-3 py-1" onClick={() => navigate('/map')}>
-                View Full Map
-              </Button>
-            </div>
-            <div className="relative mt-4 h-72">
-              <MiniMap />
-              <div className="absolute top-4 left-4 bg-white/90 border border-clay/70 rounded-xl px-3 py-2 text-xs text-ink/70">
-                Kigali, Rwanda
+              <div className="mt-4 h-3 rounded-full bg-[#E6DDCD]">
+                <div className="h-3 rounded-full bg-[#124E44]" style={{ width: `${readinessScore}%` }} />
               </div>
-              <div className="absolute bottom-4 left-4 bg-white/90 border border-clay/70 rounded-xl px-3 py-2 text-xs text-ink/70 flex gap-3">
-                <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-success" />Active Survey</span>
-                <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-danger" />Boundary Conflict</span>
+              <p className="mt-3 text-sm text-ink/62">
+                {loadedLayers.length} of {layerStatus.length || 0} GIS layers ready
+              </p>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-[#124E44]/8 p-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#124E44]/60">Features</p>
+                  <p className="mt-1 text-xl font-black text-[#123E36]">{formatNumber(totalFeatures)}</p>
+                </div>
+                <div className="rounded-2xl bg-[#BC4749]/8 p-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#BC4749]/70">Alerts</p>
+                  <p className="mt-1 text-xl font-black text-[#7A1F20]">{failedLayers.length}</p>
+                </div>
               </div>
             </div>
-          </Card>
+          </div>
+        </div>
+      </section>
 
-          <Card title="Recent System Events">
-            <div className="space-y-4 text-sm text-ink/80">
-              {events.length === 0 && (
-                <p className="text-sm text-ink/60">No recent system events available.</p>
-              )}
-              {events.map((event) => (
-                <div key={event.id} className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-sand border border-clay/70 flex items-center justify-center text-ink/60">
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-                      <path d="M5 12l5 5L19 7" />
-                    </svg>
-                  </div>
+      {error && <Card className="border border-danger/30 bg-danger/5 text-sm text-danger">{error}</Card>}
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/40">GIS Layers</p>
+          <p className="mt-3 text-3xl font-black text-ink">{loading ? '--' : loadedLayers.length}</p>
+          <p className="mt-2 text-sm text-ink/55">Loaded and queryable layers</p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/40">Features</p>
+          <p className="mt-3 text-3xl font-black text-ink">{loading ? '--' : formatNumber(totalFeatures)}</p>
+          <p className="mt-2 text-sm text-ink/55">Total GIS records in cache</p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/40">Alerts</p>
+          <p className="mt-3 text-3xl font-black text-ink">{loading ? '--' : failedLayers.length}</p>
+          <p className="mt-2 text-sm text-ink/55">Missing or unreadable layers</p>
+        </Card>
+        <Card className="p-5">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-ink/40">Total Projects</p>
+          <p className="mt-3 text-3xl font-black text-ink">{metrics?.totalProjects ?? '--'}</p>
+          <p className="mt-2 text-sm text-ink/55">Planning case files</p>
+        </Card>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <Card className="overflow-hidden p-0">
+          <div className="flex flex-wrap items-start justify-between gap-3 px-6 pt-5">
+            <div>
+              <h2 className="text-lg font-bold text-ink">Kigali GIS Workspace</h2>
+              <p className="mt-1 text-sm text-ink/58">Use the map workspace for layer inspection and manual subdivision sketches.</p>
+            </div>
+            <Button variant="secondary" className="text-xs" onClick={() => navigate('/map')}>Open Map</Button>
+          </div>
+          <div className="relative mt-4 h-80">
+            <MiniMap />
+            <div className="absolute left-4 top-4 rounded-2xl border border-clay/70 bg-white/90 px-3 py-2 text-xs font-semibold text-ink/70">
+              Kigali, Rwanda
+            </div>
+            <div className="absolute bottom-4 left-4 flex flex-wrap gap-2 rounded-2xl border border-clay/70 bg-white/90 px-3 py-2 text-xs text-ink/65">
+              <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#1F6F5F]" />Parcels</span>
+              <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#8B5E34]" />Zoning</span>
+              <span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#BC4749]" />Constraints</span>
+            </div>
+          </div>
+        </Card>
+
+        <Card title="Subdivision Workflow">
+          <div className="space-y-3">
+            {workflowSteps.map((step, index) => (
+              <div key={step.title} className="flex gap-3 rounded-2xl border border-clay/60 bg-white/70 p-3">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[#124E44] text-xs font-black text-white">
+                  {index + 1}
+                </span>
+                <div>
+                  <p className="font-bold text-ink">{step.title}</p>
+                  <p className="mt-1 text-sm leading-5 text-ink/58">{step.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <Card title="Critical GIS Layers">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {importantLayers.map((layer) => (
+              <div key={layer.layerKey} className="rounded-2xl border border-clay/60 bg-white/70 p-4">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold text-ink">{formatEventTitle(event)}</p>
-                    <p className="text-xs text-ink/50">
-                      {event.details || 'Activity recorded'} - {formatRelativeTime(event.createdAt)}
-                    </p>
+                    <p className="font-bold text-ink">{layerLabel(layer.layerKey)}</p>
+                    <p className="mt-1 text-xs text-ink/50">{formatNumber(Number(layer.featureCount) || 0)} features</p>
                   </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card title="Quick Actions">
-            <div className="space-y-3">
-              {[
-                { label: 'Add New User', icon: 'user', path: '/users' },
-                { label: 'Generate Compliance Report', icon: 'shield', path: '/reports' },
-                { label: 'System Configuration', icon: 'settings', path: '/account' }
-              ].map((action) => (
-                <button
-                  key={action.label}
-                  className="w-full flex items-center justify-between gap-3 rounded-xl bg-sand border border-clay/70 px-4 py-3 text-sm font-semibold text-ink/80 hover:bg-white/90 transition"
-                  onClick={() => navigate(action.path)}
-                >
-                  <span className="flex items-center gap-3">
-                    <span className="h-8 w-8 rounded-lg bg-white border border-clay/70 flex items-center justify-center text-ink/60">
-                      {action.icon === 'user' && (
-                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-                          <circle cx="12" cy="8" r="4" />
-                          <path d="M4 20c2-3 5-4 8-4s6 1 8 4" />
-                        </svg>
-                      )}
-                      {action.icon === 'shield' && (
-                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-                          <path d="M12 3l7 3v6c0 4.2-3 7.4-7 9-4-1.6-7-4.8-7-9V6l7-3z" />
-                        </svg>
-                      )}
-                      {action.icon === 'settings' && (
-                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-                          <path d="M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                          <path d="M4 12l2-1 1-2-1-2 1-2 2-1 2 1 2-1 2 1 2-1 2 1-1 2 1 2-1 2-2 1-2-1-2 1-2-1-2 1-1-2-2-1z" />
-                        </svg>
-                      )}
-                    </span>
-                    {action.label}
-                  </span>
-                  <span className="text-ink/40">{'>'}</span>
-                </button>
-              ))}
-            </div>
-          </Card>
-
-          <Card title="System Health">
-            <div className="space-y-4 text-sm text-ink/70">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span>Server Load</span>
-                  <span className="font-semibold text-ink">{formatPercent(metrics.serverLoadPercent)}</span>
-                </div>
-                <div className="h-2 rounded-full bg-sand mt-2">
-                  <div className="h-2 rounded-full bg-success" style={{ width: formatPercent(metrics.serverLoadPercent) }} />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <span>Database Storage</span>
-                  <span className="font-semibold text-ink">{formatPercent(metrics.storagePercent)}</span>
-                </div>
-                <div className="h-2 rounded-full bg-sand mt-2">
-                  <div className="h-2 rounded-full bg-warning" style={{ width: formatPercent(metrics.storagePercent) }} />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <span>API Latency</span>
-                  <span className="font-semibold text-ink">{metrics.apiLatencyMs}ms</span>
-                </div>
-                <div className="h-2 rounded-full bg-sand mt-2">
-                  <div className="h-2 rounded-full bg-water" style={{ width: `${Math.min(100, (metrics.apiLatencyMs / 200) * 100)}%` }} />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center justify-between">
-                  <span>Workflow Backlog</span>
-                  <span className="font-semibold text-ink">
-                    {metrics.workflowBacklog}/{metrics.workflowTotal}
+                  <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${statusTone(layer.loadedSuccessfully)}`}>
+                    {layer.loadedSuccessfully ? 'READY' : 'CHECK'}
                   </span>
                 </div>
-                <div className="h-2 rounded-full bg-sand mt-2">
-                  <div
-                    className="h-2 rounded-full bg-river"
-                    style={{
-                      width: `${metrics.workflowTotal > 0 ? Math.min(100, (metrics.workflowBacklog / metrics.workflowTotal) * 100) : 0}%`
-                    }}
-                  />
-                </div>
+                {layer.notes && <p className="mt-3 text-xs leading-5 text-ink/55">{layer.notes}</p>}
               </div>
-              <div className="flex items-center justify-between text-xs text-ink/50">
-                <span>Last updated: {lastUpdated ? lastUpdated.toLocaleTimeString() : 'Just now'}</span>
-                <span className="px-2 py-1 rounded-full bg-success/10 text-success">Operational</span>
-              </div>
-            </div>
-          </Card>
+            ))}
+          </div>
+        </Card>
+
+        <Card title="Quick Actions">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {visibleQuickActions.map((action) => (
+              <button
+                key={action.label}
+                className={`rounded-2xl border p-4 text-left transition ${
+                  action.primary
+                    ? 'border-[#124E44] bg-[#124E44] text-white shadow-[0_18px_34px_-24px_rgba(18,78,68,0.9)]'
+                    : 'border-clay/60 bg-white/70 text-ink hover:bg-white'
+                }`}
+                onClick={() => navigate(action.path)}
+              >
+                <p className="font-bold">{action.label}</p>
+                <p className={`mt-1 text-sm leading-5 ${action.primary ? 'text-white/65' : 'text-ink/55'}`}>{action.detail}</p>
+              </button>
+            ))}
+          </div>
+        </Card>
+      </section>
+
+      <Card title="Recommended Test Parcels">
+        <div className="grid gap-3 md:grid-cols-3">
+          {demoParcels.map((parcel) => (
+            <button
+              key={parcel.upi}
+              className="rounded-2xl border border-clay/60 bg-white/70 p-4 text-left transition hover:border-[#124E44]/40 hover:bg-white"
+              onClick={() => navigate('/subdivision')}
+            >
+              <p className="font-mono text-sm font-black text-ink">{parcel.upi}</p>
+              <p className="mt-2 text-xs font-bold uppercase tracking-[0.14em] text-[#124E44]">{parcel.zone}</p>
+              <p className="mt-2 text-sm leading-5 text-ink/58">{parcel.note}</p>
+            </button>
+          ))}
         </div>
-      </div>
+        <p className="mt-4 text-xs text-ink/50">
+          Last dashboard refresh: {lastUpdated ? lastUpdated.toLocaleString() : 'not loaded yet'}
+        </p>
+      </Card>
     </div>
   )
 }

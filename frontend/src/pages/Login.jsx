@@ -178,7 +178,7 @@ export default function Login() {
             </div>
             <div className="rounded-2xl border border-clay/70 bg-white/80 p-4">
               <p className="text-sm font-semibold text-ink">Role-based controls</p>
-              <p className="mt-1 text-xs text-ink/65">Admin and engineer permissions stay clearly separated.</p>
+              <p className="mt-1 text-xs text-ink/65">Admin, land surveyor, and client access stays clearly separated.</p>
             </div>
           </div>
         </section>

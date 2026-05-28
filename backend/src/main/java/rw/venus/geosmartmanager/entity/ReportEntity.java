@@ -33,6 +33,10 @@ public class ReportEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @ManyToOne
+    @JoinColumn(name = "generated_by_user_id")
+    private UserEntity generatedBy;
+
     @Column(nullable = false)
     private Instant createdAt;
 }
