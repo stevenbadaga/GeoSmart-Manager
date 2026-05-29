@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -55,6 +56,7 @@ public class PasswordResetService {
         this.userSessionService = userSessionService;
     }
 
+    @Transactional
     public AuthDtos.MessageResponse requestPasswordReset(AuthDtos.ForgotPasswordRequest request) {
         passwordResetTokenRepository.deleteByExpiresAtBefore(Instant.now());
 
@@ -71,6 +73,7 @@ public class PasswordResetService {
                 "Token valid for " + entity.getUser().getEmail().toLowerCase(Locale.ROOT));
     }
 
+    @Transactional
     public AuthDtos.MessageResponse resetPassword(AuthDtos.ResetPasswordRequest request) {
         if (!request.newPassword().equals(request.confirmPassword())) {
             throw new IllegalArgumentException("New password and confirmation password do not match.");
