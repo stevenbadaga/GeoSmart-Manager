@@ -13,7 +13,6 @@ import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.entity.SubdivisionRunEntity;
 import rw.venus.geosmartmanager.repo.ComplianceCheckRepository;
 import rw.venus.geosmartmanager.repo.DatasetRepository;
-import rw.venus.geosmartmanager.repo.ProjectRepository;
 import rw.venus.geosmartmanager.repo.SubdivisionRunRepository;
 
 import java.time.ZoneId;
@@ -58,7 +57,7 @@ public class ComplianceService {
     );
 
     private final ComplianceCheckRepository complianceCheckRepository;
-    private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
     private final SubdivisionRunRepository subdivisionRunRepository;
     private final DatasetRepository datasetRepository;
     private final AppProperties appProperties;
@@ -67,7 +66,7 @@ public class ComplianceService {
     private final GeoJsonService geoJsonService;
 
     public ComplianceService(ComplianceCheckRepository complianceCheckRepository,
-                             ProjectRepository projectRepository,
+                             ProjectService projectService,
                              SubdivisionRunRepository subdivisionRunRepository,
                              DatasetRepository datasetRepository,
                              AppProperties appProperties,
@@ -75,7 +74,7 @@ public class ComplianceService {
                              CurrentUserService currentUserService,
                              GeoJsonService geoJsonService) {
         this.complianceCheckRepository = complianceCheckRepository;
-        this.projectRepository = projectRepository;
+        this.projectService = projectService;
         this.subdivisionRunRepository = subdivisionRunRepository;
         this.datasetRepository = datasetRepository;
         this.appProperties = appProperties;
@@ -85,8 +84,7 @@ public class ComplianceService {
     }
 
     public ComplianceCheckEntity runCompliance(Long projectId, ComplianceDtos.RunComplianceRequest request) {
-        ProjectEntity project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        ProjectEntity project = projectService.getProject(projectId);
         SubdivisionRunEntity run = subdivisionRunRepository.findById(request.subdivisionRunId())
                 .orElseThrow(() -> new IllegalArgumentException("Subdivision run not found"));
         if (!run.getProject().getId().equals(project.getId())) {
@@ -280,10 +278,12 @@ public class ComplianceService {
     }
 
     public List<ComplianceCheckEntity> listChecks(Long projectId) {
+        projectService.getProject(projectId);
         return complianceCheckRepository.findByProjectId(projectId);
     }
 
     public ComplianceDtos.ComplianceResponse liveCheck(Long projectId, Long subdivisionRunId, Long maxAgeSeconds) {
+        projectService.getProject(projectId);
         SubdivisionRunEntity run = subdivisionRunRepository.findById(subdivisionRunId)
                 .orElseThrow(() -> new IllegalArgumentException("Subdivision run not found"));
         if (!run.getProject().getId().equals(projectId)) {
@@ -395,6 +395,7 @@ public class ComplianceService {
     }
 
     private ComplianceCheckEntity getCheck(Long projectId, Long checkId) {
+        projectService.getProject(projectId);
         return complianceCheckRepository.findByIdAndProjectId(checkId, projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Compliance check not found"));
     }

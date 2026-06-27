@@ -139,7 +139,7 @@ class ComplianceServiceIntegrationTest {
         var client = clientService.create(new ClientDtos.ClientRequest(
                 "Compliance Client " + suffix,
                 "client-" + suffix + "@example.com",
-                "+250780000000",
+                "+250788883986",
                 "Kigali",
                 "NID-" + suffix,
                 "LAND-" + suffix,

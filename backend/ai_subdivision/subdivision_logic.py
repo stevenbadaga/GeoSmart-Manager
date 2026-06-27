@@ -34,17 +34,12 @@ def subdivide_polygon(
     front_setback: float = 3.0,
     side_setback: float = 2.0,
 ) -> List[Polygon]:
-    """Heuristic subdivision: shrink by setbacks, then slice along longest axis."""
+    """Improved area-based sweep-line subdivision for connected plots."""
     if parent.area < min_lot_size:
         return []
 
-    # Apply setbacks (negative buffer shrinks polygon)
-    shrunken = parent.buffer(-max(front_setback, side_setback))
-    if shrunken.is_empty:
-        return []
-
-    # Align to longest edge of min bounding rectangle
-    min_rect = shrunken.minimum_rotated_rectangle
+    # Align to longest edge of min rotated rectangle
+    min_rect = parent.minimum_rotated_rectangle
     rect_coords = list(min_rect.exterior.coords)
     edge_lengths = [
         LineString([rect_coords[i], rect_coords[i + 1]]).length for i in range(4)
@@ -53,37 +48,55 @@ def subdivide_polygon(
     p1, p2 = rect_coords[longest_idx], rect_coords[longest_idx + 1]
     angle = math.degrees(math.atan2(p2[1] - p1[1], p2[0] - p1[0]))
 
-    aligned = affinity.rotate(shrunken, -angle, origin="centroid")
+    aligned = affinity.rotate(parent, -angle, origin="centroid")
     minx, miny, maxx, maxy = aligned.bounds
-    width = maxx - minx
-    height = maxy - miny
-
-    # Strip width ensures min lot size and leaves room for roads
-    strip_width = max(min_lot_size / max(height, 1e-9), _road_buffer_width(road_width))
-    num_strips = max(1, int(width // strip_width))
-
+    
+    total_area = aligned.area
+    num_lots = max(1, int(total_area // min_lot_size))
+    
+    # Cumulative area sweep to find split points
+    steps = 100
+    step_size = (maxx - minx) / steps
+    cumulative_areas = [0.0]
+    for i in range(1, steps + 1):
+        x = minx + i * step_size
+        box = Polygon([(minx, miny), (x, miny), (x, maxy), (minx, maxy)])
+        intersection = aligned.intersection(box)
+        cumulative_areas.append(intersection.area if not intersection.is_empty else cumulative_areas[-1])
+        
+    target_area = total_area / num_lots
+    split_points = []
+    for i in range(1, num_lots):
+        target = i * target_area
+        j = 0
+        while j < steps and cumulative_areas[j+1] < target:
+            j += 1
+        
+        # Linear interpolation for better precision
+        x_base = minx + j * step_size
+        a_low = cumulative_areas[j]
+        a_high = cumulative_areas[j+1]
+        a_diff = a_high - a_low
+        ratio = (target - a_low) / a_diff if a_diff > 0 else 0
+        split_points.append(x_base + ratio * step_size)
+        
+    boundaries = [minx] + split_points + [maxx]
     lots = []
-    current_x = minx
-    for _ in range(num_strips):
-        next_x = min(maxx, current_x + strip_width)
-        cut = LineString([(next_x, miny), (next_x, maxy)])
-        pieces = split(aligned, cut)
-        aligned = pieces.geoms[0]
-        right_piece = pieces.geoms[1] if len(pieces.geoms) > 1 else None
+    for i in range(len(boundaries) - 1):
+        box = Polygon([(boundaries[i], miny), (boundaries[i+1], miny), (boundaries[i+1], maxy), (boundaries[i], maxy)])
+        intersection = aligned.intersection(box)
+        if not intersection.is_empty:
+            if intersection.geom_type == 'MultiPolygon':
+                for p in intersection.geoms:
+                    if p.area > 1.0:
+                        lots.append(p)
+            else:
+                if intersection.area > 1.0:
+                    lots.append(intersection)
 
-        if right_piece and right_piece.area >= min_lot_size:
-            road_clear = right_piece.buffer(-_road_buffer_width(road_width) / 2)
-            if not road_clear.is_empty and road_clear.area >= min_lot_size:
-                lots.append(road_clear)
-
-        current_x = next_x
-
-    # Rotate back and clip to parent (safety)
+    # Rotate back and clip
     rotated = [affinity.rotate(lot, angle, origin="centroid") for lot in lots]
-    clipped = [
-        lot.intersection(parent) for lot in rotated if not lot.is_empty and lot.is_valid
-    ]
-    return [lot for lot in clipped if lot.area >= min_lot_size]
+    return [lot for lot in rotated if lot.area >= 1.0]
 
 
 def evaluate_efficiency(parent: Polygon, lots: List[Polygon]) -> float:

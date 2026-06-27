@@ -6,7 +6,7 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem('token'))
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(Boolean(localStorage.getItem('token')))
   const [presenceNotice, setPresenceNotice] = useState(null)
   const statusValue = (user?.status || '').toString().toUpperCase()
   const isApproved = ['APPROVED', 'ACTIVE'].includes(statusValue)
@@ -17,6 +17,13 @@ export function AuthProvider({ children }) {
 
   const clearPresenceNotice = () => {
     setPresenceNotice(null)
+  }
+
+  const clearSession = () => {
+    localStorage.removeItem('token')
+    setToken(null)
+    setUser(null)
+    clearPresenceNotice()
   }
 
   const refreshUser = async () => {
@@ -42,9 +49,7 @@ export function AuthProvider({ children }) {
         if (!active) return
         const status = error?.status
         if (status === 401 || status === 403) {
-          setToken(null)
-          localStorage.removeItem('token')
-          setUser(null)
+          clearSession()
           return
         }
         showPresenceNotice('Unable to reach the server. Working in limited connectivity mode.', 'warning')
@@ -57,7 +62,7 @@ export function AuthProvider({ children }) {
   }, [token])
 
   useEffect(() => {
-    if (!token) return () => {}
+    if (!token || !user) return () => {}
 
     let active = true
     const markOnline = async (withNotice) => {
@@ -117,7 +122,7 @@ export function AuthProvider({ children }) {
       window.removeEventListener('offline', handleOffline)
       window.removeEventListener('beforeunload', sendOfflineBeforeUnload)
     }
-  }, [token])
+  }, [token, user?.id])
 
   useEffect(() => {
     if (!presenceNotice?.id) return () => {}
@@ -157,10 +162,7 @@ export function AuthProvider({ children }) {
         // ignore
       }
     }
-    localStorage.removeItem('token')
-    setToken(null)
-    setUser(null)
-    clearPresenceNotice()
+    clearSession()
   }
 
   const value = useMemo(

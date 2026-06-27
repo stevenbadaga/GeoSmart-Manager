@@ -20,7 +20,7 @@ export default function Settings() {
             <p><span className="font-bold text-ink">Name:</span> {user?.fullName || 'Not available'}</p>
             <p><span className="font-bold text-ink">Email:</span> {user?.email || 'Not available'}</p>
             <p><span className="font-bold text-ink">Role:</span> {user?.role === 'SURVEYOR' ? 'Land Surveyor' : user?.role || 'Not available'}</p>
-            <p><span className="font-bold text-ink">Organization:</span> {user?.organization || 'Not recorded'}</p>
+            <p><span className="font-bold text-ink">Status:</span> {user?.status || 'Not available'}</p>
           </div>
         </Card>
         <Card title="Notification Preferences">

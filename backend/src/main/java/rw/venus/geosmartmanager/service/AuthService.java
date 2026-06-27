@@ -9,8 +9,11 @@ import org.springframework.stereotype.Service;
 import rw.venus.geosmartmanager.api.dto.AuthDtos;
 import rw.venus.geosmartmanager.config.JwtService;
 import rw.venus.geosmartmanager.domain.Role;
+import rw.venus.geosmartmanager.domain.KycStatus;
 import rw.venus.geosmartmanager.domain.UserStatus;
+import rw.venus.geosmartmanager.entity.ClientEntity;
 import rw.venus.geosmartmanager.entity.UserEntity;
+import rw.venus.geosmartmanager.repo.ClientRepository;
 import rw.venus.geosmartmanager.repo.UserRepository;
 
 import java.time.Instant;
@@ -26,6 +29,7 @@ public class AuthService {
     private final AuditService auditService;
     private final GoogleTokenVerifierService googleTokenVerifierService;
     private final UserSessionService userSessionService;
+    private final ClientRepository clientRepository;
 
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
@@ -33,7 +37,8 @@ public class AuthService {
                        JwtService jwtService,
                        AuditService auditService,
                        GoogleTokenVerifierService googleTokenVerifierService,
-                       UserSessionService userSessionService) {
+                       UserSessionService userSessionService,
+                       ClientRepository clientRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -41,6 +46,7 @@ public class AuthService {
         this.auditService = auditService;
         this.googleTokenVerifierService = googleTokenVerifierService;
         this.userSessionService = userSessionService;
+        this.clientRepository = clientRepository;
     }
 
     public AuthDtos.AuthResponse register(AuthDtos.RegisterRequest request) {
@@ -49,7 +55,10 @@ public class AuthService {
         }
 
         Role role = request.role() != null ? request.role() : Role.SURVEYOR;
-        if (role != Role.ADMIN && role != Role.SURVEYOR && role != Role.CLIENT) {
+        if (role == Role.ADMIN) {
+            throw new IllegalArgumentException("Admin accounts cannot be created from public registration.");
+        }
+        if (role != Role.SURVEYOR && role != Role.CLIENT) {
             role = Role.SURVEYOR;
         }
 
@@ -60,14 +69,11 @@ public class AuthService {
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(role)
                 .status(UserStatus.ACTIVE)
-                .professionalLicense(normalizeOptional(request.professionalLicense()))
-                .organization(normalizeOptional(request.organization()))
-                .specialization(normalizeOptional(request.specialization()))
-                .certifications(normalizeOptional(request.certifications()))
                 .createdAt(now)
                 .lastActiveAt(now)
                 .build();
         userRepository.save(user);
+        ensureClientProfile(user, now);
         auditService.log(user.getEmail(), "REGISTER", "User", user.getId(), "User registration");
         return buildAuthResponse(user);
     }
@@ -103,6 +109,7 @@ public class AuthService {
         user.setStatus(UserStatus.ACTIVE);
         user.setLastActiveAt(now);
         userRepository.save(user);
+        ensureClientProfile(user, now);
 
         String action = isNewUser ? "REGISTER_GOOGLE" : "LOGIN_GOOGLE";
         String details = action.equals("REGISTER_GOOGLE")
@@ -122,6 +129,23 @@ public class AuthService {
                 .createdAt(now)
                 .lastActiveAt(now)
                 .build();
+    }
+
+    private void ensureClientProfile(UserEntity user, Instant now) {
+        if (user == null || user.getRole() != Role.CLIENT) {
+            return;
+        }
+        if (clientRepository.findByUserId(user.getId()).isPresent()) {
+            return;
+        }
+        ClientEntity client = ClientEntity.builder()
+                .name(user.getFullName())
+                .contactEmail(user.getEmail())
+                .kycStatus(KycStatus.PENDING)
+                .userId(user.getId())
+                .createdAt(now != null ? now : Instant.now())
+                .build();
+        clientRepository.save(client);
     }
 
     private AuthDtos.AuthResponse buildAuthResponse(UserEntity user) {
@@ -144,11 +168,4 @@ public class AuthService {
         ));
     }
 
-    private String normalizeOptional(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
 }

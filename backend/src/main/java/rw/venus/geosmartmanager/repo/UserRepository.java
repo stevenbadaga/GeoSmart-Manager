@@ -14,4 +14,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     long countByStatus(UserStatus status);
 
     long countByCreatedAtAfter(Instant after);
+
+    long countByRole(rw.venus.geosmartmanager.domain.Role role);
 }

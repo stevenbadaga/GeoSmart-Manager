@@ -46,8 +46,20 @@ public class ProjectCommunicationEntity {
     @Column(name = "contact_person")
     private String contactPerson;
 
+    @Column(name = "sender_user_id")
+    private Long senderUserId;
+
+    @Column(name = "sender_name")
+    private String senderName;
+
+    @Column(name = "sender_role")
+    private String senderRole;
+
     @Column(columnDefinition = "TEXT", nullable = false)
     private String summary;
+
+    @Column(name = "system_generated", nullable = false)
+    private boolean systemGenerated;
 
     @Column(name = "occurred_at", nullable = false)
     private Instant occurredAt;

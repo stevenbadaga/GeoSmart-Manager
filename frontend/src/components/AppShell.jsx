@@ -5,15 +5,24 @@ import Topbar from './Topbar'
 
 export default function AppShell() {
   return (
-    <div className="relative min-h-screen md:grid md:grid-cols-[304px_minmax(0,1fr)]">
-      <div className="pointer-events-none absolute left-[-90px] top-[22%] h-72 w-72 rounded-full bg-river/10 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-[-90px] right-[-40px] h-72 w-72 rounded-full bg-parcel/12 blur-3xl" />
-      <div className="pointer-events-none absolute inset-0 opacity-[0.045] [background-image:linear-gradient(to_right,rgba(30,41,59,0.18)_1px,transparent_1px),linear-gradient(to_bottom,rgba(30,41,59,0.18)_1px,transparent_1px)] [background-size:48px_48px]" />
-      <Sidebar />
-      <div className="relative z-10 flex min-w-0 flex-col">
+    <div className="app-shell relative min-h-screen overflow-x-hidden">
+      {/* Background patterns */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden opacity-50">
+        <div className="absolute -left-[10%] -top-[10%] h-[40%] w-[40%] rounded-full bg-emerald-500/5 blur-[120px]" />
+        <div className="absolute -right-[10%] -bottom-[10%] h-[40%] w-[40%] rounded-full bg-blue-500/5 blur-[120px]" />
+        <div className="gis-grid absolute inset-0 opacity-[0.03]" />
+      </div>
+
+      {/* Sidebar - Fixed on desktop, normal flow on mobile (Sidebar handle its own mobile height) */}
+      <div className="md:fixed md:left-0 md:top-0 md:bottom-0 md:z-40 md:w-[280px]">
+        <Sidebar />
+      </div>
+
+      {/* Main Content Area */}
+      <div className="relative z-10 flex min-h-screen flex-col md:pl-[280px]">
         <Topbar />
-        <main className="px-4 pb-8 pt-5 sm:px-6 lg:px-8">
-          <div className="mx-auto w-full max-w-[1480px] space-y-6">
+        <main className="flex-1 px-6 pb-12 pt-8 sm:px-8 lg:px-12">
+          <div className="mx-auto w-full max-w-[1600px] space-y-10">
             <Outlet />
           </div>
         </main>

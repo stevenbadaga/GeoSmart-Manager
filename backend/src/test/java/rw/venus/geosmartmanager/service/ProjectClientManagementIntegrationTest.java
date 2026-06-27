@@ -43,7 +43,7 @@ class ProjectClientManagementIntegrationTest {
         ClientEntity client = clientService.create(new ClientDtos.ClientRequest(
                 "Client " + suffix,
                 "client-" + suffix + "@example.com",
-                "+250780123456",
+                "+250788883986",
                 "Kigali, Gasabo",
                 "NID-" + suffix,
                 "LAND-" + suffix,
@@ -61,7 +61,11 @@ class ProjectClientManagementIntegrationTest {
                 ProjectStatus.IN_PROGRESS,
                 LocalDate.now(),
                 LocalDate.now().plusDays(21),
-                client.getId()
+                client.getId(),
+                "1/01/05/04/" + suffix.substring(0, 4),
+                6,
+                "Agriculture",
+                "Client wants a balanced six-plot subdivision."
         ));
 
         var document = projectDocumentService.create(project.getId(), new ProjectRecordsDtos.ProjectDocumentRequest(
@@ -90,7 +94,7 @@ class ProjectClientManagementIntegrationTest {
         assertThat(document.getProject().getId()).isEqualTo(project.getId());
         assertThat(communication.getProject().getId()).isEqualTo(project.getId());
         assertThat(projectService.documentCount(project.getId())).isEqualTo(1);
-        assertThat(projectService.communicationCount(project.getId())).isEqualTo(1);
+        assertThat(projectService.communicationCount(project.getId())).isEqualTo(2);
         assertThat(projectService.list(false)).extracting(ProjectEntity::getId).contains(project.getId());
 
         ProjectEntity archived = projectService.archive(project.getId());

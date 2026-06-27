@@ -68,7 +68,7 @@ public class UserController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER')")
     public List<AuthDtos.UserResponse> list() {
         return userService.list().stream().map(this::toResponse).toList();
     }

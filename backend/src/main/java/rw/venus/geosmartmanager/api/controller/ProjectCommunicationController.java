@@ -30,7 +30,7 @@ public class ProjectCommunicationController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER','SURVEYOR','ENGINEER','CIVIL_ENGINEER')")
+    @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER','SURVEYOR','ENGINEER','CIVIL_ENGINEER','CLIENT')")
     public ProjectRecordsDtos.ProjectCommunicationResponse create(@PathVariable Long projectId,
                                                                   @Valid @RequestBody ProjectRecordsDtos.ProjectCommunicationRequest request) {
         return toResponse(projectCommunicationService.create(projectId, request));
@@ -43,6 +43,10 @@ public class ProjectCommunicationController {
                 entity.getChannel(),
                 entity.getSubject(),
                 entity.getContactPerson(),
+                entity.getSenderUserId(),
+                entity.getSenderName(),
+                entity.getSenderRole(),
+                entity.isSystemGenerated(),
                 entity.getSummary(),
                 entity.getOccurredAt(),
                 entity.getCreatedAt()

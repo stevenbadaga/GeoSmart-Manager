@@ -1,66 +1,9 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-
-const columns = [
-  {
-    title: 'GeoSmart Manager',
-    links: [
-      { text: 'Home', to: '/' },
-      { text: 'Features', to: '/features' },
-      { text: 'How It Works', to: '/how-it-works' },
-      { text: 'Login', to: '/login' }
-    ]
-  },
-  {
-    title: 'Planning Support',
-    links: [
-      { text: 'Data & Compliance', to: '/data-compliance' },
-      { text: 'Data Limitations', to: '/data-compliance' },
-      { text: 'About', to: '/about' },
-      { text: 'Contact', to: '/contact' }
-    ]
-  },
-  {
-    title: 'Resources',
-    links: [
-      { text: 'Academic prototype', href: '#' },
-      { text: 'Rwanda land planning support', href: '#' },
-      { text: 'Preliminary assessment only', href: '#' },
-      { text: 'Official approval remains separate', href: '#' }
-    ]
-  },
-  {
-    title: 'Contact',
-    links: [
-      { text: 'Kigali, Rwanda', icon: 'pin', href: 'https://maps.google.com/?q=Kigali,Rwanda' },
-      { text: 'contact@example.com', icon: 'mail', href: 'mailto:contact@example.com' },
-      { text: '+250 000 000 000', icon: 'phone', href: 'tel:+250000000000' },
-      { text: 'Mon-Fri, 08:00-18:00 CAT', icon: 'clock', href: '#' }
-    ]
-  }
-]
+import BrandLogo from './BrandLogo'
+import { publicImages } from '../assets/publicImages'
 
 const iconMap = {
-  in: (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-      <path d="M4.98 3.5a2.5 2.5 0 11-.02 5 2.5 2.5 0 01.02-5zM4 8.98h2v12H4zM9.5 9h1.9v1.6h.03c.26-.5.9-1.1 1.86-1.1 1.99 0 2.36 1.3 2.36 3v5.48h-2V13.9c0-1.1-.02-2.52-1.54-2.52-1.54 0-1.78 1.2-1.78 2.44v7.16h-2z" />
-    </svg>
-  ),
-  tw: (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-      <path d="M21 5.2a6 6 0 01-1.7.5 3 3 0 001.3-1.7 6 6 0 01-1.9.8A3 3 0 0012 7.5a8.5 8.5 0 01-6.2-3.1 3 3 0 00.9 4 3 3 0 01-1.4-.4v.1a3 3 0 002.4 3 3 3 0 01-1.4.1 3 3 0 002.8 2A6 6 0 013 16.3 8.5 8.5 0 007.6 18c5.7 0 8.8-4.7 8.8-8.8v-.4A6 6 0 0021 5.2z" />
-    </svg>
-  ),
-  gh: (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-      <path d="M12 2a10 10 0 00-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1-1-1.3-1-1.3-.8-.6.1-.6.1-.6.9.1 1.3.9 1.3.9.8 1.3 2 1 2.5.8.1-.6.3-1 .6-1.3-2.2-.2-4.5-1.1-4.5-5a4 4 0 011-2.8 3.7 3.7 0 01.1-2.8s.8-.3 2.8 1a9.6 9.6 0 015 0c2-1.3 2.8-1 2.8-1a3.7 3.7 0 01.1 2.8 4 4 0 011 2.8c0 3.9-2.3 4.8-4.6 5 .3.2.6.7.6 1.5v2.2c0 .3.2.6.7.5A10 10 0 0012 2z" />
-    </svg>
-  ),
-  yt: (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
-      <path d="M21.5 7.2s-.2-1.5-.8-2.2c-.8-.8-1.7-.8-2.1-.8C15.4 4 12 4 12 4h0s-3.4 0-6.6.2c-.4 0-1.3 0-2.1.8-.6.7-.8 2.2-.8 2.2S2 8.8 2 10.4v1.2c0 1.6.2 3.2.2 3.2s.2 1.5.8 2.2c.8.8 1.8.8 2.2.9 1.6.1 6.6.2 6.6.2s3.4 0 6.6-.2c.4 0 1.3 0 2.1-.8.6-.7.8-2.2.8-2.2s.2-1.6.2-3.2v-1.2c0-1.6-.2-3.2-.2-3.2zM10 13.8V8.9l4.8 2.5z" />
-    </svg>
-  ),
   pin: (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.7">
       <path d="M12 21s7-5.1 7-11.2A7 7 0 005 9.8C5 15.9 12 21 12 21z" />
@@ -86,81 +29,95 @@ const iconMap = {
   )
 }
 
-const focusedLinkClass = 'cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-[#0D6B50] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b2d23] focus-visible:outline-none'
-
 export default function PublicFooter() {
   return (
-    <footer className="mt-8 w-full">
-      <div className="w-full border-t border-white/10 bg-gradient-to-br from-[#0b2d23] via-[#114536] to-[#0a3c34] px-4 py-10 text-white shadow-[0_30px_70px_-40px_rgba(10,27,38,0.75)] sm:px-8 lg:px-12">
-        <div className="mx-auto grid w-full max-w-[1400px] gap-8 lg:grid-cols-[1.2fr_3fr]">
-          <div className="space-y-5">
-            <div className="flex items-center gap-3">
-              <div className="relative grid h-11 w-11 place-items-center rounded-2xl bg-white/14 text-base font-semibold tracking-[0.08em]">
-                <span className="absolute left-1 top-1 h-2 w-2 rounded-sm bg-[#1f8f5f]" />
-                GS
-              </div>
-              <div className="min-w-0">
-                <p className="text-lg font-semibold leading-tight">GeoSmart Manager</p>
-                <p className="text-sm text-white/70">Academic prototype for Rwanda land planning support.</p>
-              </div>
+    <footer className="public-footer w-full bg-gradient-to-br from-emerald-950 via-teal-950 to-slate-950 text-white">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8 py-14">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-14 items-start">
+          
+          {/* Column 1: Brand */}
+          <div className="space-y-6">
+            <BrandLogo
+              to="/"
+              src={publicImages.newBlackLogoTransparent}
+              alt="GeoSmart Manager footer logo"
+              className="w-48 sm:w-52 lg:w-60 max-w-full"
+              imageClassName="h-20 w-auto bg-transparent object-contain border-none shadow-none"
+            />
+            <div className="space-y-4">
+              <p className="text-slate-300 leading-relaxed text-sm">
+                Professional GIS-based land planning and subdivision support for Rwanda.
+              </p>
             </div>
-
-            <p className="max-w-sm text-xs leading-6 text-white/45">
-              Preliminary planning and compliance support only. Official approval remains with competent institutions and licensed professionals.
-            </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {columns.map((col) => (
-              <div key={col.title} className="space-y-3">
-                <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-white/30">{col.title}</p>
-                <ul className="text-[12px] text-white/50">
-                  {col.links.map((item) => {
-                    const content = (
-                      <span className="flex items-center gap-2">
-                        {item.icon && iconMap[item.icon]}
-                        <span>{item.text}</span>
-                      </span>
-                    )
+          {/* Column 2: GeoSmart Manager */}
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-widest text-emerald-300">GeoSmart Manager</p>
+            <ul className="mt-6 space-y-3">
+              {[
+                { text: 'Home', to: '/' },
+                { text: 'Features', to: '/features' },
+                { text: 'How It Works', to: '/features#how-it-works' },
+                { text: 'About', to: '/about' },
+                { text: 'Contact', to: '/contact' }
+              ].map((link) => (
+                <li key={link.text}>
+                  <Link to={link.to} className="text-slate-300 hover:text-white transition-colors text-sm">
+                    {link.text}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-                    if (item.to) {
-                      return (
-                        <li key={item.text}>
-                          <Link className={`mb-2 block transition-colors hover:text-white/80 ${focusedLinkClass}`} to={item.to}>
-                            {content}
-                          </Link>
-                        </li>
-                      )
-                    }
+          {/* Column 3: Planning Support */}
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-widest text-emerald-300">Planning Support</p>
+            <ul className="mt-6 space-y-3">
+              {[
+                { text: 'Data & Compliance', to: '/data-compliance' },
+                { text: 'Subdivision Support', to: '/subdivision' },
+                { text: 'GIS Workspace', to: '/map' },
+                { text: 'Reports', to: '/reports' }
+              ].map((link) => (
+                <li key={link.text}>
+                  <Link to={link.to} className="text-slate-300 hover:text-white transition-colors text-sm">
+                    {link.text}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-                    return (
-                      <li key={item.text}>
-                        <a
-                          className={`mb-2 block transition-colors hover:text-white/80 ${focusedLinkClass}`}
-                          href={item.href}
-                          target={item.href?.startsWith('http') ? '_blank' : undefined}
-                          rel="noreferrer"
-                        >
-                          {content}
-                        </a>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ))}
+          {/* Column 4: Contact Information */}
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-widest text-emerald-300">Contact Information</p>
+            <ul className="mt-6 space-y-4">
+              {[
+                { text: 'Kigali, Rwanda', icon: 'pin', href: 'https://maps.google.com/?q=Kigali,Rwanda' },
+                { text: 'badagaclass@gmail.com', icon: 'mail', href: 'mailto:badagaclass@gmail.com' },
+                { text: '+25078883986', icon: 'phone', href: 'tel:+25078883986' },
+                { text: 'Mon-Fri, 08:00-18:00 CAT', icon: 'clock' }
+              ].map((item) => (
+                <li key={item.text} className="flex items-start gap-3 text-sm">
+                  <span className="mt-1 text-emerald-400/80">{iconMap[item.icon]}</span>
+                  {item.href ? (
+                    <a href={item.href} className="text-slate-300 hover:text-white transition-colors" target={item.href.startsWith('http') ? '_blank' : undefined} rel="noreferrer">
+                      {item.text}
+                    </a>
+                  ) : (
+                    <span className="text-slate-300">{item.text}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col gap-2 border-t border-white/[0.06] pt-4 text-[11px] text-white/20 sm:flex-row sm:items-center sm:justify-between">
-          <span>(c) {new Date().getFullYear()} GeoSmart Manager. Academic prototype.</span>
-          <div className="flex items-center gap-3">
-            <a className={`transition-colors hover:text-white/50 ${focusedLinkClass}`} href="#">Privacy</a>
-            <span aria-hidden="true">&middot;</span>
-            <a className={`transition-colors hover:text-white/50 ${focusedLinkClass}`} href="#">Terms</a>
-            <span aria-hidden="true">&middot;</span>
-            <a className={`transition-colors hover:text-white/50 ${focusedLinkClass}`} href="#">Security</a>
-          </div>
+        {/* Bottom Section */}
+        <div className="border-t border-white/10 mt-10 pt-6 text-center text-sm text-slate-400">
+          <p>&copy; {new Date().getFullYear()} GeoSmart Manager. All rights reserved.</p>
         </div>
       </div>
     </footer>

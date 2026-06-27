@@ -9,13 +9,16 @@ import rw.venus.geosmartmanager.repo.DatasetRepository;
 public class DatasetAnalysisService {
     private final DatasetRepository datasetRepository;
     private final GeoJsonService geoJsonService;
+    private final ProjectService projectService;
 
-    public DatasetAnalysisService(DatasetRepository datasetRepository, GeoJsonService geoJsonService) {
+    public DatasetAnalysisService(DatasetRepository datasetRepository, GeoJsonService geoJsonService, ProjectService projectService) {
         this.datasetRepository = datasetRepository;
         this.geoJsonService = geoJsonService;
+        this.projectService = projectService;
     }
 
     public AnalyticsDtos.DatasetAnalysisResponse analyze(Long projectId, Long datasetId) {
+        projectService.getProject(projectId);
         DatasetEntity dataset = datasetRepository.findById(datasetId)
                 .orElseThrow(() -> new IllegalArgumentException("Dataset not found"));
         if (!dataset.getProject().getId().equals(projectId)) {

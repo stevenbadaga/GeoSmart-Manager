@@ -6,6 +6,7 @@ import 'leaflet-draw/dist/leaflet.draw.css'
 import App from './App'
 import './index.css'
 import { AuthProvider } from './auth/AuthContext'
+import { ThemeProvider } from './theme/ThemeContext'
 
 async function clearLegacyBrowserCache() {
   try {
@@ -31,9 +32,11 @@ if (isLocalHost) {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 )

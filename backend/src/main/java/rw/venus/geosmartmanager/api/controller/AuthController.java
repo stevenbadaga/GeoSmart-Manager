@@ -37,19 +37,19 @@ public class AuthController {
         return authService.loginWithGoogle(request);
     }
 
-    @PostMapping("/password/forgot")
+    @PostMapping("/forgot-password")
     public AuthDtos.MessageResponse forgotPassword(@Valid @RequestBody AuthDtos.ForgotPasswordRequest request) {
         return passwordResetService.requestPasswordReset(request);
     }
 
-    @GetMapping("/password/reset/validate")
-    public AuthDtos.ResetTokenValidationResponse validateResetToken(@RequestParam String token) {
-        return passwordResetService.validateResetToken(token);
-    }
-
-    @PostMapping("/password/reset")
+    @PostMapping("/reset-password")
     public AuthDtos.MessageResponse resetPassword(@Valid @RequestBody AuthDtos.ResetPasswordRequest request) {
         return passwordResetService.resetPassword(request);
+    }
+
+    @GetMapping("/reset-password/validate")
+    public AuthDtos.ResetTokenValidationResponse validateResetToken(@RequestParam String token) {
+        return passwordResetService.validateResetToken(token);
     }
 
     @GetMapping("/google/config")

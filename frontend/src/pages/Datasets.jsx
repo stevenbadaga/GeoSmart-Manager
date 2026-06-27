@@ -33,7 +33,45 @@ function sourceFolder(sourcePath = '') {
 }
 
 function statusClass(loaded) {
-  return loaded ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
+  return loaded ? 'dataset-status-ready' : 'dataset-status-check'
+}
+
+const dataCenterIcons = {
+  layers: (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3.5l8 4.2-8 4.2-8-4.2z" />
+      <path d="M4 12l8 4.2 8-4.2M4 16.5l8 4.2 8-4.2" />
+    </svg>
+  ),
+  check: (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3.5l7 3v5.7c0 4.3-2.8 7.2-7 8.8-4.2-1.6-7-4.5-7-8.8V6.5z" />
+      <path d="M9 12.2l2 2 4-4.4" />
+    </svg>
+  ),
+  records: (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M5 4.5h14v15H5z" />
+      <path d="M8.5 8h7M8.5 12h7M8.5 16h4" />
+    </svg>
+  ),
+  alert: (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 4l9 16H3z" />
+      <path d="M12 9v4M12 17h.01" />
+    </svg>
+  ),
+  map: (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3.5 6.5l5-2.2 7 2.2 5-2.2v13.2l-5 2.2-7-2.2-5 2.2z" />
+      <path d="M8.5 4.3v13.2M15.5 6.5v13.2" />
+    </svg>
+  ),
+  path: (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4.5 7.5h6l2 2h7v7.8a2 2 0 01-2 2h-13z" />
+    </svg>
+  )
 }
 
 export default function Datasets() {
@@ -64,6 +102,7 @@ export default function Datasets() {
     () => loadedLayers.reduce((sum, layer) => sum + (Number(layer.featureCount) || 0), 0),
     [loadedLayers]
   )
+  const readinessScore = layerStatus.length ? Math.round((loadedLayers.length / layerStatus.length) * 100) : 0
 
   useEffect(() => {
     api.get('/api/projects')
@@ -121,62 +160,106 @@ export default function Datasets() {
     }
   }
 
+  const metrics = [
+    { label: 'Operational Layers', value: layerStatus.length, detail: 'Available to the planning engine', icon: 'layers' },
+    { label: 'Loaded Successfully', value: loadedLayers.length, detail: 'Queryable by the planner', icon: 'check' },
+    { label: 'Total Features', value: formatNumber(totalFeatures), detail: 'Parcels, zoning, buildings, boundaries', icon: 'records' },
+    { label: 'Layer Alerts', value: failedLayers.length, detail: 'Missing or unreadable sources', icon: 'alert' }
+  ]
+
   return (
-    <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Geospatial Data Center</p>
-        <h1 className="text-2xl font-semibold text-ink mt-2">Operational GIS Layer Registry</h1>
-        <p className="text-sm text-ink/60">Monitor the verified Kigali layers powering parcel search, zoning checks, building checks, constraints, slope review, and professional reports.</p>
-      </div>
+    <div className="dataset-center space-y-5">
+      <section className="dataset-hero">
+        <div className="dataset-hero-copy">
+          <span className="dataset-kicker">Geospatial Data Center</span>
+          <h1>Geospatial Data Center</h1>
+          <p>Monitor verified Kigali planning layers, cache readiness, and operational GIS records.</p>
+        </div>
+        <div className="dataset-readiness" style={{ '--readiness': `${readinessScore * 3.6}deg` }}>
+          <span>{readinessScore}%</span>
+          <small>readiness</small>
+        </div>
+      </section>
 
-      <div className="grid md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <p className="text-xs text-ink/50">Operational Layers</p>
-          <p className="text-2xl font-semibold text-ink mt-2">{layerStatus.length}</p>
-          <p className="text-xs text-ink/60 mt-2">Available to the planning engine</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs text-ink/50">Loaded Successfully</p>
-          <p className="text-2xl font-semibold text-ink mt-2">{loadedLayers.length}</p>
-          <p className="text-xs text-ink/60 mt-2">Queryable by the planner</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs text-ink/50">Total Features</p>
-          <p className="text-2xl font-semibold text-ink mt-2">{formatNumber(totalFeatures)}</p>
-          <p className="text-xs text-ink/60 mt-2">Parcels, zoning, buildings, boundaries</p>
-        </Card>
-        <Card className="p-4">
-          <p className="text-xs text-ink/50">Layer Alerts</p>
-          <p className="text-2xl font-semibold text-ink mt-2">{failedLayers.length}</p>
-          <p className="text-xs text-ink/60 mt-2">Missing or unreadable sources</p>
-        </Card>
-      </div>
+      <section className="dataset-registry-panel">
+        <div className="dataset-section-head">
+          <div>
+            <span className="dataset-kicker">Layer Registry</span>
+            <h2>Operational GIS Layer Registry</h2>
+            <p>Verified source layers used by parcel search, zoning checks, slope review, and reports.</p>
+          </div>
+          <span className="dataset-chip">{loadedLayers.length} of {layerStatus.length || 0} loaded</span>
+        </div>
 
-      <Card title="Verified Planning Layers">
-        {layerStatusError && <p className="text-sm text-danger">{layerStatusError}</p>}
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {layerStatus.map((layer) => (
-            <div key={layer.layerKey} className="rounded-2xl border border-clay/70 bg-white/75 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-bold text-ink">{layerLabel(layer.layerKey)}</h3>
-                  <p className="mt-1 text-xs text-ink/50">{layer.geometryType || 'Metadata'} {layer.epsg ? `| EPSG:${layer.epsg}` : ''}</p>
-                </div>
-                <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${statusClass(layer.loadedSuccessfully)}`}>
-                  {layer.loadedSuccessfully ? 'READY' : 'CHECK'}
-                </span>
+        <div className="dataset-metric-grid">
+          {metrics.map((metric) => (
+            <div className="dataset-metric-card" key={metric.label}>
+              <div className="dataset-metric-top">
+                <span className="dataset-icon">{dataCenterIcons[metric.icon]}</span>
+                <span className="dataset-card-line" />
               </div>
-              <p className="mt-3 text-2xl font-black text-[#124E44]">{formatNumber(layer.featureCount)}</p>
-              <p className="text-xs text-ink/50">features / records</p>
-              <p className="mt-3 break-words text-xs leading-5 text-ink/58">{sourceFolder(layer.sourcePath)}</p>
-              {layer.notes && <p className="mt-2 text-xs leading-5 text-ink/55">{layer.notes}</p>}
+              <p>{metric.label}</p>
+              <strong>{metric.value}</strong>
+              <small>{metric.detail}</small>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="dataset-layer-section">
+        <div className="dataset-section-head">
+          <div>
+            <span className="dataset-kicker">Verified Planning Layers</span>
+            <h2>Verified Planning Layers</h2>
+            <p>Live operational status for the GIS sources already configured in the system.</p>
+          </div>
+        </div>
+        {layerStatusError && <p className="text-sm text-danger">{layerStatusError}</p>}
+        <div className="dataset-layer-grid">
+          {layerStatus.map((layer) => {
+            const featureCount = Number(layer.featureCount) || 0
+            const featureRatio = totalFeatures ? Math.min(100, Math.round((featureCount / totalFeatures) * 100)) : 0
+            return (
+              <div key={layer.layerKey} className="dataset-layer-card">
+                <div className="dataset-layer-card-head">
+                  <span className="dataset-layer-icon">{dataCenterIcons.map}</span>
+                  <div className="min-w-0 flex-1">
+                    <h3>{layerLabel(layer.layerKey)}</h3>
+                    <p>{layer.geometryType || 'Metadata'} {layer.epsg ? `| EPSG:${layer.epsg}` : ''}</p>
+                  </div>
+                  <span className={`dataset-status ${statusClass(layer.loadedSuccessfully)}`}>
+                    {layer.loadedSuccessfully ? 'READY' : 'CHECK'}
+                  </span>
+                </div>
+
+                <div className="dataset-layer-feature-row">
+                  <div>
+                    <strong>{formatNumber(layer.featureCount)}</strong>
+                    <span>features / records</span>
+                  </div>
+                  <span className="dataset-layer-type">{String(layer.layerKey || 'layer').replaceAll('_', ' ')}</span>
+                </div>
+
+                <div className="dataset-progress" aria-hidden="true">
+                  <span style={{ width: `${layer.loadedSuccessfully ? Math.max(8, featureRatio) : 4}%` }} />
+                </div>
+
+                <div className="dataset-source-path">
+                  {dataCenterIcons.path}
+                  <span>{sourceFolder(layer.sourcePath)}</span>
+                </div>
+                {layer.notes && <p className="dataset-layer-notes">{layer.notes}</p>}
+              </div>
+            )
+          })}
           {!layerStatus.length && !layerStatusError && (
-            <p className="text-sm text-ink/60">No GIS cache status was returned. Run the data inspection and cache build scripts first.</p>
+            <div className="dataset-empty-state">
+              <span className="dataset-icon">{dataCenterIcons.layers}</span>
+              <p>No GIS cache status was returned. Run the data inspection and cache build scripts first.</p>
+            </div>
           )}
         </div>
-      </Card>
+      </section>
 
       <Card title="Data Governance Notes">
         <div className="grid gap-3 text-sm text-ink/70 md:grid-cols-2">

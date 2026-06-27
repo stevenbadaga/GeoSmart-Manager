@@ -9,6 +9,7 @@ import java.time.Instant;
 
 public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
     List<ProjectEntity> findByClientId(Long clientId);
+    List<ProjectEntity> findByAssignedSurveyorId(Long assignedSurveyorId);
     List<ProjectEntity> findByArchivedAtIsNull();
     List<ProjectEntity> findByArchivedAtIsNotNull();
 
@@ -17,4 +18,9 @@ public interface ProjectRepository extends JpaRepository<ProjectEntity, Long> {
     long countByStatusNot(ProjectStatus status);
 
     long countByCreatedAtAfter(Instant after);
+
+    long countByAssignedSurveyorId(Long id);
+    long countByAssignedSurveyorIdAndStatus(Long id, ProjectStatus status);
+    long countByClientId(Long id);
+    boolean existsByClientIdAndAssignedSurveyorId(Long clientId, Long assignedSurveyorId);
 }

@@ -539,16 +539,16 @@ export default function MapView() {
 
   return (
     <div className="space-y-6">
-      <Card title="Kigali GIS Layer Workspace">
-        <div className="mb-5 rounded-[1.5rem] border border-[#124E44]/15 bg-[#F6F1E7] p-4">
-          <p className="text-sm font-semibold text-[#124E44]">Layer review and sketch support</p>
-          <p className="mt-1 max-w-4xl text-sm leading-6 text-ink/62">
-            Use this page to preview project datasets, imported subdivision results, administrative overlays, and quick survey sketches. Main compliance checking remains in the Subdivision Planner.
-          </p>
+      <Card className="gis-control-card">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div>
+            <span className="gis-control-kicker">GIS workspace</span>
+            <h3 className="mt-1 text-xl font-bold tracking-tight text-slate-950">Kigali GIS Layer Workspace</h3>
+          </div>
         </div>
-        <div className="grid md:grid-cols-6 gap-4">
-          <label className="block space-y-2">
-            <span className="text-sm font-medium">Workspace project</span>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+          <label className="gis-control-field">
+            <span>Workspace project</span>
             <select className="input" value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
               <option value="">Select project</option>
               {projects.map((project) => (
@@ -556,16 +556,16 @@ export default function MapView() {
               ))}
             </select>
           </label>
-          <label className="block space-y-2">
-            <span className="text-sm font-medium">View mode</span>
+          <label className="gis-control-field">
+            <span>View mode</span>
             <select className="input" value={mode} onChange={(e) => setMode(e.target.value)}>
               <option value="dataset">GIS dataset</option>
               <option value="subdivision">Subdivision output</option>
             </select>
           </label>
           {mode === 'dataset' ? (
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Imported GIS layer</span>
+            <label className="gis-control-field">
+              <span>Imported GIS layer</span>
               <select className="input" value={selectedDataset} onChange={(e) => setSelectedDataset(e.target.value)}>
                 <option value="">Select dataset</option>
                 {datasets.map((dataset) => (
@@ -574,8 +574,8 @@ export default function MapView() {
               </select>
             </label>
           ) : (
-            <label className="block space-y-2">
-              <span className="text-sm font-medium">Subdivision run</span>
+            <label className="gis-control-field">
+              <span>Subdivision run</span>
               <select className="input" value={selectedRun} onChange={(e) => setSelectedRun(e.target.value)}>
                 <option value="">Select run</option>
                 {runs.map((run) => (
@@ -584,15 +584,15 @@ export default function MapView() {
               </select>
             </label>
           )}
-          <label className="block space-y-2">
-            <span className="text-sm font-medium">Basemap</span>
+          <label className="gis-control-field">
+            <span>Basemap</span>
             <select className="input" value={basemap} onChange={(e) => setBasemap(e.target.value)}>
               <option value="osm">OpenStreetMap</option>
               <option value="satellite">Satellite</option>
             </select>
           </label>
-          <label className="block space-y-2">
-            <span className="text-sm font-medium">Sketch snap (m)</span>
+          <label className="gis-control-field">
+            <span>Sketch snap (m)</span>
             <input
               className="input"
               type="number"
@@ -602,8 +602,8 @@ export default function MapView() {
               onChange={(e) => setSnapTolerance(Number(e.target.value))}
             />
           </label>
-          <label className="block space-y-2">
-            <span className="text-sm font-medium">Reference grid</span>
+          <label className="gis-control-field">
+            <span>Reference grid</span>
             <select className="input" value={utmSpacing} onChange={(e) => setUtmSpacing(Number(e.target.value))}>
               <option value={1000}>1 km</option>
               <option value={2000}>2 km</option>

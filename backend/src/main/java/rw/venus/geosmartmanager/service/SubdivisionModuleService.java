@@ -17,7 +17,6 @@ import rw.venus.geosmartmanager.entity.DatasetEntity;
 import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.entity.SubdivisionRunEntity;
 import rw.venus.geosmartmanager.repo.DatasetRepository;
-import rw.venus.geosmartmanager.repo.ProjectRepository;
 import rw.venus.geosmartmanager.repo.SubdivisionRunRepository;
 
 import java.time.Instant;
@@ -45,7 +44,7 @@ public class SubdivisionModuleService {
     private static final double TOUCH_TOLERANCE_DEGREES = 0.000003d;
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {};
 
-    private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
     private final DatasetRepository datasetRepository;
     private final SubdivisionRunRepository subdivisionRunRepository;
     private final ObjectMapper objectMapper;
@@ -54,14 +53,14 @@ public class SubdivisionModuleService {
     private final GeoJsonService geoJsonService;
     private final GeoJsonReader geoJsonReader;
 
-    public SubdivisionModuleService(ProjectRepository projectRepository,
+    public SubdivisionModuleService(ProjectService projectService,
                                     DatasetRepository datasetRepository,
                                     SubdivisionRunRepository subdivisionRunRepository,
                                     ObjectMapper objectMapper,
                                     AuditService auditService,
                                     CurrentUserService currentUserService,
                                     GeoJsonService geoJsonService) {
-        this.projectRepository = projectRepository;
+        this.projectService = projectService;
         this.datasetRepository = datasetRepository;
         this.subdivisionRunRepository = subdivisionRunRepository;
         this.objectMapper = objectMapper;
@@ -72,8 +71,7 @@ public class SubdivisionModuleService {
     }
 
     public SubdivisionDtos.DemoBundleResponse getDemoBundle(Long projectId) {
-        ProjectEntity project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        ProjectEntity project = projectService.getProject(projectId);
         LayerBundle bundle = ensureDemoLayers(project);
 
         List<FeatureRecord> parcelFeatures = parseFeatures(bundle.parcels().getGeoJson());
@@ -101,8 +99,7 @@ public class SubdivisionModuleService {
     }
 
     public SubdivisionRunEntity validateSubdivision(Long projectId, SubdivisionDtos.ValidateSubdivisionRequest request) {
-        ProjectEntity project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        ProjectEntity project = projectService.getProject(projectId);
         LayerBundle bundle = ensureDemoLayers(project);
 
         List<FeatureRecord> parcelFeatures = parseFeatures(bundle.parcels().getGeoJson());

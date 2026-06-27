@@ -66,7 +66,7 @@ public class SampleDataSeeder implements CommandLineRunner {
             ClientEntity client1 = clientService.create(new ClientDtos.ClientRequest(
                     "Umutekano Cooperative",
                     "contact@umutekano.rw",
-                    "+250780123456",
+                    "+250788883986",
                     "Kigali, Gasabo",
                     "NID-UMU-001",
                     "LAND-UMU-001",
@@ -77,7 +77,7 @@ public class SampleDataSeeder implements CommandLineRunner {
             ClientEntity client2 = clientService.create(new ClientDtos.ClientRequest(
                     "Nyumba Developers",
                     "projects@nyumba.rw",
-                    "+250785445566",
+                    "+250788883986",
                     "Kigali, Kicukiro",
                     "NID-NYU-002",
                     "LAND-NYU-002",
@@ -95,7 +95,11 @@ public class SampleDataSeeder implements CommandLineRunner {
                     ProjectStatus.IN_PROGRESS,
                     LocalDate.now().minusDays(14),
                     LocalDate.now().plusDays(30),
-                    client1.getId()
+                    client1.getId(),
+                    "1/01/05/04/3041",
+                    6,
+                    "Single family houses",
+                    "Sample seeded intake for subdivision workflow."
             ));
 
             ProjectEntity project2 = projectService.create(new ProjectDtos.ProjectRequest(
@@ -108,7 +112,11 @@ public class SampleDataSeeder implements CommandLineRunner {
                     ProjectStatus.PLANNING,
                     LocalDate.now().minusDays(3),
                     null,
-                    client2.getId()
+                    client2.getId(),
+                    "1/02/11/03/2201",
+                    4,
+                    "Survey",
+                    "Sample boundary and parcel validation request."
             ));
 
             String sampleGeoJson = "{" +

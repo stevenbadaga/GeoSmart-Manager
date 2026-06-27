@@ -13,11 +13,7 @@ public class AuthDtos {
             @NotBlank String fullName,
             @Email @NotBlank String email,
             @NotBlank String password,
-            Role role,
-            String professionalLicense,
-            String organization,
-            String specialization,
-            String certifications
+            Role role
     ) {}
 
     public record LoginRequest(
@@ -45,8 +41,13 @@ public class AuthDtos {
     ) {}
 
     public record MessageResponse(
-            String message
-    ) {}
+            String message,
+            String resetLink
+    ) {
+        public MessageResponse(String message) {
+            this(message, null);
+        }
+    }
 
     public record ResetTokenValidationResponse(
             boolean valid,

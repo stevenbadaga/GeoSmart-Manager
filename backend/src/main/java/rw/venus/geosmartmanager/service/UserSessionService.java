@@ -46,7 +46,7 @@ public class UserSessionService {
                 .isPresent();
     }
 
-    public void touchSession(String sessionId) {
+    public synchronized void touchSession(String sessionId) {
         if (sessionId == null || sessionId.isBlank()) {
             return;
         }
@@ -54,7 +54,7 @@ public class UserSessionService {
                 .filter(session -> session.getRevokedAt() == null)
                 .ifPresent(session -> {
                     Instant now = Instant.now();
-                    if (session.getLastSeenAt() == null || session.getLastSeenAt().isBefore(now.minusSeconds(30))) {
+                    if (session.getLastSeenAt() == null || session.getLastSeenAt().isBefore(now.minusSeconds(120))) {
                         session.setLastSeenAt(now);
                         userSessionRepository.save(session);
                     }

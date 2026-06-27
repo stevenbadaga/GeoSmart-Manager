@@ -44,6 +44,9 @@ public class ClientEntity {
     @Column(name = "reviewer_notes", columnDefinition = "TEXT")
     private String reviewerNotes;
 
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(nullable = false)
     private Instant createdAt;
 }

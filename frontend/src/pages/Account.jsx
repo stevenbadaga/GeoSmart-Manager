@@ -14,11 +14,7 @@ function formatDateTime(value) {
 }
 
 const emptyProfile = {
-  fullName: '',
-  professionalLicense: '',
-  organization: '',
-  specialization: '',
-  certifications: ''
+  fullName: ''
 }
 
 export default function Account() {
@@ -34,11 +30,7 @@ export default function Account() {
 
   useEffect(() => {
     setProfile({
-      fullName: user?.fullName || '',
-      professionalLicense: user?.professionalLicense || '',
-      organization: user?.organization || '',
-      specialization: user?.specialization || '',
-      certifications: user?.certifications || ''
+      fullName: user?.fullName || ''
     })
   }, [user])
 
@@ -110,120 +102,123 @@ export default function Account() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-10 max-w-5xl animate-rise">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Account</p>
-          <h1 className="text-2xl font-semibold text-ink mt-2">Profile & Access</h1>
-          <p className="text-sm text-ink/60">Manage your professional profile and active device sessions.</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Personal Account</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight mt-2 font-display">Identity & Access</h1>
+          <p className="text-sm text-slate-500 font-medium mt-1">Manage your professional profile and monitor active platform sessions.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary" onClick={revokeOtherSessions}>Revoke Others</Button>
-          <Button variant="secondary" onClick={handleLogout}>Sign Out</Button>
+          <Button variant="secondary" className="px-6 shadow-sm" onClick={revokeOtherSessions}>Revoke Other Devices</Button>
+          <Button variant="secondary" className="px-6 border-rose-100 text-rose-600 hover:bg-rose-50 hover:border-rose-200 shadow-sm" onClick={handleLogout}>Sign Out</Button>
         </div>
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
-      {info && <p className="text-sm text-success">{info}</p>}
-
-      <Card className="p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-14 w-14 rounded-full bg-sand border border-clay/70 flex items-center justify-center text-ink/60 text-xl font-semibold">
-              {(user?.fullName || 'User').slice(0, 1)}
-            </div>
-            <div>
-              <p className="text-lg font-semibold text-ink">{user?.fullName || 'Survey Engineer'}</p>
-              <p className="text-sm text-ink/60">{user?.email}</p>
-              <p className="text-xs text-ink/50 mt-1">{user?.organization || 'Organization not set'}</p>
-            </div>
-          </div>
-          <Button variant="secondary" onClick={() => {
-            setEditing((current) => !current)
-            setInfo('')
-            setError('')
-          }}
-          >
-            {editing ? 'Close Editor' : 'Edit Profile'}
-          </Button>
+      <Card className="shadow-premium overflow-hidden border-none p-0">
+        <div className="bg-[#063F35] p-10 lg:p-14 text-white relative">
+           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
+           <div className="gis-grid absolute inset-0 opacity-[0.03]" />
+           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                 <div className="h-24 w-24 rounded-[2rem] bg-white/10 border border-white/20 flex items-center justify-center text-white text-3xl font-bold shadow-2xl backdrop-blur-md uppercase font-display">
+                   {(user?.fullName || 'U').slice(0, 1)}
+                 </div>
+                 <div className="text-center md:text-left">
+                    <p className="text-3xl font-bold tracking-tight font-display">{user?.fullName || 'Survey Engineer'}</p>
+                    <p className="text-emerald-100/60 font-medium mt-2 text-lg">{user?.email}</p>
+                    <div className="mt-4 flex flex-wrap justify-center md:justify-start gap-3">
+                       <span className="px-3 py-1 rounded-lg bg-emerald-400/20 border border-emerald-400/30 text-[10px] font-black uppercase tracking-widest text-emerald-400">{user?.role?.replace('_', ' ') || 'PLANNER'}</span>
+                       <span className="px-3 py-1 rounded-lg bg-white/10 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/60">EST. {new Date().getFullYear()}</span>
+                    </div>
+                 </div>
+              </div>
+              <Button variant="secondary" className="border-white/20 bg-white/5 text-white hover:bg-white/10 px-8 py-4 font-black backdrop-blur-sm shadow-xl" onClick={() => {
+                setEditing((current) => !current)
+                setInfo('')
+                setError('')
+              }}>
+                {editing ? 'Close Settings' : 'Modify Profile'}
+              </Button>
+           </div>
         </div>
 
-        <div className="mt-6 grid md:grid-cols-3 gap-4 text-sm text-ink/80">
-          <div className="rounded-xl border border-clay/70 bg-white/70 p-4">
-            <p className="text-xs text-ink/50">Role</p>
-            <p className="text-base font-semibold mt-2">{user?.role || 'ENGINEER'}</p>
-          </div>
-          <div className="rounded-xl border border-clay/70 bg-white/70 p-4">
-            <p className="text-xs text-ink/50">Professional License</p>
-            <p className="text-base font-semibold mt-2">{user?.professionalLicense || 'Not set'}</p>
-          </div>
-          <div className="rounded-xl border border-clay/70 bg-white/70 p-4">
-            <p className="text-xs text-ink/50">Specialization</p>
-            <p className="text-base font-semibold mt-2">{user?.specialization || 'Not set'}</p>
-          </div>
-        </div>
+        <div className="p-10 lg:p-14 bg-white">
+           <div className="grid md:grid-cols-3 gap-8">
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:border-emerald-200 group">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Account Role</p>
+                 <p className="font-bold text-slate-900 text-lg tracking-tight group-hover:text-emerald-700 transition-colors font-display">{user?.role?.replace('_', ' ') || 'ENGINEER'}</p>
+              </div>
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:border-emerald-200 group">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Auth Identifier</p>
+                 <p className="font-bold text-slate-900 text-lg tracking-tight group-hover:text-emerald-700 transition-colors truncate font-display">{user?.email || 'Not set'}</p>
+              </div>
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 transition-all hover:border-emerald-200 group">
+                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">System Status</p>
+                 <p className="font-bold text-slate-900 text-lg tracking-tight group-hover:text-emerald-700 transition-colors font-display">{user?.status || 'ACTIVE'}</p>
+              </div>
+           </div>
 
-        {editing && (
-          <form className="mt-6 space-y-4" onSubmit={saveProfile}>
-            <div className="grid md:grid-cols-2 gap-4">
-              <Input label="Full name" value={profile.fullName} onChange={(event) => setProfile({ ...profile, fullName: event.target.value })} required />
-              <Input label="Organization" value={profile.organization} onChange={(event) => setProfile({ ...profile, organization: event.target.value })} />
-              <Input label="Professional license" value={profile.professionalLicense} onChange={(event) => setProfile({ ...profile, professionalLicense: event.target.value })} />
-              <Input label="Specialization" value={profile.specialization} onChange={(event) => setProfile({ ...profile, specialization: event.target.value })} />
-            </div>
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-ink/80">Certifications</span>
-              <textarea
-                className="input min-h-28"
-                value={profile.certifications}
-                onChange={(event) => setProfile({ ...profile, certifications: event.target.value })}
-                placeholder="List certifications, registrations, or professional memberships"
-              />
-            </label>
-            <div className="flex justify-end gap-2">
-              <Button variant="secondary" type="button" onClick={() => setEditing(false)}>Cancel</Button>
-              <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save Profile'}</Button>
-            </div>
-          </form>
-        )}
+           {editing && (
+             <form className="mt-12 space-y-8 p-10 rounded-[2.5rem] bg-slate-50/50 border border-slate-100 animate-rise" onSubmit={saveProfile}>
+                <div className="max-w-md space-y-6">
+                   <h3 className="text-xl font-bold text-slate-900 tracking-tight font-display">Profile Details</h3>
+                   <Input label="Professional Full Name" value={profile.fullName} onChange={(event) => setProfile({ ...profile, fullName: event.target.value })} required placeholder="e.g. Jean Pierre" />
+                   <div className="flex justify-end gap-3 pt-6 border-t border-slate-200/60">
+                      <button type="button" className="px-8 py-3 text-sm font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors" onClick={() => setEditing(false)}>Cancel</button>
+                      <Button className="px-10 py-4 shadow-xl" type="submit" disabled={saving}>{saving ? 'Syncing...' : 'Update Identity'}</Button>
+                   </div>
+                </div>
+             </form>
+           )}
+        </div>
       </Card>
 
-      <Card title="Active Sessions">
-        <div className="space-y-3">
-          {sessionLoading && <p className="text-sm text-ink/60">Loading sessions...</p>}
+      <Card title="Active Device Sessions" premium className="shadow-premium">
+        <div className="space-y-4">
+          {sessionLoading && (
+            <div className="py-12 text-center animate-pulse">
+               <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Auditing session security...</p>
+            </div>
+          )}
           {!sessionLoading && sessions.map((session) => (
-            <div key={session.sessionId} className="rounded-xl border border-clay/60 bg-white/70 p-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-ink">{session.deviceLabel || 'Unknown device'}</p>
-                    {session.current && <span className="rounded-full bg-river/10 px-2 py-1 text-[11px] font-semibold text-river">Current</span>}
-                    {session.revoked && <span className="rounded-full bg-danger/10 px-2 py-1 text-[11px] font-semibold text-danger">Revoked</span>}
+            <div key={session.sessionId} className="group rounded-2xl border border-slate-100 bg-white p-6 transition-all hover:border-emerald-200 hover:shadow-xl">
+              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-3">
+                    <p className="font-bold text-slate-900 text-lg tracking-tight font-display">{session.deviceLabel || 'Secured Workstation'}</p>
+                    {session.current && <span className="status-badge badge-success"><span className="status-dot dot-success" /> Active</span>}
+                    {session.revoked && <span className="status-badge badge-danger"><span className="status-dot dot-danger" /> Revoked</span>}
                   </div>
-                  <p className="text-xs text-ink/55 mt-1">{session.userAgent || 'User agent unavailable'}</p>
-                  <p className="text-xs text-ink/50 mt-2">
-                    IP: {session.ipAddress || 'Unknown'} | Started: {formatDateTime(session.createdAt)} | Last seen: {formatDateTime(session.lastSeenAt)}
-                  </p>
+                  <p className="text-[13px] text-slate-400 font-medium mt-2 leading-relaxed max-w-2xl">{session.userAgent || 'Encrypted user agent string'}</p>
+                  <div className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <span className="flex items-center gap-2">
+                       <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10" /><path d="M12 2v20M2 12h20" /></svg>
+                       {session.ipAddress || '127.0.0.1'}
+                    </span>
+                    <span className="flex items-center gap-2">
+                       <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                       {formatDateTime(session.createdAt)}
+                    </span>
+                    <span className="flex items-center gap-2">
+                       <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                       Seen: {formatDateTime(session.lastSeenAt)}
+                    </span>
+                  </div>
                 </div>
                 {!session.revoked && (
-                  <Button variant="secondary" onClick={() => revokeSession(session)}>
-                    {session.current ? 'End Current Session' : 'Revoke Session'}
+                  <Button variant="secondary" className="px-6 whitespace-nowrap shadow-sm" onClick={() => revokeSession(session)}>
+                    {session.current ? 'Sign Out Device' : 'End Session'}
                   </Button>
                 )}
               </div>
             </div>
           ))}
           {!sessionLoading && !sessions.length && (
-            <p className="text-sm text-ink/60">No active sessions recorded yet.</p>
+            <div className="py-16 text-center bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 transition-colors hover:bg-white hover:border-emerald-200">
+               <p className="text-[13px] font-bold text-slate-400 italic">No historical device sessions found.</p>
+            </div>
           )}
-        </div>
-      </Card>
-
-      <Card title="Security Tips">
-        <div className="space-y-2 text-sm text-ink/70">
-          <p>Review your active devices regularly and revoke anything unfamiliar.</p>
-          <p>Keep professional license and certification details current for project assignments.</p>
-          <p>Use sign out on shared devices after field operations or review sessions.</p>
         </div>
       </Card>
     </div>

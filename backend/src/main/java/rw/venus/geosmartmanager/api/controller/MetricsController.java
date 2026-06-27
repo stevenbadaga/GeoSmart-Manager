@@ -18,7 +18,7 @@ public class MetricsController {
 
     @GetMapping("/overview")
     @PreAuthorize("hasAnyRole('ADMIN','PROJECT_MANAGER','SURVEYOR','ENGINEER','CIVIL_ENGINEER','CLIENT')")
-    public MetricsDtos.OverviewResponse overview() {
-        return metricsService.overview();
+    public MetricsDtos.OverviewResponse overview(@org.springframework.security.core.annotation.AuthenticationPrincipal rw.venus.geosmartmanager.entity.UserEntity user) {
+        return metricsService.overview(user);
     }
 }

@@ -16,7 +16,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -33,17 +32,13 @@ class AuthProfileSessionIntegrationTest {
     private JwtService jwtService;
 
     @Test
-    void registerStoresProfileFieldsAndCreatesManagedSession() throws Exception {
+    void registerCreatesManagedSessionForCurrentSelfServiceFields() throws Exception {
         String email = "register-" + UUID.randomUUID().toString().substring(0, 8) + "@example.com";
         String registerPayload = objectMapper.writeValueAsString(new RegisterPayload(
                 "Session Surveyor",
                 email,
                 "Password123!",
-                "SURVEYOR",
-                "LS-2026-1001",
-                "Venus Surveying",
-                "Boundary Survey",
-                "RICS, Rwanda Survey Board"
+                "SURVEYOR"
         ));
 
         JsonNode authNode = readJson(mockMvc.perform(post("/api/auth/register")
@@ -57,10 +52,9 @@ class AuthProfileSessionIntegrationTest {
         String token = authNode.path("token").asText();
         JsonNode userNode = authNode.path("user");
 
-        assertThat(userNode.path("professionalLicense").asText()).isEqualTo("LS-2026-1001");
-        assertThat(userNode.path("organization").asText()).isEqualTo("Venus Surveying");
-        assertThat(userNode.path("specialization").asText()).isEqualTo("Boundary Survey");
-        assertThat(userNode.path("certifications").asText()).contains("RICS");
+        assertThat(userNode.path("fullName").asText()).isEqualTo("Session Surveyor");
+        assertThat(userNode.path("email").asText()).isEqualTo(email);
+        assertThat(userNode.path("role").asText()).isEqualTo("SURVEYOR");
         assertThat(jwtService.parseToken(token).get("sid", String.class)).isNotBlank();
 
         JsonNode meNode = readJson(mockMvc.perform(get("/api/users/me")
@@ -70,8 +64,8 @@ class AuthProfileSessionIntegrationTest {
                 .getResponse()
                 .getContentAsString());
 
-        assertThat(meNode.path("organization").asText()).isEqualTo("Venus Surveying");
-        assertThat(meNode.path("specialization").asText()).isEqualTo("Boundary Survey");
+        assertThat(meNode.path("email").asText()).isEqualTo(email);
+        assertThat(meNode.path("role").asText()).isEqualTo("SURVEYOR");
 
         JsonNode sessionsNode = readJson(mockMvc.perform(get("/api/users/me/sessions")
                         .header("Authorization", "Bearer " + token))
@@ -106,11 +100,7 @@ class AuthProfileSessionIntegrationTest {
                                 "Project Manager",
                                 email,
                                 password,
-                                "PROJECT_MANAGER",
-                                "",
-                                "GeoSmart",
-                                "Project Delivery",
-                                "PMI"
+                                "PROJECT_MANAGER"
                         ))))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -181,11 +171,7 @@ class AuthProfileSessionIntegrationTest {
             String fullName,
             String email,
             String password,
-            String role,
-            String professionalLicense,
-            String organization,
-            String specialization,
-            String certifications
+            String role
     ) {}
 
     private record LoginPayload(

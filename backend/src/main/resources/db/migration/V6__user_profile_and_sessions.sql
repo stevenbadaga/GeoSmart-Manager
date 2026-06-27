@@ -1,10 +1,9 @@
-ALTER TABLE users
-    ADD COLUMN organization VARCHAR(200),
-    ADD COLUMN specialization VARCHAR(200),
-    ADD COLUMN certifications TEXT;
+ALTER TABLE users ADD COLUMN organization VARCHAR(200);
+ALTER TABLE users ADD COLUMN specialization VARCHAR(200);
+ALTER TABLE users ADD COLUMN certifications TEXT;
 
 CREATE TABLE user_sessions (
-    id BIGSERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     session_id VARCHAR(120) NOT NULL UNIQUE,
     device_label VARCHAR(200),

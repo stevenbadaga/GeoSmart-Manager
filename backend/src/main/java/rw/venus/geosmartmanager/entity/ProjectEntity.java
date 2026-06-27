@@ -52,6 +52,36 @@ public class ProjectEntity {
     @JoinColumn(name = "client_id")
     private ClientEntity client;
 
+    @Column(name = "assigned_surveyor_id")
+    private Long assignedSurveyorId;
+
+    @Column(name = "requested_upi", length = 120)
+    private String requestedUpi;
+
+    @Column(name = "requested_parcel_count")
+    private Integer requestedParcelCount;
+
+    @Column(name = "requested_land_use", length = 120)
+    private String requestedLandUse;
+
+    @Column(name = "intake_notes", columnDefinition = "TEXT")
+    private String intakeNotes;
+
+    @Column(name = "approved_at")
+    private Instant approvedAt;
+
+    @Column(name = "surveyor_accepted_at")
+    private Instant surveyorAcceptedAt;
+
+    @Column(name = "subdivision_drafted_at")
+    private Instant subdivisionDraftedAt;
+
+    @Column(name = "compliance_checked_at")
+    private Instant complianceCheckedAt;
+
+    @Column(name = "report_ready_at")
+    private Instant reportReadyAt;
+
     @Column(name = "archived_at")
     private Instant archivedAt;
 

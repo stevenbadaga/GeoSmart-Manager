@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 class PasswordResetIntegrationTest {
-    private static final Pattern TOKEN_PATTERN = Pattern.compile("token=([A-Za-z0-9_-]+)");
+    private static final Pattern TOKEN_PATTERN = Pattern.compile("token(?:=|=3D)([A-Za-z0-9_-]+)");
 
     @Autowired
     private MockMvc mockMvc;
@@ -167,14 +167,21 @@ class PasswordResetIntegrationTest {
     }
 
     private String readMessageBody(MimeMessage message) throws Exception {
-        Object content = message.getContent();
+        return readContent(message.getContent());
+    }
+
+    private String readContent(Object content) throws Exception {
         if (content instanceof String stringContent) {
             return stringContent;
         }
         if (content instanceof Multipart multipart) {
-            BodyPart bodyPart = multipart.getBodyPart(0);
-            Object bodyContent = bodyPart.getContent();
-            return bodyContent instanceof String stringContent ? stringContent : String.valueOf(bodyContent);
+            StringBuilder body = new StringBuilder();
+            for (int index = 0; index < multipart.getCount(); index++) {
+                BodyPart bodyPart = multipart.getBodyPart(index);
+                body.append(readContent(bodyPart.getContent()));
+                body.append('\n');
+            }
+            return body.toString();
         }
         return String.valueOf(content);
     }

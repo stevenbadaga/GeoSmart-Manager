@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import Button from '../components/Button'
-import Input from '../components/Input'
-import Card from '../components/Card'
 import { useAuth } from '../auth/AuthContext'
 import { api } from '../api/http'
+import { publicImages } from '../assets/publicImages'
+import BrandLogo from '../components/BrandLogo'
 
 const GOOGLE_SCRIPT_SOURCE = 'https://accounts.google.com/gsi/client'
 
@@ -32,6 +31,19 @@ function loadGoogleIdentityScript() {
   })
 }
 
+function loginErrorMessage(error) {
+  if (!error) return 'Unable to sign in. Please try again.'
+  if (error.status === 401 || error.status === 403) {
+    return error.message && error.message !== 'Request failed'
+      ? error.message
+      : 'Invalid email or password.'
+  }
+  if (error.message === 'Failed to fetch' || error.message === 'NetworkError when attempting to fetch resource.') {
+    return 'Unable to reach the GeoSmart server. Check that the backend is running.'
+  }
+  return error.message || 'Unable to sign in. Please try again.'
+}
+
 export default function Login() {
   const navigate = useNavigate()
   const { login, googleLogin } = useAuth()
@@ -55,7 +67,7 @@ export default function Login() {
       await login({ email, password })
       navigate('/dashboard')
     } catch (err) {
-      setError(err.message)
+      setError(loginErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -151,98 +163,128 @@ export default function Login() {
   }, [googleConfigured, googleClientId, googleLogin, navigate])
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-4 py-8 sm:px-6 lg:px-10">
-      <div className="pointer-events-none absolute left-[-90px] top-[-70px] h-64 w-64 rounded-full bg-river/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-[-120px] right-[-70px] h-72 w-72 rounded-full bg-parcel/20 blur-3xl" />
+    <div className="relative min-h-screen flex overflow-hidden bg-slate-50">
+      {/* LEFT SIDE: IMAGE PANEL (IMAGE ONLY) */}
+      <section className="relative hidden lg:block lg:w-1/2 overflow-hidden bg-emerald-950">
+        <img
+          src={publicImages.sunriseLandscapeImage}
+          alt="GeoSmart land planning professional banner"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/75 via-emerald-950/55 to-slate-950/40" />
+      </section>
 
-      <div className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="animate-rise space-y-6">
-          <Link to="/" className="inline-flex items-center gap-3 text-ink">
-            <div className="grid h-11 w-11 place-items-center rounded-xl bg-river text-lg font-semibold text-white shadow-sm">G</div>
-            <div>
-              <p className="text-base font-semibold">GeoSmart Manager</p>
-              <p className="text-xs text-ink/60">Land Intelligence Platform</p>
+      {/* RIGHT SIDE: AUTH PANEL */}
+      <div className="flex min-h-screen flex-1 items-center justify-center px-6 py-12 lg:px-16">
+        <div className="w-full max-w-lg">
+          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl md:p-10">
+            {/* Logo Wrapper */}
+            <div className="mb-10 text-center">
+              <BrandLogo to="/" src={publicImages.newWhiteLogoTransparent} className="mx-auto h-12 w-auto object-contain" />
             </div>
-          </Link>
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-river">Welcome Back</p>
-            <h1 className="mt-2 text-4xl leading-tight text-ink sm:text-5xl">Sign in to your workspace.</h1>
-            <p className="mt-4 max-w-xl text-base text-ink/70">
-              Continue project monitoring, map analysis, and compliance workflows from your GeoSmart dashboard.
-            </p>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-clay/70 bg-white/80 p-4">
-              <p className="text-sm font-semibold text-ink">Fast access</p>
-              <p className="mt-1 text-xs text-ink/65">Everything from datasets to reports in one panel.</p>
-            </div>
-            <div className="rounded-2xl border border-clay/70 bg-white/80 p-4">
-              <p className="text-sm font-semibold text-ink">Role-based controls</p>
-              <p className="mt-1 text-xs text-ink/65">Admin, land surveyor, and client access stays clearly separated.</p>
-            </div>
-          </div>
-        </section>
 
-        <Card className="animate-rise stagger-2 w-full max-w-xl justify-self-center p-8 sm:p-10">
-          <h2 className="text-3xl font-semibold text-ink">Sign in</h2>
-          <p className="mt-2 text-sm text-ink/65">Use your registered email and password.</p>
-          <div className="mt-6 rounded-2xl border border-clay/70 bg-white/90 px-4 py-4">
-            {googleConfigLoading && (
-              <p className="text-xs text-center text-ink/55">Checking Google Sign-In configuration...</p>
-            )}
-            {!googleConfigLoading && !googleConfigured && (
-              <p className="text-xs text-ink/60">
-                Google Sign-In is not configured. Set <code className="font-semibold">GOOGLE_CLIENT_ID</code> on backend
-                or <code className="font-semibold">VITE_GOOGLE_CLIENT_ID</code> on frontend.
-              </p>
-            )}
+
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">Welcome back</h2>
+            <p className="mt-3 text-base leading-relaxed text-slate-600">Sign in to continue to your GeoSmart Manager workspace.</p>
+
+            {/* Google Sign-In Area (Only if configured) */}
             {!googleConfigLoading && googleConfigured && (
-              <div className={`flex justify-center ${googleLoading ? 'opacity-60 pointer-events-none' : ''}`}>
-                <div ref={googleButtonRef} className="w-full max-w-[360px]" />
+              <div className="mt-8 space-y-6">
+                <div className={`flex justify-center ${googleLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+                  <div ref={googleButtonRef} className="w-full" />
+                </div>
+                <div className="flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-slate-400 font-bold">
+                  <span className="h-px flex-1 bg-slate-100" />
+                  or sign in with email
+                  <span className="h-px flex-1 bg-slate-100" />
+                </div>
               </div>
             )}
-            {!googleConfigLoading && googleConfigured && !googleReady && (
-              <p className="mt-2 text-center text-xs text-ink/55">Preparing Google Sign-In...</p>
-            )}
-          </div>
-          <div className="mt-5 flex items-center gap-3 text-xs uppercase tracking-[0.16em] text-ink/45">
-            <span className="h-px flex-1 bg-clay/80" />
-            or use email
-            <span className="h-px flex-1 bg-clay/80" />
-          </div>
-          <form className="mt-7 space-y-5" onSubmit={onSubmit}>
-            <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-ink/80">Password</span>
-              <div className="relative">
+
+            <form className="mt-8 space-y-6" onSubmit={onSubmit}>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700" htmlFor="email">Email address</label>
                 <input
-                  className="input pr-16"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="name@example.com"
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base text-slate-900 outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-ink/55 hover:text-ink/80"
-                  onClick={() => setShowPassword((visible) => !visible)}
-                >
-                  {showPassword ? 'Hide' : 'Show'}
-                </button>
               </div>
-            </label>
-            <div className="flex justify-end">
-              <Link className="text-sm font-semibold text-river hover:text-moss transition-colors" to="/forgot-password">
-                Forgot password?
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center px-1">
+                  <label className="text-sm font-semibold text-slate-700" htmlFor="password">Password</label>
+                  <Link className="text-sm font-semibold text-emerald-700 hover:text-emerald-800 transition-colors" to="/forgot-password">
+                    Forgot password?
+                  </Link>
+                </div>
+                <div className="relative">
+                  <input
+                    id="password"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base text-slate-900 outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-emerald-700 transition-colors"
+                    onClick={() => setShowPassword((visible) => !visible)}
+                  >
+                    {showPassword ? 'Hide' : 'Show'}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-600 animate-in fade-in slide-in-from-top-2 duration-300">
+                   <p className="font-semibold text-center">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-8 w-full rounded-2xl bg-emerald-700 px-6 py-4 text-base font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-100 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-emerald-700/10"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Signing in...
+                  </span>
+                ) : 'Sign in'}
+              </button>
+            </form>
+
+            <div className="my-8 border-t border-slate-100" />
+
+            <div className="space-y-4 text-center text-sm text-slate-600">
+              <p>
+                New to GeoSmart?{' '}
+                <Link className="font-semibold text-emerald-700 hover:text-emerald-800 transition-colors" to="/register">
+                  Create an account
+                </Link>
+              </p>
+              <Link className="inline-flex items-center justify-center gap-2 font-semibold text-slate-400 hover:text-slate-600 transition-colors" to="/">
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M19 12H5m7 7l-7-7 7-7" />
+                </svg>
+                Back to home
               </Link>
             </div>
-            {error && <p className="rounded-xl border border-danger/20 bg-danger/5 px-3 py-2 text-sm text-danger">{error}</p>}
-            <Button className="w-full" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</Button>
-          </form>
-          <p className="mt-6 text-sm text-ink/70">
-            New here? <Link className="font-semibold text-river hover:text-moss transition-colors" to="/register">Create an account</Link>
-          </p>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

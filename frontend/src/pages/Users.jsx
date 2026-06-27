@@ -14,7 +14,6 @@ const roleTabs = [
 ]
 
 const roleOptions = [
-  { value: 'ADMIN', label: 'Admin' },
   { value: 'SURVEYOR', label: 'Land Surveyor' },
   { value: 'CLIENT', label: 'Client' }
 ]
@@ -26,17 +25,13 @@ const statusOptions = [
   { value: 'SUSPENDED', label: 'Suspended' }
 ]
 
-const avatarPalette = ['#1F6F5F', '#2A6FA1', '#B6862C', '#5B667A', '#1F8A4C', '#C97A1A']
+const avatarPalette = ['#063F35', '#0D2F27', '#4D694E', '#10201B', '#10B981', '#92400E']
 
 const emptyForm = {
   fullName: '',
   email: '',
   role: 'SURVEYOR',
   status: 'ACTIVE',
-  professionalLicense: '',
-  organization: '',
-  specialization: '',
-  certifications: '',
   password: ''
 }
 
@@ -48,13 +43,13 @@ function avatarColor(name = '') {
 function roleBadge(role) {
   switch (role) {
     case 'ADMIN':
-      return 'bg-water/10 text-water'
+      return 'badge-info'
     case 'SURVEYOR':
-      return 'bg-success/10 text-success'
+      return 'badge-success'
     case 'CLIENT':
-      return 'bg-sand text-secondary'
+      return 'badge-warning'
     default:
-      return 'bg-river/10 text-river'
+      return 'badge-slate'
   }
 }
 
@@ -69,17 +64,17 @@ function formatStatus(status) {
 }
 
 function formatRelative(value) {
-  if (!value) return '--'
+  if (!value) return 'Never'
   const time = new Date(value).getTime()
   if (Number.isNaN(time)) return '--'
   const diffMs = Date.now() - time
   const minutes = Math.floor(diffMs / 60000)
   if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes} mins ago`
+  if (minutes < 60) return `${minutes}m ago`
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} hours ago`
+  if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
-  return `${days} days ago`
+  return `${days}d ago`
 }
 
 function normalizeEnum(value) {
@@ -142,7 +137,7 @@ export default function Users() {
   const [page, setPage] = useState(1)
   const [openMenuId, setOpenMenuId] = useState(null)
   const fileInputRef = useRef(null)
-  const pageSize = 6
+  const pageSize = 8
 
   const loadUsers = () => {
     setLoading(true)
@@ -166,8 +161,8 @@ export default function Users() {
   if (user?.role !== 'ADMIN') {
     return (
       <Card title="Access Restricted">
-        <p className="text-sm text-ink/70">
-          User management is available to system administrators only.
+        <p className="text-sm text-slate-500 font-medium leading-relaxed">
+          User management is reserved for system administrators. Please contact your organization head for access.
         </p>
       </Card>
     )
@@ -175,11 +170,11 @@ export default function Users() {
 
   const filteredUsers = useMemo(() => {
     const tab = roleTabs.find((item) => item.value === activeTab)
-    return users.filter((user) => {
-      const matchesQuery = [user.fullName, user.email].some((field) =>
+    return users.filter((u) => {
+      const matchesQuery = [u.fullName, u.email].some((field) =>
         field?.toLowerCase().includes(query.toLowerCase())
       )
-      const matchesRole = !tab?.roles?.length || tab.roles.includes(user.role)
+      const matchesRole = !tab?.roles?.length || tab.roles.includes(u.role)
       return matchesQuery && matchesRole
     })
   }, [users, activeTab, query])
@@ -200,17 +195,13 @@ export default function Users() {
     setInfo('')
   }
 
-  const openEdit = (user) => {
-    setEditingUser(user)
+  const openEdit = (u) => {
+    setEditingUser(u)
     setForm({
-      fullName: user.fullName || '',
-      email: user.email || '',
-      role: user.role || 'SURVEYOR',
-      status: user.status || 'ACTIVE',
-      professionalLicense: user.professionalLicense || '',
-      organization: user.organization || '',
-      specialization: user.specialization || '',
-      certifications: user.certifications || '',
+      fullName: u.fullName || '',
+      email: u.email || '',
+      role: u.role || 'SURVEYOR',
+      status: u.status || 'ACTIVE',
       password: ''
     })
     setShowForm(true)
@@ -227,7 +218,7 @@ export default function Users() {
     setInfo('')
     try {
       await api.put(`/api/users/${targetUser.id}`, { status })
-      setInfo(`Status updated to ${status}.`)
+      setInfo(`Account status for ${targetUser.fullName} updated to ${status}.`)
       loadUsers()
     } catch (err) {
       setError(err.message)
@@ -250,26 +241,18 @@ export default function Users() {
         await api.put(`/api/users/${editingUser.id}`, {
           fullName: form.fullName,
           role: form.role,
-          status: form.status,
-          professionalLicense: form.professionalLicense,
-          organization: form.organization,
-          specialization: form.specialization,
-          certifications: form.certifications
+          status: form.status
         })
-        setInfo('User updated successfully.')
+        setInfo('User profile updated successfully.')
       } else {
         await api.post('/api/users', {
           fullName: form.fullName,
           email: form.email,
           password: form.password,
           role: form.role,
-          status: form.status,
-          professionalLicense: form.professionalLicense,
-          organization: form.organization,
-          specialization: form.specialization,
-          certifications: form.certifications
+          status: form.status
         })
-        setInfo('User created successfully.')
+        setInfo('New user account created.')
       }
       closeForm()
       loadUsers()
@@ -304,36 +287,30 @@ export default function Users() {
           fullName: row.fullName || row.name || '',
           email: row.email || '',
           password: row.password || '',
-          role: normalizeEnum(row.role || 'SURVEYOR'),
+          role: normalizeEnum(row.role || 'SURVEYOR') === 'CLIENT' ? 'CLIENT' : 'SURVEYOR',
           status: normalizeEnum(row.status || 'ACTIVE'),
-          professionalLicense: row.professionalLicense || row.license || '',
-          organization: row.organization || '',
-          specialization: row.specialization || '',
-          certifications: row.certifications || row.certification || ''
         }
-        if (!payload.fullName || !payload.email || !payload.password) {
-          continue
-        }
+        if (!payload.fullName || !payload.email || !payload.password) continue
         await api.post('/api/users', payload)
         success += 1
       }
       loadUsers()
-      setInfo(`Imported ${success} users successfully.`)
+      setInfo(`Successfully imported ${success} team members.`)
     } catch (err) {
       setError(err.message)
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div className="space-y-10 animate-rise">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-semibold text-ink">Team & Users</h1>
-          <p className="text-sm text-ink/60">Manage user access, roles, and professional profile details.</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-display">Team & Users</h1>
+          <p className="mt-2 text-slate-500 font-medium">Manage identity, role-based access, and account health across the platform.</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button variant="secondary" onClick={handleBulkImport}>Bulk Import</Button>
-          <Button onClick={openCreate}>Add New User</Button>
+          <Button variant="secondary" className="px-6 shadow-sm" onClick={handleBulkImport}>Bulk Import</Button>
+          <Button className="px-8 shadow-xl" onClick={openCreate}>Add Team Member</Button>
           <input
             ref={fileInputRef}
             type="file"
@@ -343,18 +320,17 @@ export default function Users() {
           />
         </div>
       </div>
-      <p className="text-xs text-ink/50">
-        Bulk import CSV headers: fullName,email,password,role,status,professionalLicense,organization,specialization,certifications
-      </p>
 
-      <Card className="p-4">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
+      <Card className="shadow-premium">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+          <div className="flex flex-wrap gap-1.5 p-1.5 bg-slate-50 rounded-xl border border-slate-100">
             {roleTabs.map((tab) => (
               <button
                 key={tab.value}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition ${
-                  activeTab === tab.value ? 'bg-river text-white' : 'bg-sand text-ink/70'
+                className={`px-5 py-2 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all ${
+                  activeTab === tab.value 
+                    ? 'bg-white text-emerald-700 shadow-lg ring-1 ring-emerald-500/10' 
+                    : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
                 }`}
                 onClick={() => setActiveTab(tab.value)}
               >
@@ -362,14 +338,14 @@ export default function Users() {
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2 bg-white/90 border border-clay/70 rounded-xl px-3 py-2 w-full lg:w-72">
-            <svg viewBox="0 0 24 24" className="h-4 w-4 text-ink/50" fill="none" stroke="currentColor" strokeWidth="1.6">
+          <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 w-full lg:w-[360px] group focus-within:bg-white focus-within:border-emerald-300 focus-within:ring-4 focus-within:ring-emerald-500/10 transition-all">
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="3">
               <circle cx="11" cy="11" r="7" />
               <path d="M20 20l-3.5-3.5" />
             </svg>
             <input
-              className="bg-transparent text-sm text-ink/70 placeholder:text-ink/40 focus:outline-none w-full"
-              placeholder="Filter by name or email..."
+              className="bg-transparent text-sm font-bold text-slate-700 placeholder:text-slate-300 focus:outline-none w-full"
+              placeholder="Filter by identity or email..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -377,85 +353,77 @@ export default function Users() {
         </div>
       </Card>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
-      {info && <p className="text-sm text-success">{info}</p>}
-
-      <Card className="p-0 overflow-hidden">
+      <Card className="p-0 overflow-hidden shadow-premium border-slate-200/60">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-sand text-ink/60">
+            <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="text-left px-6 py-3 font-semibold">User Profile</th>
-                <th className="text-left px-6 py-3 font-semibold">Role</th>
-                <th className="text-left px-6 py-3 font-semibold">Credentials</th>
-                <th className="text-left px-6 py-3 font-semibold">Status</th>
-                <th className="text-left px-6 py-3 font-semibold">Last Active</th>
-                <th className="text-left px-6 py-3 font-semibold">Actions</th>
+                <th className="text-left font-black uppercase tracking-widest text-[10px] text-slate-400">User Identity</th>
+                <th className="text-left font-black uppercase tracking-widest text-[10px] text-slate-400">Role</th>
+                <th className="text-left font-black uppercase tracking-widest text-[10px] text-slate-400">Credentials</th>
+                <th className="text-left font-black uppercase tracking-widest text-[10px] text-slate-400">Status</th>
+                <th className="text-left font-black uppercase tracking-widest text-[10px] text-slate-400">Last Activity</th>
+                <th className="text-right font-black uppercase tracking-widest text-[10px] text-slate-400">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {pagedUsers.map((user) => (
-                <tr key={user.id} className="border-t border-clay/60">
-                  <td className="px-6 py-4 relative">
-                    <div className="flex items-center gap-3">
+            <tbody className="divide-y divide-slate-100">
+              {pagedUsers.map((u) => (
+                <tr key={u.id} className="group hover:bg-slate-50/40 transition-colors">
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-4">
                       <div
-                        className="h-10 w-10 rounded-full border border-clay/70 flex items-center justify-center text-white text-sm font-semibold"
-                        style={{ background: avatarColor(user.fullName) }}
+                        className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-[13px] font-black uppercase shadow-lg transition-transform group-hover:scale-110 group-hover:rotate-3"
+                        style={{ background: `linear-gradient(135deg, ${avatarColor(u.fullName)}, ${avatarColor(u.fullName)}dd)` }}
                       >
-                        {user.fullName?.slice(0, 1) || 'U'}
+                        {u.fullName?.slice(0, 1) || 'U'}
                       </div>
                       <div>
-                        <p className="font-semibold text-ink">{user.fullName}</p>
-                        <p className="text-xs text-ink/50">{user.email}</p>
-                        <p className="text-xs text-ink/45">{user.organization || user.specialization || 'No profile details'}</p>
+                        <p className="font-bold text-slate-900 group-hover:text-emerald-700 transition-colors font-display">{u.fullName}</p>
+                        <p className="text-[11px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">ID #{u.id}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs ${roleBadge(user.role)}`}>
-                      {formatRole(user.role)}
+                  <td className="px-8 py-6">
+                    <span className={`status-badge ${roleBadge(u.role)}`}>
+                      {formatRole(u.role)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-ink/70">
-                    <p>{user.professionalLicense || 'N/A'}</p>
-                    <p className="text-xs text-ink/45 mt-1">{user.specialization || 'No specialization'}</p>
+                  <td className="px-8 py-6">
+                    <p className="font-bold text-slate-600">{u.email}</p>
+                    <p className="text-[11px] font-medium text-slate-400 mt-0.5 uppercase tracking-wider">Primary Auth</p>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="flex items-center gap-2 text-xs text-ink/70">
+                  <td className="px-8 py-6">
+                    <span className="flex items-center gap-2.5 text-[13px] font-bold text-slate-700">
                       <span
-                        className={`h-2 w-2 rounded-full ${
-                          user.status === 'ACTIVE'
-                            ? 'bg-success'
-                            : user.status === 'INVITED'
-                              ? 'bg-water'
-                              : user.status === 'SUSPENDED'
-                                ? 'bg-danger'
-                                : 'bg-secondary'
+                        className={`status-dot ${
+                          u.status === 'ACTIVE' ? 'dot-success' : 
+                          u.status === 'INVITED' ? 'dot-info' : 
+                          u.status === 'SUSPENDED' ? 'dot-danger' : 'dot-slate'
                         }`}
                       />
-                      {formatStatus(user.status)}
+                      {formatStatus(u.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-ink/70">{formatRelative(user.lastActiveAt)}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-8 py-6 font-bold text-slate-500 text-[13px]">{formatRelative(u.lastActiveAt)}</td>
+                  <td className="px-8 py-6 text-right relative">
                     <button
-                      className="text-ink/60 hover:text-ink transition"
-                      onClick={() => toggleMenu(user.id)}
-                      title="Actions"
+                      className="h-8 w-8 inline-grid place-items-center rounded-lg bg-white border border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600 hover:shadow-md transition-all active:scale-95"
+                      onClick={() => toggleMenu(u.id)}
                     >
-                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
-                        <circle cx="5" cy="12" r="1.5" />
-                        <circle cx="12" cy="12" r="1.5" />
-                        <circle cx="19" cy="12" r="1.5" />
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3">
+                        <circle cx="12" cy="5" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="12" cy="19" r="1" />
                       </svg>
                     </button>
-                    {openMenuId === user.id && (
-                      <div className="absolute mt-2 right-6 bg-white border border-clay/70 rounded-xl shadow-lg p-2 text-xs text-ink/70 z-10">
-                        <button className="block w-full text-left px-3 py-2 hover:bg-sand rounded-lg" onClick={() => openEdit(user)}>Edit Profile</button>
-                        <button className="block w-full text-left px-3 py-2 hover:bg-sand rounded-lg" onClick={() => updateStatus(user, 'ACTIVE')}>Set Active</button>
-                        <button className="block w-full text-left px-3 py-2 hover:bg-sand rounded-lg" onClick={() => updateStatus(user, 'OFFLINE')}>Set Offline</button>
-                        <button className="block w-full text-left px-3 py-2 hover:bg-sand rounded-lg" onClick={() => updateStatus(user, 'INVITED')}>Mark Invited</button>
-                        <button className="block w-full text-left px-3 py-2 hover:bg-sand rounded-lg text-danger" onClick={() => updateStatus(user, 'SUSPENDED')}>Suspend</button>
+                    {openMenuId === u.id && (
+                      <div className="absolute mt-2 right-8 bg-white border border-slate-200 rounded-xl shadow-2xl p-2 text-[10px] font-black uppercase tracking-widest text-slate-500 z-30 min-w-[160px] animate-rise">
+                        <button className="flex w-full items-center gap-2.5 px-3 py-2.5 hover:bg-slate-50 hover:text-emerald-700 rounded-lg transition-all" onClick={() => openEdit(u)}>
+                          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                          Edit Profile
+                        </button>
+                        <div className="h-px bg-slate-50 my-1" />
+                        <button className="flex w-full items-center gap-2.5 px-3 py-2.5 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg transition-all" onClick={() => updateStatus(u, 'ACTIVE')}>Set Active</button>
+                        <button className="flex w-full items-center gap-2.5 px-3 py-2.5 hover:bg-slate-50 hover:text-slate-700 rounded-lg transition-all" onClick={() => updateStatus(u, 'OFFLINE')}>Set Offline</button>
+                        <button className="flex w-full items-center gap-2.5 px-3 py-2.5 hover:bg-rose-50 hover:text-rose-700 rounded-lg transition-all" onClick={() => updateStatus(u, 'SUSPENDED')}>Suspend</button>
                       </div>
                     )}
                   </td>
@@ -463,29 +431,33 @@ export default function Users() {
               ))}
               {!pagedUsers.length && (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-sm text-ink/50">
-                    {loading ? 'Loading users...' : 'No users found.'}
+                  <td colSpan="6" className="px-8 py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                       <div className="h-16 w-16 grid place-items-center rounded-full bg-slate-50 text-slate-300 mb-2 shadow-sm">
+                          <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 110-8 4 4 0 010 8z" /></svg>
+                       </div>
+                       <p className="text-base font-bold text-slate-400 uppercase tracking-widest">No users found</p>
+                    </div>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-6 py-4 border-t border-clay/60 text-xs text-ink/50">
-          <span>
-            Showing {filteredUsers.length ? pageStart + 1 : 0} to {Math.min(pageStart + pageSize, filteredUsers.length)} of {filteredUsers.length} users
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 px-8 py-5 border-t border-slate-100 bg-slate-50/20">
+          <span className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400">
+            Page {page} of {totalPages} • {filteredUsers.length} members
           </span>
           <div className="flex items-center gap-2">
             <button
-              className="px-2 py-1 rounded-lg border border-clay/70 bg-white text-ink/70 disabled:opacity-40"
+              className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-emerald-700 hover:border-emerald-200 transition-all disabled:opacity-30 active:scale-95 shadow-sm"
               onClick={() => setPage((current) => Math.max(1, current - 1))}
               disabled={page === 1}
             >
               Prev
             </button>
-            <span className="px-2 py-1 rounded-lg bg-sand text-ink/70">Page {page} of {totalPages}</span>
             <button
-              className="px-2 py-1 rounded-lg border border-clay/70 bg-white text-ink/70 disabled:opacity-40"
+              className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-[11px] font-black uppercase tracking-widest text-slate-400 hover:text-emerald-700 hover:border-emerald-200 transition-all disabled:opacity-30 active:scale-95 shadow-sm"
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
               disabled={page === totalPages}
             >
@@ -496,52 +468,56 @@ export default function Users() {
       </Card>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-6">
-          <div className="bg-white rounded-2xl shadow-xl border border-clay/70 w-full max-w-lg p-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">{editingUser ? 'Edit User' : 'Add New User'}</h3>
-              <button className="text-ink/50 hover:text-ink" onClick={closeForm}>x</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 backdrop-blur-md p-6">
+          <Card className="w-full max-w-lg p-0 relative shadow-2xl overflow-hidden border-none animate-rise">
+            <div className="bg-[#063F35] p-10 text-white relative">
+               <div className="absolute right-0 top-0 h-full w-1/4 bg-emerald-500/10 blur-xl" />
+               <button className="absolute right-8 top-8 h-10 w-10 grid place-items-center rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all border border-white/10" onClick={closeForm}>
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12" /></svg>
+               </button>
+               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-2">Team Access</p>
+               <h3 className="text-2xl font-bold tracking-tight font-display">{editingUser ? 'Edit User Profile' : 'New Team Member'}</h3>
             </div>
-            <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
-              <Input label="Full name" value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} required />
-              <Input label="Email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required disabled={Boolean(editingUser)} />
-              {!editingUser && (
-                <Input label="Temporary password" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
-              )}
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-ink/80">Role</span>
-                <select className="input" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })}>
-                  {roleOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-ink/80">Status</span>
-                <select className="input" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
-                  {statusOptions.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </label>
-              <Input label="Professional license" value={form.professionalLicense} onChange={(event) => setForm({ ...form, professionalLicense: event.target.value })} />
-              <Input label="Organization" value={form.organization} onChange={(event) => setForm({ ...form, organization: event.target.value })} />
-              <Input label="Specialization" value={form.specialization} onChange={(event) => setForm({ ...form, specialization: event.target.value })} />
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-ink/80">Certifications</span>
-                <textarea
-                  className="input min-h-24"
-                  value={form.certifications}
-                  onChange={(event) => setForm({ ...form, certifications: event.target.value })}
-                  placeholder="List certifications or registration details"
-                />
-              </label>
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Button variant="secondary" type="button" onClick={closeForm}>Cancel</Button>
-                <Button type="submit">{editingUser ? 'Save Changes' : 'Create User'}</Button>
+            
+            <form className="p-10 space-y-8 bg-white" onSubmit={handleSubmit}>
+              <div className="space-y-6">
+                <Input label="Full Name" value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} required placeholder="e.g. Jean Pierre" />
+                <Input label="Email address" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required disabled={Boolean(editingUser)} placeholder="name@organization.rw" />
+                {!editingUser && (
+                  <Input label="Temporary password" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required placeholder="••••••••" />
+                )}
+                <div className="grid grid-cols-2 gap-6">
+                  {editingUser?.role === 'ADMIN' ? (
+                    <div className="space-y-2">
+                      <span className="text-[0.825rem] font-bold uppercase tracking-wider text-slate-500 ml-1">Platform Role</span>
+                      <div className="input flex items-center bg-slate-50 text-slate-400 font-bold border-slate-100 h-[48px]">Administrator</div>
+                    </div>
+                  ) : (
+                    <label className="block space-y-2">
+                      <span className="text-[0.825rem] font-bold uppercase tracking-wider text-slate-500 ml-1">Platform Role</span>
+                      <select className="input h-[48px]" value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })}>
+                        {roleOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <label className="block space-y-2">
+                    <span className="text-[0.825rem] font-bold uppercase tracking-wider text-slate-500 ml-1">Account Status</span>
+                    <select className="input h-[48px]" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
+                      {statusOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-4 pt-6 border-t border-slate-50">
+                <button type="button" className="px-8 py-3 text-sm font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors" onClick={closeForm}>Cancel</button>
+                <Button className="px-10 py-4 shadow-xl" type="submit">{editingUser ? 'Save Changes' : 'Invite User'}</Button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       )}
     </div>

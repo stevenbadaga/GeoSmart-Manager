@@ -1,7 +1,6 @@
 package rw.venus.geosmartmanager.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import rw.venus.geosmartmanager.domain.ProjectCommunicationChannel;
 import rw.venus.geosmartmanager.domain.ProjectDocumentApprovalStatus;
 
@@ -30,8 +29,8 @@ public class ProjectRecordsDtos {
     ) {}
 
     public record ProjectCommunicationRequest(
-            @NotNull ProjectCommunicationChannel channel,
-            @NotBlank String subject,
+            ProjectCommunicationChannel channel,
+            String subject,
             String contactPerson,
             @NotBlank String summary,
             Instant occurredAt
@@ -43,6 +42,10 @@ public class ProjectRecordsDtos {
             ProjectCommunicationChannel channel,
             String subject,
             String contactPerson,
+            Long senderUserId,
+            String senderName,
+            String senderRole,
+            boolean systemGenerated,
             String summary,
             Instant occurredAt,
             Instant createdAt

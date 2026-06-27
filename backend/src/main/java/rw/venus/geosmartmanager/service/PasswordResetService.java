@@ -17,6 +17,7 @@ import rw.venus.geosmartmanager.entity.UserEntity;
 import rw.venus.geosmartmanager.repo.PasswordResetTokenRepository;
 import rw.venus.geosmartmanager.repo.UserRepository;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
@@ -60,9 +61,11 @@ public class PasswordResetService {
     public AuthDtos.MessageResponse requestPasswordReset(AuthDtos.ForgotPasswordRequest request) {
         passwordResetTokenRepository.deleteByExpiresAtBefore(Instant.now());
 
-        userRepository.findByEmailIgnoreCase(request.email())
-                .filter(UserEntity::isEnabled)
-                .ifPresent(user -> issueResetToken(user, request.email()));
+        var user = userRepository.findByEmailIgnoreCase(request.email())
+                .filter(UserEntity::isEnabled);
+        if (user.isPresent()) {
+            return issueResetToken(user.get(), request.email());
+        }
 
         return new AuthDtos.MessageResponse(GENERIC_FORGOT_PASSWORD_MESSAGE);
     }
@@ -97,7 +100,7 @@ public class PasswordResetService {
         return new AuthDtos.MessageResponse("Password updated successfully. You can now sign in with the new password.");
     }
 
-    private void issueResetToken(UserEntity user, String requestedEmail) {
+    private AuthDtos.MessageResponse issueResetToken(UserEntity user, String requestedEmail) {
         String rawToken = generateToken();
         Instant expiresAt = Instant.now().plusSeconds(Math.max(5, appProperties.getAuth().getPasswordResetTokenExpirationMinutes()) * 60L);
         PasswordResetTokenEntity entity = PasswordResetTokenEntity.builder()
@@ -110,15 +113,41 @@ public class PasswordResetService {
         passwordResetTokenRepository.save(entity);
 
         String resetLink = buildResetLink(rawToken);
+        if (!passwordResetMailerService.isEmailDeliveryConfigured()) {
+            invalidateOtherUnusedTokens(user.getId(), entity.getId());
+            auditService.log(user.getEmail(), "REQUEST_PASSWORD_RESET_DEV_LINK", "User", user.getId(),
+                    "Password reset link issued without email delivery for " + requestedEmail.toLowerCase(Locale.ROOT));
+            if (isLocalResetLink(resetLink)) {
+                return new AuthDtos.MessageResponse(
+                        "Email delivery is not configured locally. Use the reset link below to continue.",
+                        resetLink
+                );
+            }
+            entity.setUsedAt(Instant.now());
+            passwordResetTokenRepository.save(entity);
+            throw new IllegalStateException("Password reset email is not configured. Set APP_MAIL_FROM_ADDRESS and SMTP credentials.");
+        }
         try {
             passwordResetMailerService.sendResetEmail(user, resetLink, expiresAt);
         } catch (RuntimeException ex) {
-            log.warn("Password reset email is disabled or failed: {}", ex.getMessage());
-            return;
+            log.warn("Password reset email failed: {}", ex.getMessage());
+            if (isLocalResetLink(resetLink)) {
+                invalidateOtherUnusedTokens(user.getId(), entity.getId());
+                auditService.log(user.getEmail(), "REQUEST_PASSWORD_RESET_DEV_LINK", "User", user.getId(),
+                        "Password reset email failed locally; reset link issued for " + requestedEmail.toLowerCase(Locale.ROOT));
+                return new AuthDtos.MessageResponse(
+                        "Email delivery is unavailable locally. Use the reset link below to continue.",
+                        resetLink
+                );
+            }
+            entity.setUsedAt(Instant.now());
+            passwordResetTokenRepository.save(entity);
+            throw ex;
         }
         invalidateOtherUnusedTokens(user.getId(), entity.getId());
         auditService.log(user.getEmail(), "REQUEST_PASSWORD_RESET", "User", user.getId(),
                 "Password reset email issued for " + requestedEmail.toLowerCase(Locale.ROOT));
+        return new AuthDtos.MessageResponse(GENERIC_FORGOT_PASSWORD_MESSAGE);
     }
 
     private PasswordResetTokenEntity loadActiveToken(String rawToken) {
@@ -198,5 +227,20 @@ public class PasswordResetService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private boolean isLocalResetLink(String resetLink) {
+        try {
+            String host = normalize(URI.create(resetLink).getHost());
+            if (host == null) {
+                return false;
+            }
+            String normalizedHost = host.toLowerCase(Locale.ROOT);
+            return normalizedHost.equals("localhost")
+                    || normalizedHost.equals("127.0.0.1")
+                    || normalizedHost.equals("::1");
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
     }
 }

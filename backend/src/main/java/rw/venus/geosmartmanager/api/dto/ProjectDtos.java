@@ -1,23 +1,28 @@
 package rw.venus.geosmartmanager.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import rw.venus.geosmartmanager.api.dto.PlannerDtos;
 import rw.venus.geosmartmanager.domain.ProjectStatus;
 
+import java.time.Instant;
 import java.time.LocalDate;
 
 public class ProjectDtos {
     public record ProjectRequest(
-            @NotBlank String code,
+            String code,
             @NotBlank String name,
             String projectType,
             String locationSummary,
             String scopeSummary,
             String description,
-            @NotNull ProjectStatus status,
+            ProjectStatus status,
             LocalDate startDate,
             LocalDate endDate,
-            @NotNull Long clientId
+            Long clientId,
+            String requestedUpi,
+            Integer requestedParcelCount,
+            String requestedLandUse,
+            String intakeNotes
     ) {}
 
     public record ProjectResponse(
@@ -34,11 +39,45 @@ public class ProjectDtos {
             Long clientId,
             String clientName,
             boolean archived,
-            java.time.Instant archivedAt,
+            Instant archivedAt,
             long documentCount,
             long communicationCount,
             String workflowStage,
             String nextAction,
-            int readinessPercent
+            int readinessPercent,
+            Long assignedSurveyorId,
+            String assignedSurveyorName,
+            String requestedUpi,
+            Integer requestedParcelCount,
+            String requestedLandUse,
+            String intakeNotes,
+            Instant approvedAt,
+            Instant surveyorAcceptedAt,
+            Instant subdivisionDraftedAt,
+            Instant complianceCheckedAt,
+            Instant reportReadyAt
     ) {}
+
+    public record AssignmentRequest(
+            Long surveyorId
+    ) {}
+
+    public record WorkflowDraftRequest(
+            Integer actualParcelCount,
+            String proposedLandUse
+    ) {}
+
+    public record WorkflowComplianceRequest(
+            Integer complianceScore,
+            String recommendation
+    ) {}
+
+    public record ProjectPlannerReportResponse(
+            Long projectId,
+            Long reportId,
+            String createdAt,
+            String reportMarkdown,
+            PlannerDtos.SubdivisionCheckResponse report
+    ) {}
+
 }

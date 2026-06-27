@@ -1,5 +1,5 @@
 CREATE TABLE users (
-    id BIGSERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     full_name VARCHAR(200) NOT NULL,
     email VARCHAR(200) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE clients (
-    id BIGSERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     name VARCHAR(200) NOT NULL,
     contact_email VARCHAR(200),
     phone VARCHAR(100),
@@ -17,7 +17,7 @@ CREATE TABLE clients (
 );
 
 CREATE TABLE projects (
-    id BIGSERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     code VARCHAR(50) NOT NULL UNIQUE,
     name VARCHAR(200) NOT NULL,
     description TEXT,
@@ -29,7 +29,7 @@ CREATE TABLE projects (
 );
 
 CREATE TABLE datasets (
-    id BIGSERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_id BIGINT NOT NULL REFERENCES projects(id),
     name VARCHAR(200) NOT NULL,
     type VARCHAR(50) NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE datasets (
 );
 
 CREATE TABLE subdivision_runs (
-    id BIGSERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_id BIGINT NOT NULL REFERENCES projects(id),
     dataset_id BIGINT NOT NULL REFERENCES datasets(id),
     status VARCHAR(50) NOT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE subdivision_runs (
 );
 
 CREATE TABLE compliance_checks (
-    id BIGSERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_id BIGINT NOT NULL REFERENCES projects(id),
     subdivision_run_id BIGINT NOT NULL REFERENCES subdivision_runs(id),
     status VARCHAR(50) NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE compliance_checks (
 );
 
 CREATE TABLE workflow_tasks (
-    id BIGSERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_id BIGINT NOT NULL REFERENCES projects(id),
     title VARCHAR(200) NOT NULL,
     description TEXT,
@@ -70,7 +70,7 @@ CREATE TABLE workflow_tasks (
 );
 
 CREATE TABLE reports (
-    id BIGSERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     project_id BIGINT NOT NULL REFERENCES projects(id),
     type VARCHAR(50) NOT NULL,
     content TEXT NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE reports (
 );
 
 CREATE TABLE audit_logs (
-    id BIGSERIAL PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     actor_email VARCHAR(200) NOT NULL,
     action VARCHAR(100) NOT NULL,
     entity_type VARCHAR(100) NOT NULL,

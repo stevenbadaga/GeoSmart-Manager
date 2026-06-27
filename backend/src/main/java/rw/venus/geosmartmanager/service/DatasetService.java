@@ -6,7 +6,6 @@ import rw.venus.geosmartmanager.entity.DatasetEntity;
 import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.domain.DatasetSourceFormat;
 import rw.venus.geosmartmanager.repo.DatasetRepository;
-import rw.venus.geosmartmanager.repo.ProjectRepository;
 
 import java.time.Instant;
 import java.util.List;
@@ -14,20 +13,19 @@ import java.util.List;
 @Service
 public class DatasetService {
     private final DatasetRepository datasetRepository;
-    private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
     private final AuditService auditService;
     private final CurrentUserService currentUserService;
 
-    public DatasetService(DatasetRepository datasetRepository, ProjectRepository projectRepository, AuditService auditService, CurrentUserService currentUserService) {
+    public DatasetService(DatasetRepository datasetRepository, ProjectService projectService, AuditService auditService, CurrentUserService currentUserService) {
         this.datasetRepository = datasetRepository;
-        this.projectRepository = projectRepository;
+        this.projectService = projectService;
         this.auditService = auditService;
         this.currentUserService = currentUserService;
     }
 
     public DatasetEntity create(Long projectId, DatasetDtos.DatasetRequest request) {
-        ProjectEntity project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        ProjectEntity project = projectService.getActiveProject(projectId);
         DatasetEntity entity = DatasetEntity.builder()
                 .project(project)
                 .name(request.name())
@@ -45,6 +43,7 @@ public class DatasetService {
     }
 
     public List<DatasetEntity> listByProject(Long projectId) {
+        projectService.getProject(projectId);
         return datasetRepository.findByProjectId(projectId);
     }
 }

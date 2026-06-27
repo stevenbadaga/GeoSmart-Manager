@@ -13,7 +13,6 @@ import rw.venus.geosmartmanager.entity.DatasetEntity;
 import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.entity.SubdivisionRunEntity;
 import rw.venus.geosmartmanager.repo.DatasetRepository;
-import rw.venus.geosmartmanager.repo.ProjectRepository;
 import rw.venus.geosmartmanager.repo.SubdivisionRunRepository;
 
 import java.time.Instant;
@@ -22,7 +21,7 @@ import java.util.List;
 
 @Service
 public class SubdivisionService {
-    private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
     private final DatasetRepository datasetRepository;
     private final SubdivisionRunRepository subdivisionRunRepository;
     private final ObjectMapper objectMapper;
@@ -31,7 +30,7 @@ public class SubdivisionService {
     private final CurrentUserService currentUserService;
     private final GeoJsonService geoJsonService;
 
-    public SubdivisionService(ProjectRepository projectRepository,
+    public SubdivisionService(ProjectService projectService,
                               DatasetRepository datasetRepository,
                               SubdivisionRunRepository subdivisionRunRepository,
                               ObjectMapper objectMapper,
@@ -39,7 +38,7 @@ public class SubdivisionService {
                               AuditService auditService,
                               CurrentUserService currentUserService,
                               GeoJsonService geoJsonService) {
-        this.projectRepository = projectRepository;
+        this.projectService = projectService;
         this.datasetRepository = datasetRepository;
         this.subdivisionRunRepository = subdivisionRunRepository;
         this.objectMapper = objectMapper;
@@ -50,8 +49,7 @@ public class SubdivisionService {
     }
 
     public SubdivisionRunEntity runSubdivision(Long projectId, SubdivisionDtos.RunSubdivisionRequest request) {
-        ProjectEntity project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        ProjectEntity project = projectService.getProject(projectId);
         DatasetEntity dataset = datasetRepository.findById(request.datasetId())
                 .orElseThrow(() -> new IllegalArgumentException("Dataset not found"));
         if (!dataset.getProject().getId().equals(project.getId())) {
@@ -87,6 +85,7 @@ public class SubdivisionService {
     }
 
     public java.util.List<SubdivisionRunEntity> listRuns(Long projectId) {
+        projectService.getProject(projectId);
         return subdivisionRunRepository.findByProjectId(projectId);
     }
 

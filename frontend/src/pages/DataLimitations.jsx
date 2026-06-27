@@ -3,13 +3,13 @@ import Card from '../components/Card'
 
 const available = ['Kigali Parcels', 'Kigali Masterplan', 'Administrative Boundaries', 'Building Footprints', 'Land Use Plans Zoning Regulations']
 const limited = [
-  ['Official road centerlines', 'Road access checks remain preliminary.'],
-  ['Road reserve / right-of-way widths', 'Road frontage and reserve compliance require official confirmation.'],
+  ['Official road centerlines', 'Road access checks should be verified.'],
+  ['Road reserve / right-of-way widths', 'Road frontage and reserve compliance require confirmation.'],
   ['Utility corridors', 'Utility conflict checks may be incomplete.'],
   ['Survey control points', 'Final survey accuracy must be confirmed by licensed professionals.'],
-  ['Official ownership verification', 'Documents can be stored for reference but ownership is not officially validated.'],
-  ['Official approval workflow', 'Final approval still happens through official institutions.'],
-  ['Full DEM slope analysis', 'Slope checks may rely on masterplan steep-slope zones if DEM processing is incomplete.'],
+  ['Official ownership verification', 'Documents can be stored for reference but ownership validation is separate.'],
+  ['Official approval workflow', 'Approval happens through official institutions.'],
+  ['Full DEM slope analysis', 'Slope checks may rely on masterplan steep-slope zones.'],
   ['Road access servitudes', 'Access rights require legal and survey confirmation.']
 ]
 
@@ -40,10 +40,13 @@ export default function DataLimitations() {
           </div>
         </Card>
       </div>
+
       <Card title="Official Review Disclaimer">
-        <p className="text-sm leading-7 text-ink/68">
-          This system provides preliminary planning and compliance assessment only. It does not replace official approval by the National Land Authority, District One Stop Centre, Irembo, or a licensed land surveyor.
-        </p>
+        <div className="space-y-4">
+          <p className="text-sm leading-7 text-ink/68">
+            This system provides preliminary planning and compliance assessment only. It does not replace official approval by the National Land Authority, District One Stop Centre, Irembo, or a licensed land surveyor.
+          </p>
+        </div>
       </Card>
     </div>
   )

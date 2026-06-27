@@ -4,10 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 
 const roles = [
   { key: 'ADMIN', label: 'Admin' },
-  { key: 'PROJECT_MANAGER', label: 'Project Manager' },
-  { key: 'SURVEYOR', label: 'Surveyor' },
-  { key: 'ENGINEER', label: 'Engineer' },
-  { key: 'CIVIL_ENGINEER', label: 'Civil Engineer' },
+  { key: 'SURVEYOR', label: 'Land Surveyor' },
   { key: 'CLIENT', label: 'Client' }
 ]
 
@@ -15,111 +12,73 @@ const rows = [
   {
     module: 'Dashboard & Metrics',
     permissions: {
-      ADMIN: 'View',
-      PROJECT_MANAGER: 'View',
-      SURVEYOR: 'View',
-      ENGINEER: 'View',
-      CIVIL_ENGINEER: 'View',
-      CLIENT: 'View'
+      ADMIN: 'Full Access',
+      SURVEYOR: 'Technical View',
+      CLIENT: 'Case View'
     }
   },
   {
     module: 'User Management',
     permissions: {
-      ADMIN: 'Manage',
-      PROJECT_MANAGER: 'No access',
-      SURVEYOR: 'No access',
-      ENGINEER: 'No access',
-      CIVIL_ENGINEER: 'No access',
-      CLIENT: 'No access'
+      ADMIN: 'Manage Accounts',
+      SURVEYOR: 'No Access',
+      CLIENT: 'No Access'
     }
   },
   {
-    module: 'Clients',
+    module: 'Projects Hub',
     permissions: {
-      ADMIN: 'Manage',
-      PROJECT_MANAGER: 'Manage',
-      SURVEYOR: 'View',
-      ENGINEER: 'View',
-      CIVIL_ENGINEER: 'View',
-      CLIENT: 'View'
+      ADMIN: 'Assign + Oversee',
+      SURVEYOR: 'Review Assigned',
+      CLIENT: 'View Own Cases'
     }
   },
   {
-    module: 'Projects',
+    module: 'GIS Datasets',
     permissions: {
-      ADMIN: 'Manage',
-      PROJECT_MANAGER: 'Manage',
-      SURVEYOR: 'View',
-      ENGINEER: 'View',
-      CIVIL_ENGINEER: 'View',
-      CLIENT: 'View'
+      ADMIN: 'Manage Layers',
+      SURVEYOR: 'Reference Only',
+      CLIENT: 'No Access'
     }
   },
   {
-    module: 'Datasets',
+    module: 'Land Subdivision',
     permissions: {
-      ADMIN: 'Edit',
-      PROJECT_MANAGER: 'Edit',
-      SURVEYOR: 'Edit',
-      ENGINEER: 'Edit',
-      CIVIL_ENGINEER: 'Edit',
-      CLIENT: 'No access'
+      ADMIN: 'Run Planner',
+      SURVEYOR: 'Run Planner',
+      CLIENT: 'View-only'
     }
   },
   {
-    module: 'AI Subdivision',
+    module: 'Planning Checks',
     permissions: {
-      ADMIN: 'Run + View',
-      PROJECT_MANAGER: 'Run + View',
-      SURVEYOR: 'View',
-      ENGINEER: 'Run + View',
-      CIVIL_ENGINEER: 'Run + View',
-      CLIENT: 'View'
+      ADMIN: 'Full Validation',
+      SURVEYOR: 'Full Validation',
+      CLIENT: 'View Result'
     }
   },
   {
-    module: 'Compliance',
+    module: 'Reports center',
     permissions: {
-      ADMIN: 'Run + View',
-      PROJECT_MANAGER: 'Run + View',
-      SURVEYOR: 'View',
-      ENGINEER: 'Run + View',
-      CIVIL_ENGINEER: 'Run + View',
-      CLIENT: 'View'
+      ADMIN: 'Manage All',
+      SURVEYOR: 'Generate',
+      CLIENT: 'Download Own'
     }
   },
   {
-    module: 'Reports',
+    module: 'Notifications',
     permissions: {
-      ADMIN: 'Generate + View',
-      PROJECT_MANAGER: 'Generate + View',
-      SURVEYOR: 'View',
-      ENGINEER: 'Generate + View',
-      CIVIL_ENGINEER: 'Generate + View',
-      CLIENT: 'View'
+      ADMIN: 'System-wide',
+      SURVEYOR: 'Assigned-only',
+      CLIENT: 'Project-only'
     }
   },
   {
-    module: 'Workflow',
+    module: 'Contact Messages',
     permissions: {
-      ADMIN: 'Edit',
-      PROJECT_MANAGER: 'Edit',
-      SURVEYOR: 'Edit',
-      ENGINEER: 'Edit',
-      CIVIL_ENGINEER: 'Edit',
-      CLIENT: 'No access'
-    }
-  },
-  {
-    module: 'Audit Logs',
-    permissions: {
-      ADMIN: 'View',
-      PROJECT_MANAGER: 'No access',
-      SURVEYOR: 'No access',
-      ENGINEER: 'No access',
-      CIVIL_ENGINEER: 'No access',
-      CLIENT: 'No access'
+      ADMIN: 'Read + Reply',
+      SURVEYOR: 'No Access',
+      CLIENT: 'Submit'
     }
   }
 ]

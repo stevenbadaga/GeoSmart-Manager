@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface ProjectCommunicationRepository extends JpaRepository<ProjectCommunicationEntity, Long> {
     List<ProjectCommunicationEntity> findByProjectIdOrderByOccurredAtDescCreatedAtDesc(Long projectId);
+    List<ProjectCommunicationEntity> findByProjectIdOrderByOccurredAtAscCreatedAtAsc(Long projectId);
     long countByProjectId(Long projectId);
 }

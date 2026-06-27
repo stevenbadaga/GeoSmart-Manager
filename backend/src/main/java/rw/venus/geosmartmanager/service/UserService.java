@@ -3,10 +3,13 @@ package rw.venus.geosmartmanager.service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import rw.venus.geosmartmanager.api.dto.UserDtos;
+import rw.venus.geosmartmanager.domain.KycStatus;
 import rw.venus.geosmartmanager.domain.Role;
 import rw.venus.geosmartmanager.domain.UserStatus;
+import rw.venus.geosmartmanager.entity.ClientEntity;
 import rw.venus.geosmartmanager.entity.UserEntity;
 import rw.venus.geosmartmanager.entity.UserSessionEntity;
+import rw.venus.geosmartmanager.repo.ClientRepository;
 import rw.venus.geosmartmanager.repo.UserRepository;
 
 import java.time.Instant;
@@ -19,17 +22,20 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuditService auditService;
     private final UserSessionService userSessionService;
+    private final ClientRepository clientRepository;
 
     public UserService(UserRepository userRepository,
                        CurrentUserService currentUserService,
                        PasswordEncoder passwordEncoder,
                        AuditService auditService,
-                       UserSessionService userSessionService) {
+                       UserSessionService userSessionService,
+                       ClientRepository clientRepository) {
         this.userRepository = userRepository;
         this.currentUserService = currentUserService;
         this.passwordEncoder = passwordEncoder;
         this.auditService = auditService;
         this.userSessionService = userSessionService;
+        this.clientRepository = clientRepository;
     }
 
     public List<UserEntity> list() {
@@ -41,7 +47,7 @@ public class UserService {
             throw new IllegalArgumentException("Email already registered");
         }
 
-        Role role = request.role() != null ? request.role() : Role.ENGINEER;
+        Role role = resolveManagedRoleForCreate(request.role());
         UserStatus status = request.status() != null ? request.status() : UserStatus.ACTIVE;
         Instant now = Instant.now();
 
@@ -59,6 +65,7 @@ public class UserService {
                 .lastActiveAt(status == UserStatus.ACTIVE ? now : null)
                 .build();
         userRepository.save(user);
+        ensureClientProfile(user, now);
         auditService.log(currentUserService.getCurrentUserEmail(), "CREATE", "User", user.getId(), "User created");
         return user;
     }
@@ -71,7 +78,7 @@ public class UserService {
             user.setFullName(request.fullName());
         }
         if (request.role() != null) {
-            user.setRole(request.role());
+            user.setRole(resolveManagedRoleForUpdate(user, request.role()));
         }
         if (request.status() != null) {
             user.setStatus(request.status());
@@ -90,6 +97,7 @@ public class UserService {
         }
 
         userRepository.save(user);
+        ensureClientProfile(user, Instant.now());
         auditService.log(currentUserService.getCurrentUserEmail(), "UPDATE", "User", user.getId(), "User updated");
         return user;
     }
@@ -215,5 +223,48 @@ public class UserService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private Role resolveManagedRoleForCreate(Role requestedRole) {
+        Role role = requestedRole != null ? requestedRole : Role.SURVEYOR;
+        if (role == Role.ADMIN) {
+            throw new IllegalArgumentException("Admin accounts cannot be created here.");
+        }
+        if (role != Role.SURVEYOR && role != Role.CLIENT) {
+            return Role.SURVEYOR;
+        }
+        return role;
+    }
+
+    private Role resolveManagedRoleForUpdate(UserEntity user, Role requestedRole) {
+        if (user.getRole() == Role.ADMIN) {
+            if (requestedRole != Role.ADMIN) {
+                throw new IllegalArgumentException("The admin account role cannot be changed.");
+            }
+            return Role.ADMIN;
+        }
+        return resolveManagedRoleForCreate(requestedRole);
+    }
+
+    private void ensureClientProfile(UserEntity user, Instant now) {
+        if (user == null || user.getRole() != Role.CLIENT) {
+            return;
+        }
+        ClientEntity client = clientRepository.findByUserId(user.getId())
+                .orElseGet(() -> ClientEntity.builder()
+                        .userId(user.getId())
+                        .createdAt(now != null ? now : Instant.now())
+                        .kycStatus(KycStatus.PENDING)
+                        .build());
+        if (client.getName() == null || client.getName().isBlank()) {
+            client.setName(user.getFullName());
+        }
+        if (client.getContactEmail() == null || client.getContactEmail().isBlank()) {
+            client.setContactEmail(user.getEmail());
+        }
+        if (client.getKycStatus() == null) {
+            client.setKycStatus(KycStatus.PENDING);
+        }
+        clientRepository.save(client);
     }
 }

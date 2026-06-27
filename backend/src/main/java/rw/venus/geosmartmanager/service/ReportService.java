@@ -4,9 +4,11 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.stereotype.Service;
+import rw.venus.geosmartmanager.api.dto.PlannerDtos;
+import rw.venus.geosmartmanager.api.dto.ProjectDtos;
 import rw.venus.geosmartmanager.api.dto.ReportDtos;
+import rw.venus.geosmartmanager.domain.ReportType;
 import rw.venus.geosmartmanager.entity.ProjectEntity;
 import rw.venus.geosmartmanager.entity.ReportEntity;
 import rw.venus.geosmartmanager.entity.SubdivisionRunEntity;
@@ -15,10 +17,10 @@ import rw.venus.geosmartmanager.entity.DatasetEntity;
 import rw.venus.geosmartmanager.entity.UserEntity;
 import rw.venus.geosmartmanager.repo.ComplianceCheckRepository;
 import rw.venus.geosmartmanager.repo.DatasetRepository;
-import rw.venus.geosmartmanager.repo.ProjectRepository;
 import rw.venus.geosmartmanager.repo.ReportRepository;
 import rw.venus.geosmartmanager.repo.SubdivisionRunRepository;
 
+import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -34,32 +36,37 @@ public class ReportService {
     private static final float LEADING = 14f;
 
     private final ReportRepository reportRepository;
-    private final ProjectRepository projectRepository;
+    private final ProjectService projectService;
     private final DatasetRepository datasetRepository;
     private final SubdivisionRunRepository subdivisionRunRepository;
     private final ComplianceCheckRepository complianceCheckRepository;
     private final AuditService auditService;
     private final CurrentUserService currentUserService;
+    private final PdfBrandingSupport pdfBrandingSupport;
+    private final GisPlannerService gisPlannerService;
 
     public ReportService(ReportRepository reportRepository,
-                         ProjectRepository projectRepository,
+                         ProjectService projectService,
                          DatasetRepository datasetRepository,
                          SubdivisionRunRepository subdivisionRunRepository,
                          ComplianceCheckRepository complianceCheckRepository,
                          AuditService auditService,
-                         CurrentUserService currentUserService) {
+                         CurrentUserService currentUserService,
+                         PdfBrandingSupport pdfBrandingSupport,
+                         GisPlannerService gisPlannerService) {
         this.reportRepository = reportRepository;
-        this.projectRepository = projectRepository;
+        this.projectService = projectService;
         this.datasetRepository = datasetRepository;
         this.subdivisionRunRepository = subdivisionRunRepository;
         this.complianceCheckRepository = complianceCheckRepository;
         this.auditService = auditService;
         this.currentUserService = currentUserService;
+        this.pdfBrandingSupport = pdfBrandingSupport;
+        this.gisPlannerService = gisPlannerService;
     }
 
     public ReportEntity generate(Long projectId, ReportDtos.GenerateReportRequest request) {
-        ProjectEntity project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        ProjectEntity project = projectService.getProject(projectId);
 
         String content = buildReportContent(project, request.type());
 
@@ -75,22 +82,64 @@ public class ReportService {
         return report;
     }
 
+    @org.springframework.transaction.annotation.Transactional
+    public ProjectDtos.ProjectPlannerReportResponse generatePlannerReportForProject(Long projectId, PlannerDtos.SubdivisionCheckRequest request) {
+        ProjectEntity project = projectService.getActiveProject(projectId);
+        PlannerDtos.PlannerReportResponse plannerReport = gisPlannerService.generateReport(request);
+
+        projectService.recordSubdivisionDraft(projectId, plannerReport.report().proposedPlotCount(), request.proposedLandUse());
+        projectService.recordComplianceCheck(projectId, plannerReport.report().complianceScore(), plannerReport.report().recommendation());
+
+        ReportEntity projectReport = ReportEntity.builder()
+                .project(project)
+                .type(ReportType.SUBDIVISION)
+                .content(plannerReport.reportMarkdown())
+                .generatedBy(currentUserService.getCurrentUser())
+                .createdAt(Instant.now())
+                .build();
+        reportRepository.save(projectReport);
+
+        projectService.markPlannerReportReady(projectId);
+        auditService.log(currentUserService.getCurrentUserEmail(), "GENERATE", "Report", projectReport.getId(), "Project subdivision report generated");
+
+        return new ProjectDtos.ProjectPlannerReportResponse(
+                projectId,
+                projectReport.getId(),
+                plannerReport.createdAt(),
+                plannerReport.reportMarkdown(),
+                plannerReport.report()
+        );
+    }
+
     public List<ReportEntity> listByProject(Long projectId) {
+        projectService.getProject(projectId);
         return reportRepository.findByProjectIdOrderByCreatedAtDesc(projectId);
     }
 
     public ReportEntity getReport(Long projectId, Long reportId) {
+        projectService.getProject(projectId);
         return reportRepository.findByIdAndProjectId(reportId, projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Report not found"));
     }
 
     public byte[] generatePdf(ReportEntity report) {
         try (PDDocument document = new PDDocument()) {
+            PdfBrandingSupport.PdfFonts fonts = pdfBrandingSupport.loadUiFonts(document);
             PDPage page = new PDPage(PDRectangle.A4);
             document.addPage(page);
 
             float y = page.getMediaBox().getHeight() - MARGIN;
             PDPageContentStream content = new PDPageContentStream(document, page);
+            float logoHeight = pdfBrandingSupport.drawLogo(document, content, MARGIN, y + 18f, 195f);
+            if (logoHeight > 0f) {
+                y -= logoHeight + 10f;
+                content.setStrokingColor(new Color(210, 220, 214));
+                content.setLineWidth(1f);
+                content.moveTo(MARGIN, y);
+                content.lineTo(page.getMediaBox().getWidth() - MARGIN, y);
+                content.stroke();
+                y -= 18f;
+            }
 
             List<Line> lines = buildPdfLines(report);
             float x = MARGIN;
@@ -114,8 +163,9 @@ public class ReportService {
                     content.newLineAtOffset(x, y);
                 }
 
-                content.setFont(line.bold ? PDType1Font.HELVETICA_BOLD : PDType1Font.HELVETICA,
+                content.setFont(line.bold ? fonts.bold() : fonts.serifRegular(),
                         line.bold ? TITLE_SIZE : FONT_SIZE);
+                content.setNonStrokingColor(line.bold ? new Color(17, 24, 39) : new Color(55, 65, 81));
                 content.showText(line.text);
                 content.newLineAtOffset(0, -LEADING);
                 y -= LEADING;
@@ -212,7 +262,7 @@ public class ReportService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(ZoneId.of("Africa/Kigali"));
         String created = formatter.format(report.getCreatedAt());
 
-        lines.add(new Line("GeoSmart-Manager Report", true));
+        lines.add(new Line("GeoSmart Manager Report", true));
         lines.add(new Line("Project: " + project.getName() + " (" + project.getCode() + ")", false));
         lines.add(new Line("Report Type: " + report.getType(), false));
         lines.add(new Line("Generated: " + created + " CAT", false));
