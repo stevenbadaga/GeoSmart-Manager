@@ -9,36 +9,24 @@ import org.springframework.stereotype.Component;
 import rw.venus.geosmartmanager.domain.Role;
 import rw.venus.geosmartmanager.domain.UserStatus;
 import rw.venus.geosmartmanager.entity.UserEntity;
-import rw.venus.geosmartmanager.repo.PasswordResetTokenRepository;
-import rw.venus.geosmartmanager.repo.ReportRepository;
 import rw.venus.geosmartmanager.repo.UserRepository;
-import rw.venus.geosmartmanager.repo.UserSessionRepository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 
 @Component
 public class DemoUserSeeder implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(DemoUserSeeder.class);
 
     private final UserRepository userRepository;
-    private final UserSessionRepository userSessionRepository;
-    private final PasswordResetTokenRepository passwordResetTokenRepository;
-    private final ReportRepository reportRepository;
     private final PasswordEncoder passwordEncoder;
     private final String defaultTestPassword;
 
     public DemoUserSeeder(UserRepository userRepository,
-                          UserSessionRepository userSessionRepository,
-                          PasswordResetTokenRepository passwordResetTokenRepository,
-                          ReportRepository reportRepository,
                           PasswordEncoder passwordEncoder,
                           @Value("${app.demo.default-test-password}") String defaultTestPassword) {
         this.userRepository = userRepository;
-        this.userSessionRepository = userSessionRepository;
-        this.passwordResetTokenRepository = passwordResetTokenRepository;
-        this.reportRepository = reportRepository;
         this.passwordEncoder = passwordEncoder;
         this.defaultTestPassword = defaultTestPassword;
     }
@@ -51,68 +39,33 @@ public class DemoUserSeeder implements CommandLineRunner {
                 new DemoUser("Badaga Irankunda", "badagairankunda@gmail.com", Role.CLIENT, null, "GeoSmart Manager", "Client Review", "Default Client demo account")
         );
 
-        removeNonDemoUsers(demoUsers);
-
         for (DemoUser demoUser : demoUsers) {
             upsertDemoUser(demoUser);
         }
 
-        log.info("Demo accounts ensured: {} account(s). Configure DEFAULT_TEST_PASSWORD for local test login.", demoUsers.size());
-    }
-
-    private void removeNonDemoUsers(List<DemoUser> demoUsers) {
-        Set<String> demoEmails = demoUsers.stream()
-                .map(DemoUser::email)
-                .map(String::toLowerCase)
-                .collect(java.util.stream.Collectors.toSet());
-        List<UserEntity> nonDemoUsers = userRepository.findAll().stream()
-                .filter(user -> user.getEmail() == null || !demoEmails.contains(user.getEmail().toLowerCase()))
-                .toList();
-
-        for (UserEntity user : nonDemoUsers) {
-            reportRepository.findByGeneratedById(user.getId()).forEach(report -> {
-                report.setGeneratedBy(null);
-                reportRepository.save(report);
-            });
-            userSessionRepository.deleteAll(userSessionRepository.findByUserIdOrderByLastSeenAtDesc(user.getId()));
-            passwordResetTokenRepository.deleteAll(passwordResetTokenRepository.findAll().stream()
-                    .filter(token -> token.getUser() != null && token.getUser().getId().equals(user.getId()))
-                    .toList());
-            userRepository.delete(user);
-        }
-
-        if (!nonDemoUsers.isEmpty()) {
-            log.info("Removed {} non-demo account(s).", nonDemoUsers.size());
-        }
+        log.info("Demo accounts ensured: {} account(s). Password matches default: {}. Configure DEFAULT_TEST_PASSWORD for local test login.", demoUsers.size(), "GeoSmart@2026".equals(defaultTestPassword));
     }
 
     private void upsertDemoUser(DemoUser demoUser) {
+        Optional<UserEntity> existingUser = userRepository.findByEmailIgnoreCase(demoUser.email());
+        if (existingUser.isPresent()) {
+            return;
+        }
+
         Instant now = Instant.now();
-        UserEntity user = userRepository.findByEmailIgnoreCase(demoUser.email())
-                .orElseGet(() -> UserEntity.builder()
-                        .passwordHash(passwordEncoder.encode(defaultTestPassword))
-                        .email(demoUser.email().toLowerCase())
-                        .createdAt(now)
-                        .build());
-
-        user.setFullName(demoUser.fullName());
-        user.setEmail(demoUser.email().toLowerCase());
-        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
-            user.setPasswordHash(passwordEncoder.encode(defaultTestPassword));
-        }
-        // Keep demo logins deterministic for local testing and presentations.
-        user.setPasswordHash(passwordEncoder.encode(defaultTestPassword));
-        user.setRole(demoUser.role());
-        user.setStatus(UserStatus.ACTIVE);
-        user.setProfessionalLicense(demoUser.professionalLicense());
-        user.setOrganization(demoUser.organization());
-        user.setSpecialization(demoUser.specialization());
-        user.setCertifications(demoUser.certifications());
-        user.setLastActiveAt(now);
-        if (user.getCreatedAt() == null) {
-            user.setCreatedAt(now);
-        }
-
+        UserEntity user = UserEntity.builder()
+                .fullName(demoUser.fullName())
+                .email(demoUser.email().toLowerCase())
+                .passwordHash(passwordEncoder.encode(defaultTestPassword))
+                .role(demoUser.role())
+                .status(UserStatus.ACTIVE)
+                .professionalLicense(demoUser.professionalLicense())
+                .organization(demoUser.organization())
+                .specialization(demoUser.specialization())
+                .certifications(demoUser.certifications())
+                .createdAt(now)
+                .lastActiveAt(now)
+                .build();
         userRepository.save(user);
     }
 

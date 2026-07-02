@@ -92,8 +92,8 @@ export default function ResetPassword() {
           </div>
         ) : (
           <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-            <Input label="New Password" type="password" value={form.newPassword} onChange={e => setForm({ ...form, newPassword: e.target.value })} required />
-            <Input label="Confirm New Password" type="password" value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })} required />
+            <Input label="New Password" type="password" value={form.newPassword} onChange={e => setForm({ ...form, newPassword: e.target.value })} autoComplete="new-password" required />
+            <Input label="Confirm New Password" type="password" value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })} autoComplete="new-password" required />
             
             {error && <p className="text-sm text-danger font-bold">{error}</p>}
             

@@ -19,7 +19,7 @@ BACKEND_DIR = ROOT / "backend"
 DATA_DIR = BACKEND_DIR / "data"
 SQLITE_PATH = DATA_DIR / "geosmart_gis.sqlite"
 
-PARCELS_PATH = REQUESTED_DATA_DIR / "Kigali 05.22.2026" / "Kigali_Parcels.shp"
+PARCELS_PATH = REQUESTED_DATA_DIR / "KIGALI CITY 11.06.2026" / "KIGALI_CITY_11.06.shp"
 MASTERPLAN_PATH = REQUESTED_DATA_DIR / "Kigali Masterplan" / "Kigali_Masterplan.shp"
 BUILDINGS_PATH = REQUESTED_DATA_DIR / "Building Footprint" / "Building_Footprints.shp"
 ADMIN_DIR = REQUESTED_DATA_DIR / "Administrative Boundaries"
@@ -597,6 +597,10 @@ def create_tables(connection: sqlite3.Connection) -> None:
 
         CREATE INDEX idx_parcels_upi_normalized ON parcels(upi_normalized);
         CREATE INDEX idx_parcels_bbox ON parcels(min_lon, min_lat, max_lon, max_lat);
+        CREATE INDEX idx_parcels_district ON parcels(district);
+        CREATE INDEX idx_parcels_sector ON parcels(sector);
+        CREATE INDEX idx_parcels_cell ON parcels(cell);
+        CREATE INDEX idx_parcels_village ON parcels(village);
         CREATE INDEX idx_masterplan_zone_code ON masterplan_zones(zone_code);
         CREATE INDEX idx_masterplan_bbox ON masterplan_zones(min_lon, min_lat, max_lon, max_lat);
         CREATE INDEX idx_admin_level ON administrative_boundaries(boundary_level);
@@ -678,12 +682,14 @@ def build_parcels(connection: sqlite3.Connection) -> None:
 
     def rows() -> Iterable[tuple[Any, ...]]:
         for row in wgs84.itertuples(index=False):
-            geometry = row.geometry
+            geometry = getattr(row, "geometry", None)
+            if geometry is None or pd.isna(geometry) or not hasattr(geometry, "bounds"):
+                continue
             centroid = geometry.centroid
             min_lon, min_lat, max_lon, max_lat = bbox_tuple(geometry)
             official_area = as_float(getattr(row, "st_area_sh", None)) or as_float(getattr(row, "Shape_Area", None))
             yield (
-                as_text(getattr(row, "OBJECTID_1", None)),
+                as_text(getattr(row, "OBJECTID_1", None)) or as_text(getattr(row, "objectid", None)),
                 as_text(getattr(row, "upi", None)),
                 as_text(getattr(row, "upi", None)).strip().lower() if as_text(getattr(row, "upi", None)) else None,
                 as_text(getattr(row, "parcel_num", None)),
@@ -955,6 +961,29 @@ def build_layer_status(connection: sqlite3.Connection) -> None:
         frame = gpd.read_file(path, rows=3)
         frame_wgs84 = to_wgs84(frame)
         bounds = bbox_tuple(frame_wgs84.geometry.union_all())
+        
+        notes = None
+        if layer_key == "parcels":
+            full_frame = gpd.read_file(path, ignore_geometry=True)
+            dist_counts = full_frame["district"].value_counts()
+            districts = sorted(full_frame["district"].dropna().astype(str).unique().tolist())
+            dist_parts = [f"{d} ({dist_counts[d]:,})" for d in districts]
+            dist_str = ", ".join(dist_parts)
+            gasabo_avail = "Yes" if "Gasabo" in districts else "No"
+            kicukiro_avail = "Yes" if "Kicukiro" in districts else "No"
+            notes = f"Districts: {dist_str}. Gasabo & Kicukiro available: {gasabo_avail}/{kicukiro_avail}."
+            
+            # Check for missing files
+            base_path = str(path)[:-4]
+            missing_parts = []
+            for ext in [".shp", ".dbf", ".shx", ".prj"]:
+                if not Path(base_path + ext).exists():
+                    missing_parts.append(ext)
+            if missing_parts:
+                notes += f" WARNING: Missing shapefile parts: {', '.join(missing_parts)}."
+            if frame.crs is None:
+                notes += " WARNING: Missing coordinate reference system (CRS)."
+                
         rows.append(
             (
                 layer_key,
@@ -969,7 +998,7 @@ def build_layer_status(connection: sqlite3.Connection) -> None:
                 bounds[3],
                 1,
                 json.dumps([str(column) for column in frame.columns if column != "geometry"]),
-                None,
+                notes,
             )
         )
 

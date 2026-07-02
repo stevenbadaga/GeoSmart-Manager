@@ -246,6 +246,92 @@ public class UserService {
         return resolveManagedRoleForCreate(requestedRole);
     }
 
+    public UserEntity updateAvatar(org.springframework.web.multipart.MultipartFile file) {
+        UserEntity user = getCurrent();
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("File is empty");
+        }
+
+        // Validate file size limit: 5MB
+        long maxSize = 5 * 1024 * 1024L;
+        if (file.getSize() > maxSize) {
+            throw new IllegalArgumentException("File is too large. Max size is 5MB.");
+        }
+
+        String originalName = file.getOriginalFilename();
+        String contentType = file.getContentType();
+
+        // Validate image type: jpg, jpeg, png, webp
+        if (contentType == null) {
+            contentType = "";
+        }
+        contentType = contentType.toLowerCase();
+        String lowerName = originalName != null ? originalName.toLowerCase() : "";
+        
+        boolean isValidImage = contentType.equals("image/jpeg") || contentType.equals("image/jpg") || 
+                               contentType.equals("image/png") || contentType.equals("image/webp") ||
+                               lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg") || 
+                               lowerName.endsWith(".png") || lowerName.endsWith(".webp");
+
+        if (!isValidImage) {
+            throw new IllegalArgumentException("Unsupported file type. Only JPG, JPEG, PNG, and WEBP are supported.");
+        }
+
+        try {
+            java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads");
+            if (!java.nio.file.Files.exists(uploadPath)) {
+                java.nio.file.Files.createDirectories(uploadPath);
+            }
+
+            // Generate unique name
+            String extension = "";
+            if (originalName != null && originalName.contains(".")) {
+                extension = originalName.substring(originalName.lastIndexOf("."));
+            }
+            String uniqueName = java.util.UUID.randomUUID().toString() + extension;
+            java.nio.file.Path filePath = uploadPath.resolve(uniqueName);
+
+            // Copy file
+            java.nio.file.Files.copy(file.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            // Delete old avatar if it exists locally
+            if (user.getAvatarUrl() != null && user.getAvatarUrl().startsWith("/uploads/")) {
+                try {
+                    String oldFileName = user.getAvatarUrl().substring("/uploads/".length());
+                    java.nio.file.Path oldPath = uploadPath.resolve(oldFileName);
+                    java.nio.file.Files.deleteIfExists(oldPath);
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
+
+            user.setAvatarUrl("/uploads/" + uniqueName);
+            userRepository.save(user);
+            auditService.log(user.getEmail(), "UPDATE_AVATAR", "User", user.getId(), "User profile picture updated");
+            return user;
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Upload failed. Please try again.");
+        }
+    }
+
+    public UserEntity deleteAvatar() {
+        UserEntity user = getCurrent();
+        if (user.getAvatarUrl() != null && user.getAvatarUrl().startsWith("/uploads/")) {
+            try {
+                java.nio.file.Path uploadPath = java.nio.file.Paths.get("uploads");
+                String oldFileName = user.getAvatarUrl().substring("/uploads/".length());
+                java.nio.file.Path oldPath = uploadPath.resolve(oldFileName);
+                java.nio.file.Files.deleteIfExists(oldPath);
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+        user.setAvatarUrl(null);
+        userRepository.save(user);
+        auditService.log(user.getEmail(), "DELETE_AVATAR", "User", user.getId(), "User profile picture removed");
+        return user;
+    }
+
     private void ensureClientProfile(UserEntity user, Instant now) {
         if (user == null || user.getRole() != Role.CLIENT) {
             return;

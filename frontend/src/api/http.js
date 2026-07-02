@@ -13,9 +13,18 @@ async function parseResponse(response) {
 export async function apiRequest(path, options = {}) {
   const token = localStorage.getItem('token')
   const isPublicAuthRoute = path.startsWith('/api/auth/')
+
+  if (!token && !isPublicAuthRoute && path !== '/api/health') {
+    const error = new Error('Unauthorized: No token provided')
+    error.status = 401
+    throw error
+  }
+
   const headers = {
-    'Content-Type': 'application/json',
     ...(options.headers || {})
+  }
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json'
   }
 
   if (token && !isPublicAuthRoute) {
@@ -28,6 +37,10 @@ export async function apiRequest(path, options = {}) {
   })
 
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('token')
+      window.dispatchEvent(new Event('auth-logout'))
+    }
     const data = await parseResponse(response)
     const message = typeof data === 'string'
       ? data

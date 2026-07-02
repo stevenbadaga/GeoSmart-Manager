@@ -105,15 +105,34 @@ public class PdfBrandingSupport {
 
     private byte[] loadResourceBytes(String resourcePath) {
         ClassPathResource resource = new ClassPathResource(resourcePath);
-        if (!resource.exists()) {
-            return new byte[0];
+        if (resource.exists()) {
+            try (InputStream inputStream = resource.getInputStream()) {
+                return inputStream.readAllBytes();
+            } catch (IOException ex) {
+                // fall through
+            }
         }
 
-        try (InputStream inputStream = resource.getInputStream()) {
-            return inputStream.readAllBytes();
+        // File-system fallback for development environments:
+        try {
+            java.nio.file.Path path = java.nio.file.Path.of("src/main/resources").resolve(resourcePath);
+            if (java.nio.file.Files.exists(path)) {
+                return java.nio.file.Files.readAllBytes(path);
+            }
         } catch (IOException ex) {
-            return new byte[0];
+            // fall through
         }
+
+        try {
+            java.nio.file.Path path = java.nio.file.Path.of("backend/src/main/resources").resolve(resourcePath);
+            if (java.nio.file.Files.exists(path)) {
+                return java.nio.file.Files.readAllBytes(path);
+            }
+        } catch (IOException ex) {
+            // fall through
+        }
+
+        return new byte[0];
     }
 
     private byte[] loadSystemFontBytes(String relativeWindowsFontPath) {

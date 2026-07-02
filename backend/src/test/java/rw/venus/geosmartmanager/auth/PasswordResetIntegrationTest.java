@@ -39,7 +39,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(properties = {
         "app.mail.from-address=test@geomart.rw",
-        "app.auth.password-reset-url-base=http://localhost:5173/reset-password"
+        "GEOSMART_MAIL_USERNAME=test-smtp-user",
+        "GEOSMART_MAIL_APP_PASSWORD=test-smtp-password",
+        "app.auth.password-reset-url-base=http://geosmart.rw/reset-password"
 })
 @AutoConfigureMockMvc
 @Transactional
@@ -88,7 +90,7 @@ class PasswordResetIntegrationTest {
                 .getContentAsString());
         String sessionToken = registerNode.path("token").asText();
 
-        mockMvc.perform(post("/api/auth/password/forgot")
+        mockMvc.perform(post("/api/auth/forgot-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ForgotPayload(email))))
                 .andExpect(status().isOk());
@@ -97,7 +99,7 @@ class PasswordResetIntegrationTest {
         verify(mailSender).send(messageCaptor.capture());
         String resetToken = extractResetToken(messageCaptor.getValue());
 
-        JsonNode validateNode = readJson(mockMvc.perform(get("/api/auth/password/reset/validate")
+        JsonNode validateNode = readJson(mockMvc.perform(get("/api/auth/reset-password/validate")
                         .param("token", resetToken))
                 .andExpect(status().isOk())
                 .andReturn()
@@ -105,7 +107,7 @@ class PasswordResetIntegrationTest {
                 .getContentAsString());
         assertThat(validateNode.path("valid").asBoolean()).isTrue();
 
-        mockMvc.perform(post("/api/auth/password/reset")
+        mockMvc.perform(post("/api/auth/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ResetPayload(
                                 resetToken,
@@ -150,7 +152,7 @@ class PasswordResetIntegrationTest {
                 .when(mailSender)
                 .send(any(MimeMessage.class));
 
-        mockMvc.perform(post("/api/auth/password/forgot")
+        mockMvc.perform(post("/api/auth/forgot-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ForgotPayload(email))))
                 .andExpect(status().isServiceUnavailable());

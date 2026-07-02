@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { publicImages } from '../assets/publicImages'
+import { API_URL } from '../api/http'
 
 const primaryLinks = [
   { to: '/dashboard', label: 'Dashboard', helper: 'System overview', icon: 'grid', roles: ['ADMIN', 'SURVEYOR', 'CLIENT'] },
@@ -247,9 +248,17 @@ export default function Sidebar() {
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-100/[0.32] to-transparent" />
             <div className="relative flex items-center gap-3">
               <div className="relative">
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-400 text-xs font-black uppercase text-[#04251f] shadow-[0_12px_28px_-16px_rgba(52,211,153,0.9)] ring-1 ring-white/25">
-                  {(user?.fullName || user?.email || 'U').slice(0, 1)}
-                </div>
+                {user?.avatarUrl ? (
+                  <img
+                    src={`${API_URL}${user.avatarUrl}`}
+                    alt={user?.fullName || 'Avatar'}
+                    className="h-10 w-10 rounded-xl object-cover ring-1 ring-white/25 shadow-[0_12px_28px_-16px_rgba(52,211,153,0.9)]"
+                  />
+                ) : (
+                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-400 text-xs font-black uppercase text-[#04251f] shadow-[0_12px_28px_-16px_rgba(52,211,153,0.9)] ring-1 ring-white/25">
+                    {(user?.fullName || user?.email || 'U').slice(0, 1)}
+                  </div>
+                )}
                 <div className="absolute -bottom-0.5 -right-0.5 block h-3 w-3 rounded-full border-2 border-[#05261f] bg-emerald-300" />
               </div>
               <div className="min-w-0 flex-1">

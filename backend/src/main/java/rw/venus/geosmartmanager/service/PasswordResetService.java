@@ -61,10 +61,11 @@ public class PasswordResetService {
     public AuthDtos.MessageResponse requestPasswordReset(AuthDtos.ForgotPasswordRequest request) {
         passwordResetTokenRepository.deleteByExpiresAtBefore(Instant.now());
 
-        var user = userRepository.findByEmailIgnoreCase(request.email())
+        String email = request.email() != null ? request.email().trim() : "";
+        var user = userRepository.findByEmailIgnoreCase(email)
                 .filter(UserEntity::isEnabled);
         if (user.isPresent()) {
-            return issueResetToken(user.get(), request.email());
+            return issueResetToken(user.get(), email);
         }
 
         return new AuthDtos.MessageResponse(GENERIC_FORGOT_PASSWORD_MESSAGE);

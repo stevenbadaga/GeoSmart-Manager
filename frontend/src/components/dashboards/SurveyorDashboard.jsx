@@ -33,7 +33,7 @@ export default function SurveyorDashboard({ metrics, loading, loadedLayers, form
       {/* Metrics Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {metricItems.map((item) => (
-          <div key={item.label} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-7 shadow-premium transition-all hover:border-emerald-500/20 hover:shadow-lg">
+          <div key={item.label} className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-7 shadow-premium transition-all hover:border-emerald-500/20 hover:shadow-lg">
             <div className={`mb-5 inline-flex h-11 w-11 items-center justify-center rounded-xl border ${colorMap[item.color]}`}>
               {dashboardIcons[item.icon]}
             </div>
@@ -48,7 +48,7 @@ export default function SurveyorDashboard({ metrics, loading, loadedLayers, form
         <div className="space-y-8">
           <Card title="Technical Workspace" premium className="shadow-premium">
              <div className="grid gap-5 sm:grid-cols-2">
-                <button onClick={() => navigate('/subdivision')} className="group relative overflow-hidden rounded-[2rem] bg-[#063F35] p-8 text-white text-left transition-all hover:shadow-2xl hover:-translate-y-1">
+                <button onClick={() => navigate('/subdivision')} className="group relative overflow-hidden rounded-2xl bg-[#063F35] p-8 text-white text-left transition-all hover:shadow-2xl hover:-translate-y-1">
                    <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-emerald-400/10 blur-2xl group-hover:bg-emerald-400/20 transition-all" />
                    <div className="relative z-10">
                      <p className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400">Core Engine</p>
@@ -61,8 +61,8 @@ export default function SurveyorDashboard({ metrics, loading, loadedLayers, form
                    </div>
                 </button>
                 <div className="grid gap-4">
-                  <button onClick={() => navigate('/map')} className="group flex items-center gap-5 rounded-2xl border border-slate-100 bg-slate-50/50 p-6 text-left transition-all hover:border-emerald-200 hover:bg-white hover:shadow-lg">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-blue-50 text-blue-600 transition-transform group-hover:scale-110">
+                  <button onClick={() => navigate('/map')} className="group flex items-center gap-5 rounded-xl border border-slate-100 bg-slate-50/50 p-6 text-left transition-all hover:border-emerald-200 hover:bg-white hover:shadow-lg">
+                    <div className="grid h-12 w-12 place-items-center rounded-xl bg-blue-50 text-blue-600 transition-transform group-hover:scale-110">
                        <svg viewBox="0 0 24 24" className="h-5.5 w-5.5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /><path d="M9 3v15M15 6v15" /></svg>
                     </div>
                     <div>
@@ -70,8 +70,8 @@ export default function SurveyorDashboard({ metrics, loading, loadedLayers, form
                       <p className="mt-1 text-[11px] font-medium text-slate-400">Kigali layer inspection</p>
                     </div>
                   </button>
-                  <button onClick={() => navigate('/projects')} className="group flex items-center gap-5 rounded-2xl border border-slate-100 bg-slate-50/50 p-6 text-left transition-all hover:border-emerald-200 hover:bg-white hover:shadow-lg">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
+                  <button onClick={() => navigate('/projects')} className="group flex items-center gap-5 rounded-xl border border-slate-100 bg-slate-50/50 p-6 text-left transition-all hover:border-emerald-200 hover:bg-white hover:shadow-lg">
+                    <div className="grid h-12 w-12 place-items-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
                        <svg viewBox="0 0 24 24" className="h-5.5 w-5.5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /></svg>
                     </div>
                     <div>
@@ -84,7 +84,7 @@ export default function SurveyorDashboard({ metrics, loading, loadedLayers, form
           </Card>
 
           <Card title="Technical Audit Queue" className="shadow-premium">
-             <div className="p-12 text-center bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-200">
+             <div className="p-12 text-center bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
                 <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-slate-100 text-slate-400 mb-6 shadow-sm">
                    <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2z" /></svg>
                 </div>
@@ -136,7 +136,7 @@ export default function SurveyorDashboard({ metrics, loading, loadedLayers, form
            <Card title="Kigali Map Snapshot" className="p-0 overflow-hidden shadow-premium group">
              <div className="h-[300px] relative">
                 <MiniMap />
-                <div className="absolute bottom-5 left-5 z-[1000] rounded-2xl bg-slate-900/90 border border-white/10 px-4 py-2.5 text-[10px] font-bold text-white shadow-2xl backdrop-blur-md group-hover:translate-y-[-2px] transition-all">
+                <div className="absolute bottom-5 left-5 z-[1000] rounded-xl bg-slate-900/90 border border-white/10 px-4 py-2.5 text-[10px] font-bold text-white shadow-2xl backdrop-blur-md group-hover:translate-y-[-2px] transition-all">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-400" />
                     GIS Engine Operational

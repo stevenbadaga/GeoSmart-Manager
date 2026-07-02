@@ -304,11 +304,12 @@ export default function Users() {
   return (
     <div className="space-y-10 animate-rise">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-display">Team & Users</h1>
-          <p className="mt-2 text-slate-500 font-medium">Manage identity, role-based access, and account health across the platform.</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
+        <section className="flex-1 rounded-[2rem] border border-[#124E44]/20 bg-[#123E36] p-6 text-white">
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-[#E8C46A]">Identity & Governance</p>
+          <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-white">Team & Users</h1>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-white/75">Manage identity, role-based access, and account health across the platform.</p>
+        </section>
+        <div className="flex flex-wrap gap-3 self-end lg:self-center">
           <Button variant="secondary" className="px-6 shadow-sm" onClick={handleBulkImport}>Bulk Import</Button>
           <Button className="px-8 shadow-xl" onClick={openCreate}>Add Team Member</Button>
           <input

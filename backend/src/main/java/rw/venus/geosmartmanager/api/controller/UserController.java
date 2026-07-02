@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import rw.venus.geosmartmanager.api.dto.AuthDtos;
 import rw.venus.geosmartmanager.api.dto.UserDtos;
 import rw.venus.geosmartmanager.entity.UserEntity;
@@ -35,6 +38,16 @@ public class UserController {
     @PutMapping("/me")
     public AuthDtos.UserResponse updateCurrentProfile(@Validated @RequestBody UserDtos.UpdateProfileRequest request) {
         return toResponse(userService.updateCurrentProfile(request));
+    }
+
+    @PostMapping("/me/avatar")
+    public AuthDtos.UserResponse uploadAvatar(@RequestParam("file") MultipartFile file) {
+        return toResponse(userService.updateAvatar(file));
+    }
+
+    @DeleteMapping("/me/avatar")
+    public AuthDtos.UserResponse deleteAvatar() {
+        return toResponse(userService.deleteAvatar());
     }
 
     @PostMapping("/me/offline")
@@ -97,7 +110,8 @@ public class UserController {
                 user.getOrganization(),
                 user.getSpecialization(),
                 user.getCertifications(),
-                user.getLastActiveAt()
+                user.getLastActiveAt(),
+                user.getAvatarUrl()
         );
     }
 }

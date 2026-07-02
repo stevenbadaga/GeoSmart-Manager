@@ -48,11 +48,15 @@ public class GisPlannerService {
     private final GeoJsonService geoJsonService;
     private final GeoJsonReader geoJsonReader;
     private final GeoJsonWriter geoJsonWriter;
+    private final PdfBrandingSupport pdfBrandingSupport;
     private Path sqlitePath;
 
-    public GisPlannerService(ObjectMapper objectMapper, GeoJsonService geoJsonService) {
+    public GisPlannerService(ObjectMapper objectMapper,
+                             GeoJsonService geoJsonService,
+                             PdfBrandingSupport pdfBrandingSupport) {
         this.objectMapper = objectMapper;
         this.geoJsonService = geoJsonService;
+        this.pdfBrandingSupport = pdfBrandingSupport;
         this.geoJsonReader = new GeoJsonReader(new GeometryFactory());
         this.geoJsonWriter = new GeoJsonWriter();
     }
@@ -109,12 +113,18 @@ public class GisPlannerService {
                        p.official_area_sqm,
                        (SELECT COUNT(*) FROM parcels d WHERE d.upi_normalized = p.upi_normalized) AS duplicate_count
                 FROM parcels p
-                WHERE p.upi_normalized LIKE ?
+                WHERE p.upi_normalized LIKE ? 
+                   OR p.district LIKE ? 
+                   OR p.sector LIKE ? 
+                   OR p.cell LIKE ? 
+                   OR p.village LIKE ?
                 ORDER BY
                     CASE
                         WHEN p.upi_normalized = ? THEN 0
                         WHEN p.upi_normalized LIKE ? THEN 1
-                        ELSE 2
+                        WHEN p.district LIKE ? THEN 2
+                        WHEN p.sector LIKE ? THEN 3
+                        ELSE 4
                     END,
                     LENGTH(p.upi_normalized),
                     p.id
@@ -122,9 +132,16 @@ public class GisPlannerService {
                 """;
         try (Connection connection = openConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
-            statement.setString(1, "%" + normalized + "%");
-            statement.setString(2, normalized);
-            statement.setString(3, normalized + "%");
+            String pattern = "%" + normalized + "%";
+            statement.setString(1, pattern);
+            statement.setString(2, pattern);
+            statement.setString(3, pattern);
+            statement.setString(4, pattern);
+            statement.setString(5, pattern);
+            statement.setString(6, normalized);
+            statement.setString(7, normalized + "%");
+            statement.setString(8, pattern);
+            statement.setString(9, pattern);
             try (ResultSet resultSet = statement.executeQuery()) {
                 List<PlannerDtos.ParcelSearchResponse> results = new ArrayList<>();
                 while (resultSet.next()) {
@@ -1279,28 +1296,67 @@ public class GisPlannerService {
             float height = box.getHeight();
             float y = height - PDF_MARGIN;
 
-            content.setNonStrokingColor(new Color(18, 78, 68));
-            content.addRect(0, height - 100, width, 100);
+            // Stats count for dynamic top summary
+            int passedCount = 0;
+            int warnCount = 0;
+            int failedCount = 0;
+            if (report.checks() != null) {
+                for (PlannerDtos.CheckResultResponse check : report.checks()) {
+                    if ("PASS".equalsIgnoreCase(check.status())) {
+                        passedCount++;
+                    } else if ("WARN".equalsIgnoreCase(check.status())) {
+                        warnCount++;
+                    } else if ("FAIL".equalsIgnoreCase(check.status())) {
+                        failedCount++;
+                    }
+                }
+            }
+
+            // Redesigned premium header with white/cream area
+            content.setNonStrokingColor(new Color(253, 254, 251)); // premium cream/white
+            content.addRect(0, height - 105, width, 105);
             content.fill();
-            drawText(content, "GeoSmart Manager", PDF_MARGIN, height - 36, 11, true, Color.WHITE);
-            drawText(content, "Subdivision Layout and Measurements", PDF_MARGIN, height - 63, 20, true, Color.WHITE);
-            drawText(content, "Parent UPI: " + report.parcel().upi() + " | Recommendation: " + report.recommendation()
-                    + " | Score: " + report.complianceScore() + "/100", PDF_MARGIN, height - 84, 11, true, Color.WHITE);
+
+            // Divider green brand line at bottom of header
+            content.setStrokingColor(new Color(6, 63, 53)); // brand.deep green
+            content.setLineWidth(2f);
+            content.moveTo(PDF_MARGIN, height - 105f);
+            content.lineTo(width - PDF_MARGIN, height - 105f);
+            content.stroke();
+
+            float textX = PDF_MARGIN;
+            if (pdfBrandingSupport.hasLogo(PdfBrandingSupport.LogoVariant.DARK)) {
+                pdfBrandingSupport.drawLogo(document, content, PDF_MARGIN, height - 28f, 110f, PdfBrandingSupport.LogoVariant.DARK);
+                textX = PDF_MARGIN + 125f;
+            }
+
+            drawText(content, "Subdivision Layout Report", textX, height - 38, 18, true, new Color(16, 32, 27)); // brand.ink
+            drawText(content, "Preliminary parcel review, measurement schedule, and compliance summary.", textX, height - 56, 8.5f, false, new Color(100, 116, 139)); // slate
+            
+            // Format dynamic date
+            String dateText = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                    .withZone(java.time.ZoneId.of("Africa/Kigali"))
+                    .format(java.time.Instant.now()) + " CAT";
+
+            drawText(content, "Parent UPI: " + report.parcel().upi() + "  |  Rec: " + report.recommendation()
+                    + "  |  Score: " + report.complianceScore() + "/100  |  Date: " + dateText, textX, height - 76, 9f, true, new Color(6, 63, 53));
 
             Geometry parent = parseGeometry(report.parcel().geometryGeoJson());
             List<PlotMeasurement> measurements = buildPlotMeasurements(report, proposalPlots);
             List<Geometry> geometries = new ArrayList<>();
             geometries.add(parent);
             proposalPlots.forEach(plot -> geometries.add(plot.geometry()));
-            PdfMapTransform transform = mapTransform(geometries, PDF_MARGIN, 275f, width - (PDF_MARGIN * 2), 420f);
 
             float mapBottom = 275f;
             float mapHeight = 420f;
+            float mapWidth = 277f; // shrunk to allow wider right compliance panel
+            PdfMapTransform transform = mapTransform(geometries, PDF_MARGIN, mapBottom, mapWidth, mapHeight);
+
             content.setNonStrokingColor(new Color(248, 248, 244));
-            content.addRect(PDF_MARGIN, mapBottom, width - (PDF_MARGIN * 2), mapHeight);
+            content.addRect(PDF_MARGIN, mapBottom, mapWidth, mapHeight);
             content.fill();
             content.setStrokingColor(new Color(210, 204, 190));
-            content.addRect(PDF_MARGIN, mapBottom, width - (PDF_MARGIN * 2), mapHeight);
+            content.addRect(PDF_MARGIN, mapBottom, mapWidth, mapHeight);
             content.stroke();
 
             drawGeometry(content, parent, transform, new Color(18, 78, 68), new Color(31, 111, 95, 24), 2.5f);
@@ -1316,7 +1372,106 @@ public class GisPlannerService {
                 drawGeometry(content, plot.geometry(), transform, new Color(21, 89, 219), fills[i % fills.length], 2.2f);
                 Coordinate centroid = plot.geometry().getCentroid().getCoordinate();
                 float[] point = transform.toPage(centroid);
-                drawText(content, "P" + (i + 1), point[0] - 8, point[1] - 4, 10, true, Color.BLACK);
+
+                int plotNum = i + 1;
+                String plotStatus = "PASS";
+                if (report.plots() != null) {
+                    for (PlannerDtos.PlotResultResponse pr : report.plots()) {
+                        if (pr.plotNumber() == plotNum) {
+                            plotStatus = pr.status() != null ? pr.status() : "PASS";
+                            break;
+                        }
+                    }
+                }
+
+                Color statusColor = new Color(16, 185, 129); // PASS
+                if ("FAIL".equalsIgnoreCase(plotStatus)) {
+                    statusColor = new Color(239, 68, 68);
+                } else if ("WARN".equalsIgnoreCase(plotStatus)) {
+                    statusColor = new Color(245, 158, 11);
+                }
+
+                float labelWidth = 38f;
+                float labelHeight = 11f;
+                float rectX = point[0] - labelWidth / 2f;
+                float rectY = point[1] - labelHeight / 2f;
+
+                content.setNonStrokingColor(statusColor);
+                content.addRect(rectX, rectY, labelWidth, labelHeight);
+                content.fill();
+
+                content.setStrokingColor(Color.WHITE);
+                content.setLineWidth(0.8f);
+                content.addRect(rectX, rectY, labelWidth, labelHeight);
+                content.stroke();
+
+                drawText(content, "P" + plotNum + " " + plotStatus.toUpperCase(), rectX + 3f, rectY + 2.5f, 6.5f, true, Color.WHITE);
+            }
+
+            // Draw Compliance Checklist on the right side of the subdivided parcels map
+            float rightPanelWidth = 210f; // wider panel for better text readability
+            float rightPanelX = width - PDF_MARGIN - rightPanelWidth;
+
+            content.setNonStrokingColor(new Color(250, 250, 247)); // premium cream/off-white background
+            content.addRect(rightPanelX, mapBottom, rightPanelWidth, mapHeight);
+            content.fill();
+            content.setStrokingColor(new Color(220, 215, 200));
+            content.setLineWidth(1f);
+            content.addRect(rightPanelX, mapBottom, rightPanelWidth, mapHeight);
+            content.stroke();
+
+            // Panel Title
+            drawText(content, "Compliance Audit", rightPanelX + 12f, mapBottom + mapHeight - 20f, 11, true, new Color(18, 78, 68));
+
+            // Stats Box
+            float statsY = mapBottom + mapHeight - 55f;
+            content.setNonStrokingColor(new Color(240, 243, 238)); // subtle green-gray box
+            content.addRect(rightPanelX + 10f, statsY, rightPanelWidth - 20f, 28f);
+            content.fill();
+            content.setStrokingColor(new Color(215, 222, 210));
+            content.addRect(rightPanelX + 10f, statsY, rightPanelWidth - 20f, 28f);
+            content.stroke();
+
+            drawText(content, "Passed: " + passedCount, rightPanelX + 16f, statsY + 16f, 8, true, new Color(16, 185, 129));
+            drawText(content, "Warnings: " + (warnCount + failedCount), rightPanelX + 16f, statsY + 6f, 8, true, new Color(245, 158, 11));
+            drawText(content, "Score: " + report.complianceScore() + "/100", rightPanelX + 110f, statsY + 11f, 8.5f, true, new Color(6, 63, 53));
+
+            float checkY = statsY - 18f;
+            if (report.checks() != null) {
+                for (PlannerDtos.CheckResultResponse check : report.checks()) {
+                    if (checkY < mapBottom + 20f) break;
+
+                    Color statusColor = new Color(16, 185, 129); // PASS
+                    if ("FAIL".equalsIgnoreCase(check.status())) {
+                        statusColor = new Color(239, 68, 68); // FAIL
+                    } else if ("WARN".equalsIgnoreCase(check.status())) {
+                        statusColor = new Color(245, 158, 11); // WARN
+                    }
+
+                    List<String> labelLines = wrapTextToLines(check.label(), PDType1Font.HELVETICA_BOLD, 7.5f, rightPanelWidth - 62f);
+                    if (labelLines.isEmpty()) {
+                        labelLines.add("N/A");
+                    }
+
+                    // Badge
+                    content.setNonStrokingColor(statusColor);
+                    content.addRect(rightPanelX + 12f, checkY - 2f, 32f, 10f);
+                    content.fill();
+
+                    String badgeStatus = check.status() != null ? check.status().toUpperCase() : "PASS";
+                    drawText(content, badgeStatus, rightPanelX + 15f, checkY + 0.5f, 6.5f, true, Color.WHITE);
+
+                    // Wrapped lines
+                    float lineY = checkY + 0.5f;
+                    for (int lineIdx = 0; lineIdx < labelLines.size(); lineIdx++) {
+                        if (lineY < mapBottom + 8f) break;
+                        drawText(content, labelLines.get(lineIdx), rightPanelX + 48f, lineY, 7.5f, true, Color.DARK_GRAY);
+                        lineY -= 9.5f;
+                    }
+
+                    float itemHeight = Math.max(16f, 6f + labelLines.size() * 9.5f);
+                    checkY -= itemHeight;
+                }
             }
 
             drawText(content, "Figure 1. Proposed subdivision layout (schematic, derived from submitted GeoJSON).",
@@ -1351,6 +1506,38 @@ public class GisPlannerService {
         }
     }
 
+    private List<String> wrapTextToLines(String text, org.apache.pdfbox.pdmodel.font.PDFont font, float fontSize, float maxWidth) throws java.io.IOException {
+        List<String> wrappedLines = new ArrayList<>();
+        if (text == null || text.isEmpty()) {
+            return wrappedLines;
+        }
+
+        String[] words = text.split(" ");
+        StringBuilder currentLine = new StringBuilder();
+
+        for (String word : words) {
+            if (word.isEmpty()) continue;
+            String testLine = currentLine.length() == 0 ? word : currentLine + " " + word;
+            String cleaned = testLine.replaceAll("[^\\x20-\\x7E]", "");
+            float width = font.getStringWidth(cleaned) / 1000f * fontSize;
+            if (width > maxWidth) {
+                if (currentLine.length() > 0) {
+                    wrappedLines.add(currentLine.toString());
+                    currentLine = new StringBuilder(word);
+                } else {
+                    wrappedLines.add(word);
+                    currentLine = new StringBuilder();
+                }
+            } else {
+                currentLine = new StringBuilder(testLine);
+            }
+        }
+        if (currentLine.length() > 0) {
+            wrappedLines.add(currentLine.toString());
+        }
+        return wrappedLines;
+    }
+
     private void drawIndividualPlotPages(PDDocument document,
                                          PlannerDtos.SubdivisionCheckResponse report,
                                          List<ProposalPlot> proposalPlots) throws Exception {
@@ -1366,11 +1553,17 @@ public class GisPlannerService {
                 float height = box.getHeight();
 
                 content.setNonStrokingColor(new Color(18, 78, 68));
-                content.addRect(0, height - 88, width, 88);
+                content.addRect(0, height - 92, width, 92);
                 content.fill();
-                drawText(content, "GeoSmart Manager", PDF_MARGIN, height - 34, 11, true, Color.WHITE);
-                drawText(content, "Individual Plot Measurement - P" + (i + 1), PDF_MARGIN, height - 58, 18, true, Color.WHITE);
-                drawText(content, "Parent UPI: " + report.parcel().upi(), PDF_MARGIN, height - 76, 10, false, Color.WHITE);
+
+                float textX = PDF_MARGIN;
+                if (pdfBrandingSupport.hasLogo(PdfBrandingSupport.LogoVariant.LIGHT)) {
+                    pdfBrandingSupport.drawLogo(document, content, PDF_MARGIN, height - 26f, 90f, PdfBrandingSupport.LogoVariant.LIGHT);
+                    textX = PDF_MARGIN + 105f;
+                }
+
+                drawText(content, "Individual Plot Detail - P" + (i + 1), textX, height - 38, 16, true, Color.WHITE);
+                drawText(content, "Parent UPI: " + report.parcel().upi(), textX, height - 56, 10, false, new Color(255, 255, 255, 192));
 
                 float mapWidth = width * 0.58f;
                 float mapHeight = 300f;

@@ -149,6 +149,52 @@ public class MessagingService {
     }
 
     @Transactional
+    public MessagingDtos.MessageResponse updateMessage(Long messageId, MessagingDtos.SendMessageRequest request) {
+        MessageEntity message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("Message not found"));
+        UserEntity current = requireCurrentUser();
+        if (!Objects.equals(message.getSender().getId(), current.getId()) && current.getRole() != Role.ADMIN) {
+            throw new org.springframework.security.access.AccessDeniedException("You do not have permission to edit this message");
+        }
+        if (message.getDeletedAt() != null) {
+            throw new IllegalArgumentException("Cannot edit a deleted message");
+        }
+        String body = request == null ? null : normalizeBody(request.body());
+        if (body == null) {
+            throw new IllegalArgumentException("Message body is required");
+        }
+        message.setBody(body);
+        message.setUpdatedAt(Instant.now());
+        messageRepository.save(message);
+
+        auditService.log(current.getEmail(), "EDIT_MESSAGE", "Message", message.getId(), "Message edited");
+        return toMessageResponse(message, current.getId());
+    }
+
+    @Transactional
+    public void deleteMessage(Long messageId) {
+        MessageEntity message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new IllegalArgumentException("Message not found"));
+        UserEntity current = requireCurrentUser();
+        if (!Objects.equals(message.getSender().getId(), current.getId()) && current.getRole() != Role.ADMIN) {
+            throw new org.springframework.security.access.AccessDeniedException("You do not have permission to delete this message");
+        }
+        message.setDeletedAt(Instant.now());
+        messageRepository.save(message);
+
+        // Update conversation last message timestamp if necessary
+        ConversationEntity conversation = message.getConversation();
+        java.util.Optional<MessageEntity> newLastMessage = messageRepository
+                .findTopByConversationIdAndDeletedAtIsNullOrderByCreatedAtDesc(conversation.getId());
+        Instant lastMessageAt = newLastMessage.map(MessageEntity::getCreatedAt).orElse(conversation.getCreatedAt());
+        conversation.setLastMessageAt(lastMessageAt);
+        conversationRepository.save(conversation);
+
+        auditService.log(current.getEmail(), "DELETE_MESSAGE", "Message", message.getId(), "Message deleted");
+    }
+
+
+    @Transactional
     public void markRead(Long conversationId) {
         UserEntity current = requireCurrentUser();
         ConversationEntity conversation = conversationRepository.findById(conversationId)
@@ -239,7 +285,8 @@ public class MessagingService {
                 sender.getRole(),
                 message.getBody(),
                 Objects.equals(sender.getId(), currentUserId),
-                message.getCreatedAt()
+                message.getCreatedAt(),
+                message.getUpdatedAt()
         );
     }
 

@@ -25,7 +25,7 @@ function isHashActive(pathname, hash, target) {
 }
 
 export default function PublicNavbar() {
-  const { user } = useAuth()
+  const { user, token } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const { isDark, toggleTheme } = useTheme()
@@ -41,7 +41,7 @@ export default function PublicNavbar() {
   }, [location.pathname, location.hash])
 
   useEffect(() => {
-    if (!user) {
+    if (!user || !token) {
       setUnreadCount(0)
       return
     }

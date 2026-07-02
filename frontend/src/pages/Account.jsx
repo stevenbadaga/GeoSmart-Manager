@@ -4,7 +4,7 @@ import Card from '../components/Card'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import { useAuth } from '../auth/AuthContext'
-import { api } from '../api/http'
+import { api, API_URL } from '../api/http'
 
 function formatDateTime(value) {
   if (!value) return 'N/A'
@@ -121,9 +121,17 @@ export default function Account() {
            <div className="gis-grid absolute inset-0 opacity-[0.03]" />
            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
               <div className="flex flex-col md:flex-row items-center gap-8">
-                 <div className="h-24 w-24 rounded-[2rem] bg-white/10 border border-white/20 flex items-center justify-center text-white text-3xl font-bold shadow-2xl backdrop-blur-md uppercase font-display">
-                   {(user?.fullName || 'U').slice(0, 1)}
-                 </div>
+                  {user?.avatarUrl ? (
+                    <img
+                      src={`${API_URL}${user.avatarUrl}`}
+                      alt={user?.fullName || 'Avatar'}
+                      className="h-24 w-24 rounded-2xl object-cover border border-white/20 shadow-2xl backdrop-blur-md"
+                    />
+                  ) : (
+                    <div className="h-24 w-24 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-white text-3xl font-bold shadow-2xl backdrop-blur-md uppercase font-display">
+                      {(user?.fullName || 'U').slice(0, 1)}
+                    </div>
+                  )}
                  <div className="text-center md:text-left">
                     <p className="text-3xl font-bold tracking-tight font-display">{user?.fullName || 'Survey Engineer'}</p>
                     <p className="text-emerald-100/60 font-medium mt-2 text-lg">{user?.email}</p>

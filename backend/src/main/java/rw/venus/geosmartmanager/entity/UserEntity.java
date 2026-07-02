@@ -62,6 +62,9 @@ public class UserEntity implements UserDetails {
     @Column(name = "last_active_at")
     private Instant lastActiveAt;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     @Column(nullable = false)
     private Instant createdAt;
 

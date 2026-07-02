@@ -22,6 +22,11 @@ public class EmailNotificationService {
     }
 
     private void sendEmail(String to, String subject, String body) {
+        if (!appProperties.getMail().isEnabled()) {
+            log.info("Email skipped: development mode or EMAIL_ENABLED=false");
+            return;
+        }
+
         String fromAddress = appProperties.getMail().getFromAddress();
         if (fromAddress == null || fromAddress.isBlank()) {
             log.warn("Email sending skipped: From address not configured.");

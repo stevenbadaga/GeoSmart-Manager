@@ -62,6 +62,14 @@ export function AuthProvider({ children }) {
   }, [token])
 
   useEffect(() => {
+    const handleLogoutEvent = () => {
+      clearSession()
+    }
+    window.addEventListener('auth-logout', handleLogoutEvent)
+    return () => window.removeEventListener('auth-logout', handleLogoutEvent)
+  }, [])
+
+  useEffect(() => {
     if (!token || !user) return () => {}
 
     let active = true
@@ -169,6 +177,7 @@ export function AuthProvider({ children }) {
     () => ({
       token,
       user,
+      setUser,
       loading,
       isApproved,
       login,

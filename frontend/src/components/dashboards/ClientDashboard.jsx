@@ -9,7 +9,7 @@ export default function ClientDashboard({ metrics, loading }) {
   return (
     <div className="space-y-10 animate-rise">
       {/* Welcome Section */}
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-[#063F35] p-12 lg:p-16 text-white shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl bg-[#063F35] p-12 lg:p-16 text-white shadow-2xl">
          <div className="absolute -right-20 -top-20 h-96 w-96 rounded-full bg-emerald-500/10 blur-3xl" />
          <div className="gis-grid absolute inset-0 opacity-[0.03]" />
          <div className="relative z-10 lg:flex items-center justify-between gap-20">
@@ -31,11 +31,11 @@ export default function ClientDashboard({ metrics, loading }) {
                </div>
             </div>
             <div className="hidden lg:grid grid-cols-2 gap-6 shrink-0">
-               <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-md shadow-2xl text-center min-w-[180px] transition-transform hover:-translate-y-1">
+               <div className="p-8 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md shadow-2xl text-center min-w-[180px] transition-transform hover:-translate-y-1">
                   <p className="text-4xl font-bold tracking-tight font-display">{metrics?.myProjectsCount ?? '--'}</p>
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400/60 mt-4">Active Cases</p>
                </div>
-               <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 backdrop-blur-md shadow-2xl text-center min-w-[180px] transition-transform hover:-translate-y-1">
+               <div className="p-8 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md shadow-2xl text-center min-w-[180px] transition-transform hover:-translate-y-1">
                   <p className="text-4xl font-bold tracking-tight font-display">{metrics?.myReportsCount ?? '--'}</p>
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400/60 mt-4">Ready Reports</p>
                </div>
@@ -46,8 +46,8 @@ export default function ClientDashboard({ metrics, loading }) {
       <div className="grid gap-10 lg:grid-cols-[1.6fr_1fr]">
          <div className="space-y-10">
             <Card title="Active Case Monitoring" premium className="shadow-premium">
-               <div className="p-12 text-center bg-slate-50/50 rounded-[2.5rem] border-2 border-dashed border-slate-200 transition-all hover:bg-white hover:border-emerald-200 group">
-                  <div className="mx-auto grid h-20 w-16 place-items-center rounded-3xl bg-white text-emerald-600 mb-10 shadow-xl shadow-emerald-900/5 group-hover:scale-110 transition-transform">
+               <div className="p-12 text-center bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200 transition-all hover:bg-white hover:border-emerald-200 group">
+                  <div className="mx-auto grid h-20 w-16 place-items-center rounded-xl bg-white text-emerald-600 mb-10 shadow-xl shadow-emerald-900/5 group-hover:scale-110 transition-transform">
                      <svg viewBox="0 0 24 24" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" /></svg>
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 tracking-tight font-display">Manage your planning projects</h3>
@@ -62,7 +62,7 @@ export default function ClientDashboard({ metrics, loading }) {
             <div className="grid gap-6 sm:grid-cols-2">
                <Card className="p-8 shadow-premium group hover:border-emerald-300 transition-all hover:-translate-y-1 active:scale-[0.98]">
                   <div className="flex items-center gap-6">
-                     <div className="h-14 w-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                     <div className="h-14 w-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
                         <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M4 7h16v11H4z" /><path d="M9 7V5h6v2" /></svg>
                      </div>
                      <div>
@@ -73,7 +73,7 @@ export default function ClientDashboard({ metrics, loading }) {
                </Card>
                <Card className="p-8 shadow-premium group hover:border-emerald-300 transition-all hover:-translate-y-1 active:scale-[0.98]">
                   <div className="flex items-center gap-6">
-                     <div className="h-14 w-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
+                     <div className="h-14 w-14 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-sm">
                         <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M12 3l7 3v6c0 4.2-3 7.4-7 9-4-1.6-7-4.8-7-9V6l7-3z" /></svg>
                      </div>
                      <div>
@@ -88,7 +88,7 @@ export default function ClientDashboard({ metrics, loading }) {
          <div className="space-y-10">
             <Card title="Portal Notifications" premium className="shadow-premium">
                <div className="space-y-6">
-                  <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-100 text-[13px] font-bold text-emerald-800 flex gap-4 leading-relaxed shadow-sm">
+                  <div className="p-6 rounded-xl bg-emerald-50 border border-emerald-100 text-[13px] font-bold text-emerald-800 flex gap-4 leading-relaxed shadow-sm">
                      <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                      Welcome to your GeoSmart workspace. Active projects will be displayed here as they are registered and assigned.
                   </div>
@@ -120,7 +120,7 @@ export default function ClientDashboard({ metrics, loading }) {
             <Card title="GIS Operational View" className="p-0 overflow-hidden shadow-premium group">
               <div className="h-[280px] relative">
                 <MiniMap />
-                <div className="absolute bottom-5 left-5 z-[1000] rounded-2xl bg-slate-900/90 border border-white/10 px-4 py-2.5 text-[10px] font-bold text-white shadow-2xl backdrop-blur-md group-hover:translate-y-[-2px] transition-all">
+                <div className="absolute bottom-5 left-5 z-[1000] rounded-xl bg-slate-900/90 border border-white/10 px-4 py-2.5 text-[10px] font-bold text-white shadow-2xl backdrop-blur-md group-hover:translate-y-[-2px] transition-all">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                     Kigali GIS Engine Ready

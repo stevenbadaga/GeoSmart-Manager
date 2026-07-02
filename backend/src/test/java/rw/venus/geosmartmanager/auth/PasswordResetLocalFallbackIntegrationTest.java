@@ -57,7 +57,7 @@ class PasswordResetLocalFallbackIntegrationTest {
                         ))))
                 .andExpect(status().isOk());
 
-        JsonNode forgotNode = readJson(mockMvc.perform(post("/api/auth/password/forgot")
+        JsonNode forgotNode = readJson(mockMvc.perform(post("/api/auth/forgot-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ForgotPayload(email))))
                 .andExpect(status().isOk())
@@ -70,7 +70,7 @@ class PasswordResetLocalFallbackIntegrationTest {
         assertThat(forgotNode.path("message").asText()).contains("Email delivery is not configured locally");
 
         String token = resetLink.substring(resetLink.indexOf("token=") + 6);
-        JsonNode validateNode = readJson(mockMvc.perform(get("/api/auth/password/reset/validate")
+        JsonNode validateNode = readJson(mockMvc.perform(get("/api/auth/reset-password/validate")
                         .param("token", token))
                 .andExpect(status().isOk())
                 .andReturn()

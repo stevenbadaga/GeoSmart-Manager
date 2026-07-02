@@ -146,51 +146,51 @@ export default function Reports() {
 
   return (
     <div className="space-y-10 animate-rise">
-      <section className="overflow-hidden rounded-[2.5rem] border border-slate-200/60 bg-white shadow-premium">
-        <div className="grid lg:grid-cols-[1.12fr_0.88fr]">
-          <div className="relative overflow-hidden bg-[#063F35] p-10 lg:p-14 text-white">
+      <section className="overflow-hidden rounded-3xl border border-slate-200/60 bg-white shadow-premium">
+        <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="relative overflow-hidden bg-[#063F35] p-6 lg:p-8 text-white flex flex-col justify-between">
             <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl" />
             <div className="gis-grid absolute inset-0 opacity-[0.03]" />
-            <div className="relative z-10">
-              <div className="inline-flex items-center gap-3 rounded-full bg-emerald-400/10 px-4 py-2 border border-emerald-400/20 mb-8 backdrop-blur-sm">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">Governance & Records</p>
+            <div className="relative z-10 my-auto">
+              <div className="inline-flex items-center gap-3 rounded-full bg-emerald-400/10 px-3.5 py-1.5 border border-emerald-400/20 mb-4 backdrop-blur-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-emerald-400">Governance & Records</p>
               </div>
-              <h1 className="text-4xl lg:text-5xl font-bold tracking-tight leading-[1.05] font-display">
+              <h1 className="text-3xl lg:text-4xl font-bold tracking-tight leading-tight font-display text-white">
                 Compliance Report Center
               </h1>
-              <p className="mt-8 text-lg text-emerald-100/70 leading-relaxed font-medium max-w-2xl">
+              <p className="mt-3 text-sm text-emerald-100/75 leading-relaxed font-medium max-w-xl">
                 Generate project reports and export professional subdivision compliance PDFs with parcel layouts, zoning results, and official preliminary-use documentation.
               </p>
-              <div className="mt-10 flex flex-wrap gap-4">
-                <Button type="button" className="bg-emerald-500 text-white hover:bg-emerald-400 px-8 py-4 font-black shadow-xl shadow-emerald-500/20" onClick={() => navigate('/subdivision')}>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button type="button" className="bg-emerald-500 text-white hover:bg-emerald-400 px-6 py-3 text-sm font-bold shadow-md shadow-emerald-500/10" onClick={() => navigate('/subdivision')}>
                   Generate Subdivision PDF
                 </Button>
-                <Button type="button" variant="secondary" className="border-white/20 bg-white/5 text-white hover:bg-white/10 px-8 py-4 font-black backdrop-blur-sm" onClick={() => navigate('/datasets')}>
+                <Button type="button" variant="secondary" className="border-white/20 bg-white/5 text-white hover:bg-white/10 px-6 py-3 text-sm font-bold backdrop-blur-sm" onClick={() => navigate('/datasets')}>
                   Audit GIS Data
                 </Button>
               </div>
             </div>
           </div>
-          <div className="bg-slate-50/50 p-10 lg:p-14">
-            <div className="grid gap-4">
-              <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-premium transition-all hover:border-emerald-500/20 group">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Selected Context</p>
-                <p className="mt-3 text-2xl font-bold text-slate-900 tracking-tight font-display transition-colors group-hover:text-emerald-700">{selectedProjectName || 'No project selected'}</p>
-                <p className="mt-2 text-[13px] font-medium text-slate-500 leading-relaxed">Select a case file to view generated records.</p>
+          <div className="bg-slate-50/50 p-6 lg:p-8 flex flex-col justify-center">
+            <div className="grid gap-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-emerald-500/20 group">
+                <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Selected Context</p>
+                <p className="mt-2 text-xl font-bold text-slate-900 tracking-tight font-display transition-colors group-hover:text-emerald-700">{selectedProjectName || 'No project selected'}</p>
+                <p className="mt-1 text-xs font-medium text-slate-500 leading-relaxed">Select a case file to view generated records.</p>
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="rounded-3xl bg-white border border-slate-100 p-6 shadow-premium transition-all hover:border-emerald-500/20 text-center">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Records</p>
-                  <p className="mt-2 text-3xl font-bold text-[#063F35] font-display">{totalReports}</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-2xl bg-white border border-slate-100 p-4 shadow-sm transition-all hover:border-emerald-500/20 text-center flex flex-col justify-center">
+                  <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Records</p>
+                  <p className="mt-1.5 text-2xl font-bold text-[#063F35] font-display">{totalReports}</p>
                 </div>
-                <div className="rounded-3xl bg-white border border-slate-100 p-6 shadow-premium transition-all hover:border-emerald-500/20 text-center">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Types</p>
-                  <p className="mt-2 text-3xl font-bold text-[#063F35] font-display">{activeTypes}</p>
+                <div className="rounded-2xl bg-white border border-slate-100 p-4 shadow-sm transition-all hover:border-emerald-500/20 text-center flex flex-col justify-center">
+                  <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Types</p>
+                  <p className="mt-1.5 text-2xl font-bold text-[#063F35] font-display">{activeTypes}</p>
                 </div>
-                <div className="rounded-3xl bg-white border border-slate-100 p-6 shadow-premium transition-all hover:border-emerald-500/20 text-center">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Status</p>
-                  <p className="mt-2 text-xl font-bold text-emerald-600 font-display">READY</p>
+                <div className="rounded-2xl bg-white border border-slate-100 p-4 shadow-sm transition-all hover:border-emerald-500/20 text-center flex flex-col justify-center">
+                  <p className="text-[9px] font-black uppercase tracking-[0.25em] text-slate-400">Status</p>
+                  <p className="mt-1.5 text-lg font-bold text-emerald-600 font-display">READY</p>
                 </div>
               </div>
             </div>

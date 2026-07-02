@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import * as turf from '@turf/turf'
 import proj4 from 'proj4'
 import Card from '../components/Card'
@@ -289,6 +290,7 @@ function formatCoord(value) {
 }
 
 export default function MapView() {
+  const navigate = useNavigate()
   const [projects, setProjects] = useState([])
   const [datasets, setDatasets] = useState([])
   const [runs, setRuns] = useState([])
@@ -299,6 +301,11 @@ export default function MapView() {
   const [geoJson, setGeoJson] = useState('')
   const [basemap, setBasemap] = useState('osm')
   const [error, setError] = useState('')
+  const [parcelSearchTerm, setParcelSearchTerm] = useState('')
+  const [parcelSearchResults, setParcelSearchResults] = useState([])
+  const [searchingParcels, setSearchingParcels] = useState(false)
+  const [selectedDbParcel, setSelectedDbParcel] = useState(null)
+  const [searchError, setSearchError] = useState('')
   const [sketch, setSketch] = useState({ features: [], summary: emptySummary })
   const [copyMessage, setCopyMessage] = useState('')
   const [snapTolerance, setSnapTolerance] = useState(6)
@@ -316,6 +323,33 @@ export default function MapView() {
   const [showRoadLabels, setShowRoadLabels] = useState(false)
   const [showUtmGrid, setShowUtmGrid] = useState(false)
   const [utmSpacing, setUtmSpacing] = useState(5000)
+  const handleParcelSearch = async (term) => {
+    if (!term || term.trim().length < 2) return
+    setSearchingParcels(true)
+    setSearchError('')
+    try {
+      const results = await api.get(`/api/parcels/search?upi=${encodeURIComponent(term)}`)
+      setParcelSearchResults(results)
+      if (!results.length) {
+        setSearchError(`No parcels found matching "${term}"`)
+      }
+    } catch (err) {
+      setSearchError(err.message || 'Unable to search parcels.')
+    } finally {
+      setSearchingParcels(false)
+    }
+  }
+
+  const selectParcel = async (parcelId) => {
+    setSearchError('')
+    try {
+      const parcel = await api.get(`/api/parcels/${parcelId}`)
+      setSelectedDbParcel(parcel)
+      setGeoJson(parcel.geometryGeoJson)
+    } catch (err) {
+      setSearchError(err.message || 'Unable to load parcel detail.')
+    }
+  }
 
   useEffect(() => {
     api.get('/api/projects')
@@ -340,13 +374,17 @@ export default function MapView() {
 
   useEffect(() => {
     if (mode === 'dataset') {
-      const dataset = datasets.find((item) => String(item.id) === selectedDataset)
-      setGeoJson(dataset?.geoJson || '')
+      if (selectedDataset === 'kigali_parcels_db') {
+        setGeoJson(selectedDbParcel?.geometryGeoJson || '')
+      } else {
+        const dataset = datasets.find((item) => String(item.id) === selectedDataset)
+        setGeoJson(dataset?.geoJson || '')
+      }
     } else {
       const run = runs.find((item) => String(item.id) === selectedRun)
       setGeoJson(run?.resultGeoJson || '')
     }
-  }, [mode, datasets, runs, selectedDataset, selectedRun])
+  }, [mode, datasets, runs, selectedDataset, selectedRun, selectedDbParcel])
 
   const adminLayers = useMemo(() => extractAdminLayers(datasets), [datasets])
   const roadLayer = useMemo(() => extractRoadLayers(datasets), [datasets])
@@ -568,6 +606,7 @@ export default function MapView() {
               <span>Imported GIS layer</span>
               <select className="input" value={selectedDataset} onChange={(e) => setSelectedDataset(e.target.value)}>
                 <option value="">Select dataset</option>
+                <option value="kigali_parcels_db">Kigali Parcels (Database)</option>
                 {datasets.map((dataset) => (
                   <option key={dataset.id} value={dataset.id}>{dataset.name}</option>
                 ))}
@@ -637,6 +676,98 @@ export default function MapView() {
         </Card>
 
         <div className="space-y-6">
+          {selectedDataset === 'kigali_parcels_db' && (
+            <Card title="Search & Select Kigali Parcels">
+              <div className="space-y-4">
+                <p className="text-xs text-ink/60">
+                  Search and select a parcel from the Kigali dataset. Searching by UPI, District, Sector, Cell or Village is supported.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    className="input"
+                    placeholder="Search (e.g. Gasabo, Kinyinya, 1/02/...)"
+                    value={parcelSearchTerm}
+                    onChange={(e) => setParcelSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleParcelSearch(parcelSearchTerm)}
+                  />
+                  <Button onClick={() => handleParcelSearch(parcelSearchTerm)} disabled={searchingParcels}>
+                    {searchingParcels ? '...' : 'Search'}
+                  </Button>
+                </div>
+                {searchError && <p className="text-xs text-danger">{searchError}</p>}
+                
+                {parcelSearchResults.length > 0 && (
+                  <div className="max-h-48 overflow-y-auto border border-clay/60 rounded-xl divide-y divide-clay/40 bg-white/50">
+                    {parcelSearchResults.map((result) => (
+                      <button
+                        key={result.id}
+                        type="button"
+                        className={`w-full text-left p-3 text-xs hover:bg-slate-100 transition-colors flex flex-col gap-1 ${
+                          selectedDbParcel?.id === result.id ? 'bg-slate-100 font-bold border-l-2 border-emerald-500' : ''
+                        }`}
+                        onClick={() => selectParcel(result.id)}
+                      >
+                        <span className="font-semibold text-slate-900">{result.upi}</span>
+                        <span className="text-[10px] text-slate-500">
+                          {result.district} &gt; {result.sector} &gt; {result.cell} &gt; {result.village}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {selectedDbParcel && (
+                  <div className="border border-clay/60 bg-emerald-50/20 rounded-xl p-4 space-y-3 text-xs">
+                    <div className="flex justify-between border-b border-clay/40 pb-2">
+                      <span className="font-semibold text-slate-700">UPI:</span>
+                      <span className="font-medium text-slate-900">{selectedDbParcel.upi}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-clay/40 pb-2">
+                      <span className="font-semibold text-slate-700">District:</span>
+                      <span className="font-medium text-slate-900">{selectedDbParcel.district}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-clay/40 pb-2">
+                      <span className="font-semibold text-slate-700">Sector:</span>
+                      <span className="font-medium text-slate-900">{selectedDbParcel.sector}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-clay/40 pb-2">
+                      <span className="font-semibold text-slate-700">Cell / Village:</span>
+                      <span className="font-medium text-slate-900">{selectedDbParcel.cell} / {selectedDbParcel.village || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-clay/40 pb-2">
+                      <span className="font-semibold text-slate-700">Area:</span>
+                      <span className="font-medium text-slate-900">{selectedDbParcel.officialAreaSqm?.toFixed(2) ?? '0.00'} sqm</span>
+                    </div>
+                    <div className="flex justify-between border-b border-clay/40 pb-2">
+                      <span className="font-semibold text-slate-700">Status / Accuracy:</span>
+                      <span className="font-medium text-slate-900 uppercase">{selectedDbParcel.status} / {selectedDbParcel.accuracy || 'N/A'}</span>
+                    </div>
+                    <div className="pt-2">
+                      <Button
+                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                        onClick={() =>
+                          navigate('/subdivision', {
+                            state: {
+                              project: {
+                                name: `Subdivision for ${selectedDbParcel.upi}`,
+                                requestedUpi: selectedDbParcel.upi,
+                                requestedParcelCount: 3,
+                                requestedLandUse: 'R1'
+                              }
+                            }
+                          })
+                        }
+                      >
+                        Send to Subdivision Planner
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
           <Card title="Administrative Context">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <label className="flex items-center gap-2">

@@ -1,26 +1,26 @@
 {
-  "generated_at": "2026-05-30T18:39:31.978992Z",
+  "generated_at": "2026-06-28T22:23:52.911588Z",
   "requested_data_root": "Requested Data",
   "summary": {
-    "vector_layer_count": 8,
+    "vector_layer_count": 9,
     "raster_layer_count": 1,
     "pdf_count": 1,
     "error_count": 0
   },
   "key_layers": {
     "parcels": {
-      "path": "Requested Data\\Kigali 05.22.2026\\Kigali_Parcels.shp",
-      "feature_count": 101981,
-      "non_empty_upi_count": 101981,
-      "duplicate_upi_feature_count": 2846,
-      "duplicate_upi_value_count": 1420,
+      "path": "Requested Data\\KIGALI CITY 11.06.2026\\KIGALI_CITY_11.06.shp",
+      "feature_count": 560275,
+      "non_empty_upi_count": 560275,
+      "duplicate_upi_feature_count": 3742,
+      "duplicate_upi_value_count": 1829,
       "top_status_values": {
-        "Actual": 100934,
-        "Provisional": 1047
+        "Actual": 555345,
+        "Provisional": 4930
       },
       "top_accuracy_values": {
-        "C": 101871,
-        "A": 110
+        "C": 559388,
+        "A": 887
       },
       "admin_fields_present": [
         "province",
@@ -1226,6 +1226,238 @@
           "st_length_": 488.972,
           "Shape_Leng": 488.972,
           "Shape_Area": 11285.976
+        }
+      ],
+      "loaded_successfully": true
+    },
+    {
+      "type": "vector",
+      "path": "Requested Data\\KIGALI CITY 11.06.2026\\KIGALI_CITY_11.06.shp",
+      "file_name": "KIGALI_CITY_11.06.shp",
+      "layer_name": "KIGALI_CITY_11.06",
+      "driver": "ESRI Shapefile",
+      "feature_count": 560275,
+      "geometry_type": "Polygon",
+      "geometry_type_samples": [
+        "Polygon"
+      ],
+      "crs": "PROJCS[\"ITRF_2005\",GEOGCS[\"ITRF2005\",DATUM[\"International_Terrestrial_Reference_Frame_2005\",SPHEROID[\"GRS 1980\",6378137,298.257222101,AUTHORITY[\"EPSG\",\"7019\"]],AUTHORITY[\"EPSG\",\"6896\"]],PRIMEM[\"Greenwich\",0],UNIT[\"Degree\",0.0174532925199433]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",30],PARAMETER[\"scale_factor\",0.9999],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",5000000],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+      "epsg": null,
+      "encoding": "UTF-8",
+      "bounding_box": [
+        457996.318,
+        4770096.523,
+        530828.409,
+        4835579.743
+      ],
+      "field_names": [
+        "objectid",
+        "parcel_num",
+        "village",
+        "province",
+        "district",
+        "sector",
+        "cell",
+        "cell_code",
+        "upi",
+        "change_id",
+        "start_date",
+        "end_date",
+        "status",
+        "transactio",
+        "accuracy",
+        "area_in_we",
+        "x",
+        "y",
+        "village_co",
+        "globalid",
+        "st_area_sh",
+        "st_length_"
+      ],
+      "field_types": [
+        {
+          "name": "objectid",
+          "ogr_type": "OFTInteger64",
+          "dtype": "int64"
+        },
+        {
+          "name": "parcel_num",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "village",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "province",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "district",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "sector",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "cell",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "cell_code",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "upi",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "change_id",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "start_date",
+          "ogr_type": "OFTDate",
+          "dtype": "datetime64[D]"
+        },
+        {
+          "name": "end_date",
+          "ogr_type": "OFTDate",
+          "dtype": "datetime64[D]"
+        },
+        {
+          "name": "status",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "transactio",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "accuracy",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "area_in_we",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "x",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "y",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "village_co",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "globalid",
+          "ogr_type": "OFTString",
+          "dtype": "object"
+        },
+        {
+          "name": "st_area_sh",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        },
+        {
+          "name": "st_length_",
+          "ogr_type": "OFTReal",
+          "dtype": "float64"
+        }
+      ],
+      "sample_records": [
+        {
+          "objectid": 5868907,
+          "parcel_num": 5216.0,
+          "village": "Urugwiro",
+          "province": "Kigali City",
+          "district": "Kicukiro",
+          "sector": "Masaka",
+          "cell": "Cyimo",
+          "cell_code": "1030802",
+          "upi": "1/03/08/02/5216",
+          "change_id": "BC",
+          "start_date": "2025-10-20T00:00:00",
+          "end_date": "NaT",
+          "status": "Actual",
+          "transactio": null,
+          "accuracy": "A",
+          "area_in_we": 0.0,
+          "x": 521918.956,
+          "y": 4779194.831,
+          "village_co": "103080209",
+          "globalid": "{AB8AF6A2-F834-461D-AE95-D33C7F1A7654}",
+          "st_area_sh": 339.19,
+          "st_length_": 75.536
+        },
+        {
+          "objectid": 5870174,
+          "parcel_num": 14274.0,
+          "village": "Gihuke",
+          "province": "Kigali City",
+          "district": "Kicukiro",
+          "sector": "Masaka",
+          "cell": "Gako",
+          "cell_code": "1030803",
+          "upi": "1/03/08/03/14274",
+          "change_id": "BC",
+          "start_date": "2025-10-10T00:00:00",
+          "end_date": "NaT",
+          "status": "Actual",
+          "transactio": null,
+          "accuracy": "A",
+          "area_in_we": 0.0,
+          "x": 524373.517,
+          "y": 4779350.954,
+          "village_co": "103080306",
+          "globalid": "{93633EDB-0337-4308-BA33-C210DD305137}",
+          "st_area_sh": 451.643,
+          "st_length_": 85.356
+        },
+        {
+          "objectid": 5871037,
+          "parcel_num": 14715.0,
+          "village": "Muhororo",
+          "province": "Kigali City",
+          "district": "Gasabo",
+          "sector": "Kinyinya",
+          "cell": "Kagugu",
+          "cell_code": "1021003",
+          "upi": "1/02/10/03/14715",
+          "change_id": "DP",
+          "start_date": "2025-10-29T00:00:00",
+          "end_date": "NaT",
+          "status": "Actual",
+          "transactio": null,
+          "accuracy": "A",
+          "area_in_we": 0.0,
+          "x": 509706.845,
+          "y": 4789676.282,
+          "village_co": "102100307",
+          "globalid": "{FE12C61D-A1FF-4E8F-93ED-01CBCECED937}",
+          "st_area_sh": 71.081,
+          "st_length_": 39.716
         }
       ],
       "loaded_successfully": true

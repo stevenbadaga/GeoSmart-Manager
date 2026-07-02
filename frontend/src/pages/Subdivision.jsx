@@ -5,7 +5,6 @@ import Card from '../components/Card'
 import Button from '../components/Button'
 import Input from '../components/Input'
 import GeoJsonMap from '../components/GeoJsonMap'
-import TopNavTabs from '../components/TopNavTabs'
 import { API_URL, api } from '../api/http'
 
 const DEFAULT_LAYER_STATE = {
@@ -233,7 +232,9 @@ function safeBooleanIntersects(left, right) {
 function safeIntersectPolygon(left, right, properties = {}) {
   if (!left || !right || !safeBooleanIntersects(left, right)) return null
   try {
-    const intersected = turf.intersect(turf.featureCollection([left, right]))
+    const cleanedLeft = turf.cleanCoords(left)
+    const cleanedRight = turf.cleanCoords(right)
+    const intersected = turf.intersect(turf.featureCollection([cleanedLeft, cleanedRight]))
     const polygons = polygonFeaturesFromValue(intersected)
     if (!polygons.length) return null
     const combined = polygons.length === 1
@@ -253,7 +254,9 @@ function safeDifferencePolygon(base, mask) {
   if (!base) return null
   if (!mask || !safeBooleanIntersects(base, mask)) return base
   try {
-    const difference = turf.difference(turf.featureCollection([base, mask]))
+    const cleanedBase = turf.cleanCoords(base)
+    const cleanedMask = turf.cleanCoords(mask)
+    const difference = turf.difference(turf.featureCollection([cleanedBase, cleanedMask]))
     return difference || null
   } catch {
     return base
@@ -1315,6 +1318,9 @@ function buildFallbackSuggestedPlots(parcel, count = 3, context = null, zoning =
   const features = []
   const candidates = []
   const excludedFeatures = overlayPolygonFeatures(context, ['BUILDING_FOOTPRINTS', 'CONSTRAINTS'])
+    .filter((feature) => safeBooleanIntersects(feature, parent))
+    .map((feature) => safeIntersectPolygon(feature, parent))
+    .filter(Boolean)
   const maxLotSizeSqm = strictestMaxLotSize(zoning)
   const candidateColumns = Math.max(19, count * 3)
   const candidateRows = Math.max(19, count * 3)
@@ -1428,7 +1434,12 @@ function estimateMaximumDivisiblePlotCount(parcel, context = null, zoning = []) 
   const minimumPlotSizeSqm = strictestMinLotSize(zoning)
   const buildingFeatures = overlayPolygonFeatures(context, ['BUILDING_FOOTPRINTS'])
     .filter((feature) => safeBooleanIntersects(feature, parent))
+    .map((feature) => safeIntersectPolygon(feature, parent))
+    .filter(Boolean)
   const constraintFeatures = overlayPolygonFeatures(context, ['CONSTRAINTS'])
+    .filter((feature) => safeBooleanIntersects(feature, parent))
+    .map((feature) => safeIntersectPolygon(feature, parent))
+    .filter(Boolean)
   const minimumRegionAreaSqm = Math.max(
     8,
     Number.isFinite(minimumPlotSizeSqm)
@@ -1444,9 +1455,28 @@ function estimateMaximumDivisiblePlotCount(parcel, context = null, zoning = []) 
   )
 
   if (!developableRegions.length) {
+    const hasBuildings = buildingFeatures.length > 0
+    const hasConstraints = constraintFeatures.length > 0
+    let reason = 'This parcel has no developable area left after removing buildings and restricted zones.'
+    if (hasBuildings && !hasConstraints) {
+      reason = 'Attention Required — This parcel has no developable area left because it is fully covered by existing building footprints.'
+    } else if (hasConstraints && !hasBuildings) {
+      reason = 'Attention Required — This parcel has no developable area left because it is fully within restricted masterplan zones.'
+    } else if (hasBuildings && hasConstraints) {
+      reason = 'Attention Required — This parcel has no developable area left after subtracting both existing buildings and restricted zones.'
+    }
     return {
-      error: 'This parcel has no developable area left after removing buildings and restricted zones.',
+      error: reason,
       count: 0
+    }
+  }
+
+  const parentArea = featureAreaSqm(parent)
+  if (Number.isFinite(minimumPlotSizeSqm) && parentArea < minimumPlotSizeSqm * 2) {
+    return {
+      error: `The loaded masterplan rules do not support dividing this parcel: parent parcel area of ${formatArea(parentArea)} is too small to split under the zoning rule (requires minimum lot size: ${formatArea(minimumPlotSizeSqm)}).`,
+      count: 1,
+      minimumPlotSizeSqm
     }
   }
 
@@ -1474,12 +1504,18 @@ function estimateMaximumDivisiblePlotCount(parcel, context = null, zoning = []) 
       }
     }
 
+    if (capacity < 2) {
+      return {
+        error: `The remaining developable area of ${formatArea(availableArea)} is too small for a subdivision compliant with the zoning rule (minimum lot size: ${formatArea(minimumPlotSizeSqm)}).`,
+        count: 1,
+        minimumPlotSizeSqm
+      }
+    }
+
     return {
-      error: '',
-      count: Math.min(capacity, 1),
-      availableArea,
-      minimumPlotSizeSqm,
-      note: `The raw masterplan capacity is high, but the remaining developable geometry cannot produce clean plot shapes at that count.`
+      error: 'The remaining developable geometry has awkward dimensions or overlaps that prevent generating clean compliant plot shapes.',
+      count: 1,
+      minimumPlotSizeSqm
     }
   }
 
@@ -1503,7 +1539,12 @@ function buildSuggestedPlots(parcel, count = 3, context = null, zoning = [], opt
   const minimumPlotSizeSqm = strictestMinLotSize(zoning)
   const buildingFeatures = overlayPolygonFeatures(context, ['BUILDING_FOOTPRINTS'])
     .filter((feature) => safeBooleanIntersects(feature, parent))
+    .map((feature) => safeIntersectPolygon(feature, parent))
+    .filter(Boolean)
   const constraintFeatures = overlayPolygonFeatures(context, ['CONSTRAINTS'])
+    .filter((feature) => safeBooleanIntersects(feature, parent))
+    .map((feature) => safeIntersectPolygon(feature, parent))
+    .filter(Boolean)
   const roadFeatures = roadFrontageFeatures(context, parent)
   const minimumRegionAreaSqm = Math.max(
     8,
@@ -1904,6 +1945,7 @@ export default function Subdivision() {
   const loadParcelContext = async (parcelId, options = {}) => {
     setSelectedParcelId(parcelId)
     setLoadingContext(true)
+    setContext(null)
     setError('')
     setInfoMessage('')
     setCheckResult(null)
@@ -2150,59 +2192,67 @@ export default function Subdivision() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Planning Assistant</p>
-        <h1 className="text-2xl font-semibold text-ink mt-2">AI Subdivision Planner</h1>
-        <p className="text-sm text-ink/60 mt-2">
+      {/* 1. Page Header */}
+      <section className="rounded-[2rem] border border-[#124E44]/20 bg-[#123E36] p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute right-0 top-0 h-full w-1/3 bg-emerald-500/10 blur-3xl pointer-events-none" />
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-[#E8C46A]">Planning Assistant</p>
+        <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-white">AI Subdivision Planner</h1>
+        <p className="mt-3 max-w-4xl text-sm leading-7 text-white/80">
           Verify parcel splitting eligibility and generate compliant layouts based on masterplan rules, building footprints, and constraints.
         </p>
-      </div>
+      </section>
 
-      <TopNavTabs className="mt-1" size="sm" />
-
-      <div className="grid md:grid-cols-3 gap-4">
-        <Card className="p-4">
-          <p className="text-xs text-ink/50 uppercase tracking-widest">Selected Parcel</p>
-          <p className="text-lg font-semibold text-ink mt-2">{selectedParcel?.upi || '--'}</p>
-          <p className="text-xs text-ink/60 mt-2">{selectedParcel ? formatArea(selectedParcel.officialAreaSqm) : 'Search UPI to begin.'}</p>
+      {/* 2. Stats Grid */}
+      <div className="grid md:grid-cols-3 gap-6">
+        <Card className="hover:shadow-md transition-all duration-300 border border-slate-200/40 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-[#123E36] opacity-60 group-hover:opacity-100 transition-opacity" />
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8B5E34]">Selected Parcel</p>
+          <p className="text-2xl font-black text-slate-900 mt-3 font-display tracking-tight">{selectedParcel?.upi || 'N/A'}</p>
+          <p className="text-xs text-ink/60 mt-2 font-medium">{selectedParcel ? formatArea(selectedParcel.officialAreaSqm) : 'Search UPI to begin.'}</p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs text-ink/50 uppercase tracking-widest">Decision Matrix</p>
-          <p className={`text-lg font-semibold mt-2 ${latestStatus.includes('NOT') ? 'text-danger' : 'text-ink'}`}>{latestStatus}</p>
-          <p className="text-xs text-ink/60 mt-2">
-            {checkResult ? `Score: ${checkResult.complianceScore}/100` : 'Awaiting technical proposal.'}
+        
+        <Card className="hover:shadow-md transition-all duration-300 border border-slate-200/40 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8B5E34]">Decision Matrix</p>
+          <p className={`text-2xl font-black mt-3 font-display tracking-tight ${latestStatus.includes('NOT') ? 'text-danger' : 'text-slate-900'}`}>{latestStatus}</p>
+          <p className="text-xs text-ink/60 mt-2 font-medium">
+            {checkResult ? `Compliance Score: ${checkResult.complianceScore}/100` : 'Awaiting technical proposal.'}
           </p>
         </Card>
-        <Card className="p-4">
-          <p className="text-xs text-ink/50 uppercase tracking-widest">Available Land</p>
-          <p className="text-lg font-semibold text-ink mt-2">
-            {planningContext ? formatArea(planningContext.availableArea) : (selectedParcel ? formatArea(selectedParcel.officialAreaSqm) : '--')}
+
+        <Card className="hover:shadow-md transition-all duration-300 border border-slate-200/40 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-emerald-600 opacity-60 group-hover:opacity-100 transition-opacity" />
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8B5E34]">Available Land</p>
+          <p className="text-2xl font-black text-slate-900 mt-3 font-display tracking-tight">
+            {planningContext ? formatArea(planningContext.availableArea) : (selectedParcel ? formatArea(selectedParcel.officialAreaSqm) : 'N/A')}
           </p>
-          <p className="text-xs text-ink/60 mt-2">
+          <p className="text-xs text-ink/60 mt-2 font-medium">
             {planningContext ? `${Math.round((planningContext.availableArea / planningContext.parentArea) * 100)}% of parcel is subdividable.` : 'Loads after generation or check.'}
           </p>
         </Card>
       </div>
 
+      {/* 3. Project Context Banner */}
       {plannerProject && (
-        <Card className="border border-emerald-200 bg-emerald-50/60 shadow-sm">
-          <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
+        <Card className="border border-emerald-200 bg-emerald-50/30 shadow-sm rounded-2xl relative overflow-hidden">
+          <div className="absolute right-0 top-0 h-full w-1/4 bg-emerald-500/5 blur-xl pointer-events-none" />
+          <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-700">Project Context</p>
               <h2 className="mt-2 text-xl font-black text-slate-900">{plannerProject.name}</h2>
-              <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
+              <p className="mt-2 text-xs font-medium leading-relaxed text-slate-500">
                 This workspace was opened from the project flow. Draft, compliance, and report actions will update the same client project automatically.
               </p>
             </div>
-            <div className="rounded-2xl border border-emerald-100 bg-white/80 p-4">
+            <div className="rounded-xl border border-emerald-100/50 bg-white/70 p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Requested UPI</p>
               <p className="mt-2 font-bold text-slate-900">{plannerProject.requestedUpi || '--'}</p>
             </div>
-            <div className="rounded-2xl border border-emerald-100 bg-white/80 p-4">
+            <div className="rounded-xl border border-emerald-100/50 bg-white/70 p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Client Parcel Count</p>
               <p className="mt-2 font-bold text-slate-900">{plannerProject.requestedParcelCount || '--'}</p>
             </div>
-            <div className="rounded-2xl border border-emerald-100 bg-white/80 p-4">
+            <div className="rounded-xl border border-emerald-100/50 bg-white/70 p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Land Use</p>
               <p className="mt-2 font-bold text-slate-900">{plannerProject.requestedLandUse || '--'}</p>
             </div>
@@ -2210,6 +2260,7 @@ export default function Subdivision() {
         </Card>
       )}
 
+      {/* 4. Step 1: Selection */}
       <Card title="Step 1: Parcel Selection">
         <div className="grid lg:grid-cols-[1fr_auto] gap-3">
           <Input
@@ -2219,7 +2270,7 @@ export default function Subdivision() {
             placeholder="Example: 1/01/05/04/3041"
           />
           <div className="flex items-end">
-            <Button type="button" className="w-full lg:w-auto px-6 py-3" onClick={runSearch} disabled={searching}>
+            <Button type="button" className="w-full lg:w-auto px-6 py-3 font-bold rounded-xl" onClick={runSearch} disabled={searching}>
               {searching ? 'Locating...' : 'Search Registry'}
             </Button>
           </div>
@@ -2227,16 +2278,17 @@ export default function Subdivision() {
 
         <div className="mt-4 space-y-3">
           {searchResults.map((parcel) => (
-            <div key={parcel.id} className="rounded-xl border border-clay/60 bg-white/70 p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+            <div key={parcel.id} className="rounded-2xl border border-clay/60 bg-white/70 p-5 shadow-sm hover:border-[#123E36]/30 transition-all">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-ink">{parcel.upi}</p>
-                  <p className="text-xs text-ink/60 mt-1">
-                    {parcel.district}, {parcel.sector}, {parcel.cell} • {formatArea(parcel.officialAreaSqm)}
+                  <p className="font-bold text-slate-900 text-base">{parcel.upi}</p>
+                  <p className="text-xs text-ink/60 mt-1.5 font-medium">
+                    {parcel.district} &gt; {parcel.sector} &gt; {parcel.cell} • <span className="font-semibold text-slate-700">{formatArea(parcel.officialAreaSqm)}</span>
                   </p>
                 </div>
                 <Button
                   type="button"
+                  className="px-5 py-2.5 font-bold rounded-xl text-xs transition-all shadow-sm"
                   variant={selectedParcelId === parcel.id ? 'primary' : 'secondary'}
                   onClick={() => loadParcelContext(parcel.id)}
                   disabled={loadingContext && selectedParcelId === parcel.id}
@@ -2252,18 +2304,33 @@ export default function Subdivision() {
         </div>
       </Card>
 
+      {/* 5. Step 2: Workspace */}
       <Card title="Step 2: Planner Workspace">
         <div className="grid xl:grid-cols-[1.25fr_0.75fr] gap-6">
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-4 text-sm font-medium text-ink/70">
-              <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="proposalSource" checked={proposalSource === 'draw'} onChange={() => setProposalSource('draw')} />
+          <div className="space-y-6">
+            <div className="flex rounded-2xl border border-clay/60 bg-clay/10 p-1.5 max-w-sm">
+              <button
+                type="button"
+                className={`flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all ${
+                  proposalSource === 'draw'
+                    ? 'bg-white text-[#123E36] shadow-sm'
+                    : 'text-ink/60 hover:text-ink'
+                }`}
+                onClick={() => setProposalSource('draw')}
+              >
                 Manual Drawing
-              </label>
-              <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="proposalSource" checked={proposalSource === 'upload'} onChange={() => setProposalSource('upload')} />
+              </button>
+              <button
+                type="button"
+                className={`flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all ${
+                  proposalSource === 'upload'
+                    ? 'bg-white text-[#123E36] shadow-sm'
+                    : 'text-ink/60 hover:text-ink'
+                }`}
+                onClick={() => setProposalSource('upload')}
+              >
                 GeoJSON Import
-              </label>
+              </button>
             </div>
 
             <GeoJsonMap
@@ -2273,28 +2340,39 @@ export default function Subdivision() {
               onSketchChange={setSketchFeatures}
             />
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs font-bold text-ink/60">
-              {Object.keys(DEFAULT_LAYER_STATE).map((key) => (
-                <label key={key} className="flex items-center gap-2 rounded-lg border border-clay/60 bg-white/70 px-3 py-2 cursor-pointer hover:bg-white transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={layerState[key]}
-                    onChange={(event) => setLayerState((current) => ({ ...current, [key]: event.target.checked }))}
-                  />
-                  {layerLabel(key)}
-                </label>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 text-xs font-bold">
+              {Object.keys(DEFAULT_LAYER_STATE).map((key) => {
+                const checked = layerState[key]
+                return (
+                  <label
+                    key={key}
+                    className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 cursor-pointer transition-all ${
+                      checked
+                        ? 'border-emerald-500 bg-emerald-50/20 text-emerald-800 font-extrabold shadow-sm'
+                        : 'border-clay/60 bg-white/50 text-ink/60 hover:bg-white'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      className="accent-emerald-600 h-3.5 w-3.5 rounded"
+                      checked={checked}
+                      onChange={(event) => setLayerState((current) => ({ ...current, [key]: event.target.checked }))}
+                    />
+                    {layerLabel(key)}
+                  </label>
+                )
+              })}
             </div>
 
-            <div className="rounded-xl border border-clay/60 bg-white/70 p-5">
-              <p className="text-sm font-semibold text-ink uppercase tracking-wider mb-4">Legend</p>
-              <div className="grid sm:grid-cols-2 gap-4">
+            <div className="rounded-2xl border border-clay/50 bg-white/50 p-6">
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-5">Map Legend</p>
+              <div className="grid sm:grid-cols-2 gap-5">
                 {LEGEND_ITEMS.map((item) => (
-                  <div key={item.label} className="flex gap-3 items-start">
-                    <span className={`mt-1 h-3.5 w-6 shrink-0 rounded-sm border-2 ${item.className}`} />
+                  <div key={item.label} className="flex gap-3.5 items-start">
+                    <span className={`mt-1 h-4 w-7 shrink-0 rounded-md border-2 shadow-sm ${item.className}`} />
                     <div>
-                      <p className="text-xs font-bold text-ink">{item.label}</p>
-                      <p className="text-[10px] leading-relaxed text-ink/50 mt-0.5">{item.description}</p>
+                      <p className="text-xs font-bold text-slate-900 leading-none">{item.label}</p>
+                      <p className="text-[10px] leading-relaxed text-ink/55 mt-1.5 font-medium">{item.description}</p>
                     </div>
                   </div>
                 ))}
@@ -2303,14 +2381,14 @@ export default function Subdivision() {
           </div>
 
           <div className="space-y-6">
-            <div className="rounded-xl border border-clay/60 bg-[#003C32] p-5 text-white shadow-lg relative overflow-hidden">
-              <div className="absolute right-0 top-0 h-full w-1/4 bg-emerald-500/10 blur-xl" />
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">Technical Parameters</p>
+            <div className="rounded-[2rem] border border-[#124E44]/20 bg-[#123E36] p-6 text-white shadow-xl relative overflow-hidden">
+              <div className="absolute right-0 top-0 h-full w-1/3 bg-emerald-500/10 blur-2xl pointer-events-none" />
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#E8C46A]">Technical Parameters</p>
               
               <label className="block mt-6">
-                <span className="text-xs font-bold text-emerald-100/70 uppercase">Target Land Use</span>
+                <span className="text-[10px] font-black text-emerald-200/80 uppercase tracking-wider">Target Land Use</span>
                 <select
-                  className="w-full mt-2 bg-white/10 border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                  className="w-full mt-2 bg-white/10 border border-white/20 rounded-xl px-3.5 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                   value={proposedLandUse}
                   onChange={(event) => setProposedLandUse(event.target.value)}
                 >
@@ -2322,11 +2400,11 @@ export default function Subdivision() {
                 </select>
               </label>
 
-              <div className="mt-6 p-4 rounded-xl bg-white/5 border border-white/10">
-                <p className="text-xs font-bold text-emerald-100/70 uppercase mb-3">AI Synthesis</p>
+              <div className="mt-6 p-5 rounded-2xl bg-white/5 border border-white/10">
+                <p className="text-[10px] font-black text-emerald-200/80 uppercase tracking-wider mb-4">AI Layout Synthesis</p>
                 <div className="grid grid-cols-[1fr_auto] gap-3">
                   <select
-                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none"
+                    className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none"
                     value={suggestedPlotCount}
                     onChange={(event) => setSuggestedPlotCount(Number(event.target.value))}
                   >
@@ -2336,54 +2414,66 @@ export default function Subdivision() {
                       </option>
                     ))}
                   </select>
-                  <Button type="button" className="bg-emerald-500 hover:bg-emerald-400 text-white border-none shadow-sm font-bold px-4" onClick={() => generateSuggestedPlots('selected')} disabled={!selectedParcel || draftingPlots}>
+                  <Button type="button" className="bg-[#10B981] hover:bg-[#10B981]/90 text-white border-none shadow-md font-bold px-5 rounded-xl" onClick={() => generateSuggestedPlots('selected')} disabled={!selectedParcel || draftingPlots}>
                     {draftingPlots && draftingMode === 'selected' ? 'Drafting...' : 'Draft'}
                   </Button>
                 </div>
                 <Button
                   type="button"
                   variant="secondary"
-                  className="mt-3 w-full border-white/15 bg-white/10 text-white font-bold hover:bg-white/15"
+                  className="mt-3 w-full border-white/15 bg-white/10 text-white font-bold hover:bg-white/15 rounded-xl py-2.5 text-xs"
                   onClick={() => generateSuggestedPlots('maximum')}
                   disabled={!selectedParcel || draftingPlots}
                 >
                   {draftingPlots && draftingMode === 'maximum' ? 'Calculating Maximum...' : 'All Possible By Masterplan'}
                 </Button>
-                <p className="mt-3 text-[11px] leading-5 text-emerald-50/75">
+                <p className="mt-4 text-[10px] leading-relaxed text-white/60 font-medium">
                   The main draft tries to keep plots balanced and visually cleaner. The masterplan option derives the highest divisible count from the loaded zoning rules and developable land.
                 </p>
               </div>
             </div>
 
-              <div className="grid gap-3">
-                <Button type="button" className="w-full py-4 shadow-md font-bold" onClick={runComplianceCheck} disabled={runningCheck || !selectedParcelId}>
+            <div className="grid gap-3">
+              <Button type="button" className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white border-none rounded-xl shadow-lg font-black text-sm tracking-wide transition-all duration-200" onClick={runComplianceCheck} disabled={runningCheck || !selectedParcelId}>
                 {runningCheck ? 'Processing...' : plannerProject?.id ? 'Run Compliance Check And Update Project' : 'Run Compliance Check'}
+              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <Button type="button" variant="secondary" className="font-bold rounded-xl py-3 text-xs bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100" onClick={clearSketch}>Purge Proposal</Button>
+                <Button type="button" variant="secondary" className="font-bold rounded-xl py-3 text-xs" onClick={generateReport} disabled={savingReport || !selectedParcelId}>
+                  {savingReport ? 'Generating...' : plannerProject?.id ? 'Generate Project Report' : 'Save Record'}
                 </Button>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button type="button" variant="secondary" className="font-bold" onClick={clearSketch}>Purge Proposal</Button>
-                <Button type="button" variant="secondary" className="font-bold" onClick={generateReport} disabled={savingReport || !selectedParcelId}>
-                   {savingReport ? 'Generating...' : plannerProject?.id ? 'Generate Project Report' : 'Save Record'}
-                </Button>
-                </div>
-              <Button type="button" variant="secondary" className="w-full py-3 border-emerald-200 text-emerald-700 font-bold" onClick={downloadPdfReport} disabled={downloadingPdf || !selectedParcelId}>
+              </div>
+              <Button type="button" variant="secondary" className="w-full py-3 border border-emerald-200 hover:bg-emerald-50/20 text-emerald-700 font-bold rounded-xl text-xs" onClick={downloadPdfReport} disabled={downloadingPdf || !selectedParcelId}>
                 {downloadingPdf ? 'Exporting...' : plannerProject?.id ? 'Download Project PDF' : 'Download PDF Dossier'}
               </Button>
             </div>
 
-            <div className="rounded-xl border border-clay/60 bg-white/70 p-5 space-y-4">
-              <p className="text-xs font-bold text-ink/40 uppercase tracking-widest">Proposal Metadata</p>
-              <div className="space-y-2 text-sm text-ink/70">
-                <p>Status: <span className="font-bold text-ink">{selectedParcel ? 'Parcel Context Active' : 'Waiting for selection'}</span></p>
-                <p>Plots detected: <span className="font-bold text-ink">{activeProposal.plots.length}</span></p>
-                {activeProposal.error && <p className="text-danger font-bold">{activeProposal.error}</p>}
+            <div className="rounded-2xl border border-clay/60 bg-white/50 p-6 space-y-4 shadow-sm">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Proposal Metadata</p>
+              <div className="space-y-2.5 text-xs text-ink/70">
+                <p className="flex justify-between border-b border-clay/40 pb-2">
+                  <span>Context Status:</span>
+                  <span className={`font-bold ${selectedParcel ? 'text-emerald-700' : 'text-slate-400'}`}>
+                    {selectedParcel ? 'Active Context' : 'Waiting for selection'}
+                  </span>
+                </p>
+                <p className="flex justify-between border-b border-clay/40 pb-2">
+                  <span>Plots Detected:</span>
+                  <span className="font-bold text-slate-900">{activeProposal.plots.length}</span>
+                </p>
+                {activeProposal.error && (
+                  <p className="text-xs text-red-600 font-bold bg-red-50 p-2 rounded-lg border border-red-100 mt-2">
+                    {activeProposal.error}
+                  </p>
+                )}
               </div>
-              <label className="block border-t border-clay/60 pt-4">
-                <span className="text-xs font-bold text-ink/50 uppercase">Paste GeoJSON</span>
+              <label className="block border-t border-clay/40 pt-4">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paste GeoJSON Proposal</span>
                 <textarea
-                  className="input mt-2 min-h-[120px] font-mono text-[10px] leading-relaxed"
+                  className="input mt-2 min-h-[120px] font-mono text-[10px] leading-relaxed rounded-xl border border-clay/60 bg-white/70 focus:bg-white"
                   value={uploadedGeoJsonText}
                   onChange={(event) => setUploadedGeoJsonText(event.target.value)}
-                  placeholder='{"type":"FeatureCollection",...}'
+                  placeholder='{"type":"FeatureCollection","features":[]}'
                 />
               </label>
             </div>
@@ -2391,47 +2481,62 @@ export default function Subdivision() {
         </div>
       </Card>
 
+      {/* 6. Alerts Area */}
       {(error || infoMessage) && (
-        <Card className={error ? 'border border-danger/30 bg-danger/5' : 'border border-success/20 bg-success/5'}>
-          {error && <p className="text-sm text-danger font-bold">{error}</p>}
-          {!error && infoMessage && <p className="text-sm text-success font-bold">{infoMessage}</p>}
-        </Card>
+        <div className={`rounded-2xl border p-5 shadow-sm flex items-start gap-4 ${
+          error 
+            ? 'border-red-200 bg-red-50/50 text-red-800' 
+            : 'border-emerald-200 bg-emerald-50/50 text-emerald-800'
+        }`}>
+          <span className={`h-8 w-8 shrink-0 rounded-lg flex items-center justify-center ${error ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+            {error ? (
+              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            ) : (
+              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            )}
+          </span>
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{error ? 'Attention Required' : 'Action Succeeded'}</p>
+            <p className="text-xs mt-1 text-ink/75 leading-relaxed font-medium">{error || infoMessage}</p>
+          </div>
+        </div>
       )}
 
+      {/* 7. Compliance Results summary */}
       {checkResult && (
         <>
           <Card title="Compliance Explanation Summary">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <div className="p-5 rounded-2xl border border-clay/60 bg-slate-50/50">
-                 <p className="text-[10px] font-bold text-ink/40 uppercase tracking-widest">Verdict</p>
-                 <p className="text-xl font-bold text-ink mt-2 font-display">{checkResult.recommendation}</p>
-                 <p className="text-xs text-ink/50 mt-1">Rule-based preliminary check</p>
+              <div className="p-5 rounded-2xl border border-clay/60 bg-white/70 shadow-sm">
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Verdict</p>
+                 <p className="text-xl font-black text-slate-900 mt-2 font-display">{checkResult.recommendation}</p>
+                 <p className="text-xs text-ink/60 mt-1.5">Rule-based preliminary check</p>
               </div>
-              <div className="p-5 rounded-2xl border border-clay/60 bg-slate-50/50">
-                 <p className="text-[10px] font-bold text-ink/40 uppercase tracking-widest">Parcel Utilization</p>
-                 <p className="text-xl font-bold text-ink mt-2 font-display">{Math.round((checkResult.proposedAreaSqm / checkResult.parentAreaSqm) * 100)}%</p>
-                 <p className="text-xs text-ink/50 mt-1">Coverage of subdividable land</p>
+              <div className="p-5 rounded-2xl border border-clay/60 bg-white/70 shadow-sm">
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Parcel Utilization</p>
+                 <p className="text-xl font-black text-slate-900 mt-2 font-display">{Math.round((checkResult.proposedAreaSqm / checkResult.parentAreaSqm) * 100)}%</p>
+                 <p className="text-xs text-ink/60 mt-1.5">Coverage of subdividable land</p>
               </div>
-              <div className="p-5 rounded-2xl border border-clay/60 bg-slate-50/50">
-                 <p className="text-[10px] font-bold text-ink/40 uppercase tracking-widest">Plot Distribution</p>
-                 <p className="text-xl font-bold text-ink mt-2 font-display">{activeProposal.plots.length} Plots</p>
-                 <p className="text-xs text-ink/50 mt-1">Range: {formatArea(smallestPlot?.areaSqm || 0)} - {formatArea(largestPlot?.areaSqm || 0)}</p>
+              <div className="p-5 rounded-2xl border border-clay/60 bg-white/70 shadow-sm">
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plot Distribution</p>
+                 <p className="text-xl font-black text-slate-900 mt-2 font-display">{activeProposal.plots.length} Plots</p>
+                 <p className="text-xs text-ink/60 mt-1.5">Range: {formatArea(smallestPlot?.areaSqm || 0)} - {formatArea(largestPlot?.areaSqm || 0)}</p>
               </div>
-              <div className="p-5 rounded-2xl border border-clay/60 bg-slate-50/50">
-                 <p className="text-[10px] font-bold text-ink/40 uppercase tracking-widest">Avoidance Audit</p>
-                 <p className="text-xl font-bold text-success mt-2 font-display">CLEAN</p>
-                 <p className="text-xs text-ink/50 mt-1">Constraints & buildings respected</p>
+              <div className="p-5 rounded-2xl border border-clay/60 bg-white/70 shadow-sm">
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Avoidance Audit</p>
+                 <p className="text-xl font-black text-success mt-2 font-display">CLEAN</p>
+                 <p className="text-xs text-ink/60 mt-1.5">Constraints & buildings respected</p>
               </div>
             </div>
             
-            <div className="mt-6 p-6 rounded-2xl bg-[#003C32]/5 border border-[#003C32]/10">
+            <div className="mt-6 p-6 rounded-2xl bg-[#123E36]/5 border border-[#123E36]/10">
                <div className="flex gap-4 items-start">
-                  <div className="h-10 w-10 shrink-0 rounded-xl bg-[#003C32] flex items-center justify-center text-white shadow-sm">
+                  <div className="h-10 w-10 shrink-0 rounded-xl bg-[#123E36] flex items-center justify-center text-white shadow-sm">
                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   </div>
                   <div>
                     <p className="text-sm font-bold text-ink">{checkResult.complianceScore >= 80 ? 'Safe for professional review' : 'Correction recommended'}</p>
-                    <p className="text-xs text-ink/60 mt-1 leading-relaxed">
+                    <p className="text-xs text-ink/65 mt-1 leading-relaxed font-medium">
                       {checkResult.complianceScore >= 80 
                         ? `The proposal for ${activeProposal.plots.length} plot(s) follows masterplan zoning and avoids known spatial constraints. This result supports a formal cadastral survey submission.`
                         : `The proposal has technical issues. Review the improvement tips below to align the plots with Kigali Masterplan regulations and parcel constraints.`}
@@ -2444,7 +2549,7 @@ export default function Subdivision() {
           <Card title="How To Improve Result">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {improvementTips(checkResult).map((tip) => (
-                <div key={tip.title} className="rounded-2xl border border-clay/60 bg-white p-5 shadow-sm group hover:border-emerald-500/20 transition-all">
+                <div key={tip.title} className="rounded-2xl border border-clay/60 bg-white/70 p-5 shadow-sm hover:shadow-md transition-all group hover:border-emerald-500/30">
                   <p className="font-bold text-ink text-sm font-display group-hover:text-emerald-700 transition-colors">{tip.title}</p>
                   <p className="text-xs text-ink/60 mt-3 leading-relaxed font-medium">{tip.detail}</p>
                 </div>
@@ -2455,7 +2560,7 @@ export default function Subdivision() {
           <Card title="Check Breakdown">
             <div className="grid gap-3">
               {checkResult.checks.map((check) => (
-                <div key={check.code} className="rounded-xl border border-clay/50 bg-slate-50/50 p-4 transition-all hover:bg-white hover:shadow-md group">
+                <div key={check.code} className="rounded-2xl border border-clay/60 bg-white/50 p-5 transition-all hover:bg-white hover:shadow-md group">
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <p className="font-bold text-ink text-sm group-hover:text-emerald-700 transition-colors">{check.label}</p>

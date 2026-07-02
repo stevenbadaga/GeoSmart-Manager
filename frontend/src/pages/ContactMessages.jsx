@@ -10,7 +10,7 @@ export default function ContactMessages() {
   const loadMessages = async () => {
     setLoading(true)
     try {
-      const data = await api.get('/api/contact-messages')
+      const data = await api.get('/api/admin/contact-messages')
       setMessages(data)
     } catch (err) {
       console.error('Failed to load messages', err)
@@ -25,7 +25,13 @@ export default function ContactMessages() {
 
   const updateStatus = async (id, status) => {
     try {
-      await api.post(`/api/contact-messages/${id}/status?status=${status}`)
+      if (status === 'READ') {
+        await api.patch(`/api/admin/contact-messages/${id}/read`)
+      } else if (status === 'REPLIED') {
+        await api.patch(`/api/admin/contact-messages/${id}/replied`)
+      } else if (status === 'ARCHIVED') {
+        await api.patch(`/api/admin/contact-messages/${id}/archive`)
+      }
       setMessages(messages.map(m => m.id === id ? { ...m, status } : m))
     } catch (err) {
       console.error('Failed to update status', err)
@@ -44,6 +50,12 @@ export default function ContactMessages() {
 
   return (
     <div className="space-y-6">
+      <section className="rounded-[2rem] border border-[#124E44]/20 bg-[#123E36] p-6 text-white">
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-[#E8C46A]">Public Relations</p>
+        <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-white">Contact Messages</h1>
+        <p className="mt-3 max-w-4xl text-sm leading-7 text-white/75">Review and manage inquiries from the public contact form.</p>
+      </section>
+
       <div className="grid gap-6">
         {loading ? (
           <p className="p-12 text-center text-ink/40 font-medium">Loading messages...</p>

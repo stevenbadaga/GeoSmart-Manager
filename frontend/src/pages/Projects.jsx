@@ -320,6 +320,17 @@ export default function Projects() {
     return () => clearTimeout(timer)
   }, [form.requestedUpi, showForm])
 
+  useEffect(() => {
+    if (showForm) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [showForm])
+
   const openCreate = () => {
     setEditing(null)
     setForm({
@@ -551,8 +562,9 @@ export default function Projects() {
   }
 
   return (
-    <div className="space-y-10 animate-rise">
-      <section className="overflow-hidden rounded-[1.5rem] border border-slate-200/70 bg-white shadow-[0_24px_70px_-46px_rgba(15,23,42,0.42)]">
+    <>
+      <div className="space-y-10 animate-rise">
+        <section className="overflow-hidden rounded-[1.5rem] border border-slate-200/70 bg-white shadow-[0_24px_70px_-46px_rgba(15,23,42,0.42)]">
         <div className="grid lg:grid-cols-[1.08fr_0.92fr]">
           <div className="relative overflow-hidden bg-[linear-gradient(135deg,#063F35_0%,#0D2F27_54%,#071F1A_100%)] p-6 text-white sm:p-7 lg:p-8">
             <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full bg-emerald-300/[0.16] blur-3xl" />
@@ -1035,40 +1047,40 @@ export default function Projects() {
           </div>
         </div>
       )}
-
+      </div> 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-6 backdrop-blur-md">
-          <Card className="relative w-full max-w-4xl overflow-hidden border-none p-0 shadow-2xl animate-rise">
-            <div className="relative bg-[#0b3d2e] p-10 text-white">
-              <div className="absolute right-0 top-0 h-full w-1/4 bg-gradient-to-l from-emerald-500/10 to-transparent" />
-              <button className="absolute right-8 top-8 grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-white/10 text-white transition-all hover:bg-white/20" onClick={closeForm}>
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6L6 18M6 6l12 12" /></svg>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/30 backdrop-blur-md p-[14px] md:pt-[24px] md:px-[24px] md:pb-[48px] overflow-hidden">
+          <form className="relative w-full max-w-3xl overflow-hidden rounded-[20px] bg-white border border-slate-200/60 shadow-[0_24px_50px_-12px_rgba(15,23,42,0.18)] animate-rise flex flex-col max-h-[calc(100dvh-72px)] md:max-h-[calc(100vh-96px)]" onSubmit={onSubmit}>
+            <div className="relative bg-white border-b border-slate-100 px-6 py-4 md:px-8 md:py-5 shrink-0 rounded-t-[20px]">
+              <div className="absolute top-0 inset-x-0 h-[4px] bg-gradient-to-r from-emerald-500 to-teal-600 rounded-t-[20px]" />
+              <button type="button" className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl p-2 transition-colors" onClick={closeForm}>
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" /></svg>
               </button>
-              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">Project Intake</p>
-              <h3 className="text-3xl font-black tracking-tight">{editing ? 'Update Project' : (isClientSelfService ? 'Submit Subdivision Request' : 'Create Project')}</h3>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-700">Project Intake</p>
+              <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight mt-0.5">{editing ? 'Update Project' : (isClientSelfService ? 'Submit Subdivision Request' : 'Create Project')}</h3>
             </div>
 
-            <form className="space-y-8 bg-white p-10" onSubmit={onSubmit}>
+            <div className="space-y-4 bg-white p-6 md:p-8 overflow-y-auto flex-1 min-h-0">
               {isClientSelfService && (
-                <div className="rounded-[1.75rem] border border-emerald-100 bg-emerald-50/60 px-6 py-5">
+                <div className="rounded-[1.25rem] border border-emerald-100 bg-emerald-50/50 px-5 py-4">
                   <p className="text-[0.75rem] font-black uppercase tracking-[0.22em] text-emerald-700">How This Works</p>
-                  <p className="mt-3 text-sm font-semibold leading-relaxed text-slate-700">
+                  <p className="mt-2 text-sm font-semibold leading-relaxed text-slate-700">
                     You are creating the project request only. The actual subdivision draft, compliance check, and final report are completed later by the admin team or assigned land surveyor.
                   </p>
                 </div>
               )}
 
-              <div className={`grid gap-6 ${canManageProjects ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
+              <div className={`grid gap-5 grid-cols-1 ${canManageProjects ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
                 {canManageProjects && (
                   <Input label="Project code" value={form.code} onChange={(event) => setForm({ ...form, code: event.target.value })} placeholder="e.g. GS-2026-001" />
                 )}
                 <Input label="Project name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required placeholder="e.g. Nyarugenge Subdivision Request" />
               </div>
 
-              <div className={`grid gap-6 ${canManageProjects ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
+              <div className={`grid gap-5 grid-cols-1 ${canManageProjects ? 'md:grid-cols-2' : 'md:grid-cols-1'}`}>
                 {canManageProjects ? (
                   <label className="block space-y-2">
-                    <span className="ml-1 text-[0.825rem] font-bold uppercase tracking-wider text-slate-500">Assign Client</span>
+                    <span className="ml-1 text-[0.825rem] font-black uppercase tracking-wider text-slate-700">Assign Client</span>
                     <select className="input h-[48px]" value={form.clientId} onChange={(event) => setForm({ ...form, clientId: event.target.value })} required>
                       <option value="">Select client</option>
                       {clients.map((client) => (
@@ -1077,14 +1089,14 @@ export default function Projects() {
                     </select>
                   </label>
                 ) : (
-                  <div className="rounded-[1.5rem] border border-emerald-100 bg-emerald-50/50 px-5 py-4">
+                  <div className="rounded-[1.25rem] border border-emerald-100 bg-emerald-50/50 px-5 py-4">
                     <p className="text-[0.75rem] font-black uppercase tracking-[0.22em] text-emerald-700">Client Assignment</p>
-                    <p className="mt-2 text-sm font-semibold text-slate-700">This project will be linked to your client account automatically.</p>
+                    <p className="mt-1.5 text-sm font-semibold text-slate-700">This project will be linked to your client account automatically.</p>
                   </div>
                 )}
 
                 <label className="block space-y-2">
-                  <span className="ml-1 text-[0.825rem] font-bold uppercase tracking-wider text-slate-500">Project type</span>
+                  <span className="ml-1 text-[0.825rem] font-black uppercase tracking-wider text-slate-700">Project type</span>
                   <select className="input h-[48px]" value={form.projectType} onChange={(event) => setForm({ ...form, projectType: event.target.value })}>
                     {projectTypeOptions.map((type) => (
                       <option key={type} value={type}>{type}</option>
@@ -1093,7 +1105,7 @@ export default function Projects() {
                 </label>
               </div>
 
-              <div className="grid gap-6 md:grid-cols-[1.2fr_0.8fr]">
+              <div className="grid gap-5 grid-cols-1 md:grid-cols-[1.2fr_0.8fr]">
                 <Input
                   label="Land UPI"
                   value={form.requestedUpi}
@@ -1111,9 +1123,9 @@ export default function Projects() {
                 />
               </div>
 
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
                 <label className="block space-y-2">
-                  <span className="ml-1 text-[0.825rem] font-bold uppercase tracking-wider text-slate-500">Target land use</span>
+                  <span className="ml-1 text-[0.825rem] font-black uppercase tracking-wider text-slate-700">Target land use</span>
                   <select className="input h-[48px]" value={form.requestedLandUse} onChange={(event) => setForm({ ...form, requestedLandUse: event.target.value })}>
                     {landUseOptions.map((option) => (
                       <option key={option.value || 'empty'} value={option.value}>{option.label}</option>
@@ -1124,11 +1136,11 @@ export default function Projects() {
               </div>
 
               {(suggestionLoading || suggestion) && (
-                <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50/60 p-6">
-                  <p className="text-[0.75rem] font-black uppercase tracking-[0.22em] text-slate-500">UPI Suggestion</p>
-                  {suggestionLoading && <p className="mt-3 text-sm font-semibold text-slate-500">Checking parcel registry and masterplan guidance...</p>}
+                <div className="rounded-[1.25rem] border border-slate-200 bg-slate-50/60 p-5">
+                  <p className="text-[0.75rem] font-black uppercase tracking-[0.22em] text-slate-700">UPI Suggestion</p>
+                  {suggestionLoading && <p className="mt-2 text-sm font-semibold text-slate-500">Checking parcel registry and masterplan guidance...</p>}
                   {!suggestionLoading && suggestion?.state === 'ready' && (
-                    <div className="mt-4 space-y-3 text-sm text-slate-700">
+                    <div className="mt-3 space-y-2 text-sm text-slate-700">
                       <p><span className="font-bold">Matched parcel:</span> {suggestion.parcel?.upi}</p>
                       <p><span className="font-bold">Registry location:</span> {suggestion.location || '--'}</p>
                       <p><span className="font-bold">Estimated possible parcels:</span> {suggestion.possibleCount || 'No clear estimate from current zoning rules'}</p>
@@ -1136,28 +1148,28 @@ export default function Projects() {
                     </div>
                   )}
                   {!suggestionLoading && suggestion?.state === 'not_found' && (
-                    <p className="mt-3 text-sm font-semibold text-rose-600">{suggestion.message}</p>
+                    <p className="mt-2 text-sm font-semibold text-rose-600">{suggestion.message}</p>
                   )}
                   {!suggestionLoading && suggestion?.state === 'error' && (
-                    <p className="mt-3 text-sm font-semibold text-rose-600">{suggestion.message}</p>
+                    <p className="mt-2 text-sm font-semibold text-rose-600">{suggestion.message}</p>
                   )}
                 </div>
               )}
 
-              <div className="grid gap-6 md:grid-cols-2">
+              <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
                 <label className="block space-y-2">
-                  <span className="ml-1 text-[0.825rem] font-bold uppercase tracking-wider text-slate-500">Scope summary</span>
+                  <span className="ml-1 text-[0.825rem] font-black uppercase tracking-wider text-slate-700">Scope summary</span>
                   <textarea
-                    className="input min-h-[130px] w-full resize-none text-[13px] leading-relaxed"
+                    className="input min-h-[100px] w-full resize-none text-[13px] leading-relaxed"
                     value={form.scopeSummary}
                     onChange={(event) => setForm({ ...form, scopeSummary: event.target.value })}
                     placeholder="Describe what the client wants done on this land."
                   />
                 </label>
                 <label className="block space-y-2">
-                  <span className="ml-1 text-[0.825rem] font-bold uppercase tracking-wider text-slate-500">Client notes</span>
+                  <span className="ml-1 text-[0.825rem] font-black uppercase tracking-wider text-slate-700">Client notes</span>
                   <textarea
-                    className="input min-h-[130px] w-full resize-none text-[13px] leading-relaxed"
+                    className="input min-h-[100px] w-full resize-none text-[13px] leading-relaxed"
                     value={form.intakeNotes}
                     onChange={(event) => setForm({ ...form, intakeNotes: event.target.value })}
                     placeholder="Ownership notes, preferred shapes, restrictions, site context, or anything important."
@@ -1166,21 +1178,21 @@ export default function Projects() {
               </div>
 
               <label className="block space-y-2">
-                <span className="ml-1 text-[0.825rem] font-bold uppercase tracking-wider text-slate-500">Description</span>
+                <span className="ml-1 text-[0.825rem] font-black uppercase tracking-wider text-slate-700">Description</span>
                 <textarea
-                  className="input min-h-[120px] w-full resize-none text-[13px] leading-relaxed"
+                  className="input min-h-[80px] w-full resize-none text-[13px] leading-relaxed"
                   value={form.description}
                   onChange={(event) => setForm({ ...form, description: event.target.value })}
                   placeholder="Optional internal project description."
                 />
               </label>
 
-              <div className={`grid gap-6 ${canManageProjects ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+              <div className={`grid gap-5 grid-cols-1 ${canManageProjects ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
                 <Input label="Start date" type="date" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} />
                 <Input label="Target end date" type="date" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} />
                 {canManageProjects && (
                   <label className="block space-y-2">
-                    <span className="ml-1 text-[0.825rem] font-bold uppercase tracking-wider text-slate-500">Workflow status</span>
+                    <span className="ml-1 text-[0.825rem] font-black uppercase tracking-wider text-slate-700">Workflow status</span>
                     <select className="input h-[48px]" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}>
                       {statusOptions.map((status) => (
                         <option key={status} value={status}>{statusLabel(status)}</option>
@@ -1189,19 +1201,19 @@ export default function Projects() {
                   </label>
                 )}
               </div>
+            </div>
 
-              <div className="flex items-center justify-end gap-4 border-t border-slate-100 pt-6">
-                <button type="button" className="px-8 py-3 text-sm font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-slate-600" onClick={closeForm}>
-                  Cancel
-                </button>
-                <Button className="px-10 py-4 shadow-xl" type="submit">
-                  {editing ? 'Save Changes' : (isClientSelfService ? 'Submit Project Request' : 'Create Project')}
-                </Button>
-              </div>
-            </form>
-          </Card>
+            <div className="flex items-center justify-end gap-4 border-t border-slate-100 px-6 py-4 md:px-8 md:py-5 bg-slate-50/50 shrink-0 rounded-b-[20px]">
+              <button type="button" className="px-6 py-2.5 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors" onClick={closeForm}>
+                Cancel
+              </button>
+              <Button className="px-8 py-3.5 shadow-md rounded-xl text-xs font-black uppercase tracking-wider" type="submit">
+                {editing ? 'Save Changes' : (isClientSelfService ? 'Submit Project Request' : 'Create Project')}
+              </Button>
+            </div>
+          </form>
         </div>
       )}
-    </div>
-  )
-}
+      </>
+    )
+  }

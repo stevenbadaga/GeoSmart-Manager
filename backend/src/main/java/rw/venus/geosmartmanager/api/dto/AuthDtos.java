@@ -64,7 +64,8 @@ public class AuthDtos {
             String organization,
             String specialization,
             String certifications,
-            Instant lastActiveAt
+            Instant lastActiveAt,
+            String avatarUrl
     ) {}
 
     public record AuthResponse(

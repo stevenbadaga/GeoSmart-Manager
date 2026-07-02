@@ -101,15 +101,15 @@ export default function Audit() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Audit & Security</p>
-          <h1 className="text-2xl font-semibold text-ink mt-2">Audit Trail</h1>
-          <p className="text-sm text-ink/60">Track critical actions across projects, users, and datasets.</p>
-        </div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <section className="flex-1 rounded-[2rem] border border-[#124E44]/20 bg-[#123E36] p-6 text-white">
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-[#E8C46A]">Audit & Security</p>
+          <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-white">Audit Trail</h1>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-white/75">Track critical actions across projects, users, and datasets.</p>
+        </section>
         <Button
           variant="secondary"
-          className="w-full md:w-auto"
+          className="w-full md:w-auto self-end md:self-center px-6"
           onClick={() => loadLogs({ silent: true })}
           disabled={refreshing || loading}
         >

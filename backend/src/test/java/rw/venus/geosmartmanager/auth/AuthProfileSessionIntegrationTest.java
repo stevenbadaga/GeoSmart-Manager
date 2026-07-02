@@ -14,6 +14,7 @@ import rw.venus.geosmartmanager.config.JwtService;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -165,6 +166,160 @@ class AuthProfileSessionIntegrationTest {
 
     private JsonNode readJson(String json) throws Exception {
         return objectMapper.readTree(json);
+    }
+
+    @Test
+    void loginTrimsAndComparesCaseInsensitively() throws Exception {
+        String email = "Test-Trim-Case-" + UUID.randomUUID().toString().substring(0, 8) + "@Example.Com";
+        String password = "Password123!";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RegisterPayload(
+                                "Trim Case Test",
+                                email,
+                                password,
+                                "SURVEYOR"
+                        ))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginPayload(
+                                email.toUpperCase(),
+                                password
+                        ))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginPayload(
+                                email,
+                                "wrong-password"
+                        ))))
+                .andExpect(status().is4xxClientError());
+    }
+
+    @Test
+    void testMessageSendDeleteSendFlow() throws Exception {
+        String surveyorEmail = "surveyor-chat-" + UUID.randomUUID().toString().substring(0, 8) + "@example.com";
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new RegisterPayload(
+                                "Surveyor Chat Test",
+                                surveyorEmail,
+                                "Password123!",
+                                "SURVEYOR"
+                        ))))
+                .andExpect(status().isOk());
+
+        JsonNode surveyorAuth = readJson(mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new LoginPayload(
+                                surveyorEmail,
+                                "Password123!"
+                        ))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        String token = surveyorAuth.get("token").asText();
+
+        JsonNode contactsNode = readJson(mockMvc.perform(get("/api/messages/contacts")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        
+        Long adminId = null;
+        for (JsonNode contact : contactsNode) {
+            if ("ADMIN".equals(contact.get("role").asText())) {
+                adminId = contact.get("id").asLong();
+                break;
+            }
+        }
+        assertThat(adminId).isNotNull();
+
+        record ConvReq(Long recipientId) {}
+        JsonNode convNode = readJson(mockMvc.perform(post("/api/messages/conversations")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ConvReq(adminId))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        Long convId = convNode.get("id").asLong();
+
+        record SendReq(String body) {}
+        JsonNode msg1Node = readJson(mockMvc.perform(post("/api/messages/conversations/" + convId + "/messages")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new SendReq("Hello Admin"))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        Long msg1Id = msg1Node.get("id").asLong();
+
+        mockMvc.perform(delete("/api/messages/" + msg1Id)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/messages/conversations/" + convId + "/messages")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new SendReq("Second message after delete"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void avatarUploadAndDeletionFlow() throws Exception {
+        String email = "avatar-flow-" + UUID.randomUUID().toString().substring(0, 8) + "@example.com";
+        String registerPayload = objectMapper.writeValueAsString(new RegisterPayload(
+                "Avatar User",
+                email,
+                "Password123!",
+                "CLIENT"
+        ));
+
+        JsonNode authNode = readJson(mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerPayload))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        String token = authNode.path("token").asText();
+
+        // 1. Upload valid image
+        org.springframework.mock.web.MockMultipartFile validImage = new org.springframework.mock.web.MockMultipartFile(
+                "file",
+                "avatar.png",
+                "image/png",
+                "fake image content".getBytes()
+        );
+
+        JsonNode uploadedNode = readJson(mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/api/users/me/avatar")
+                        .file(validImage)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+
+        String avatarUrl = uploadedNode.path("avatarUrl").asText();
+        assertThat(avatarUrl).startsWith("/uploads/");
+
+        // 2. Upload invalid type
+        org.springframework.mock.web.MockMultipartFile invalidFile = new org.springframework.mock.web.MockMultipartFile(
+                "file",
+                "unsupported.txt",
+                "text/plain",
+                "some text".getBytes()
+        );
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart("/api/users/me/avatar")
+                        .file(invalidFile)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isBadRequest());
+
+        // 3. Remove avatar
+        JsonNode removedNode = readJson(mockMvc.perform(delete("/api/users/me/avatar")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+
+        assertThat(removedNode.path("avatarUrl").isNull() || removedNode.path("avatarUrl").asText().isEmpty()).isTrue();
     }
 
     private record RegisterPayload(

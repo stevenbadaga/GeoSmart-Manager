@@ -63,8 +63,13 @@ export default function Login() {
     event.preventDefault()
     setError('')
     setLoading(true)
+
+    // Capture standard form values or browser autofilled values directly from DOM
+    const emailValue = event.target.elements.email.value.trim()
+    const passwordValue = event.target.elements.password.value
+
     try {
-      await login({ email, password })
+      await login({ email: emailValue, password: passwordValue })
       navigate('/dashboard')
     } catch (err) {
       setError(loginErrorMessage(err))
@@ -183,7 +188,6 @@ export default function Login() {
               <BrandLogo to="/" src={publicImages.newWhiteLogoTransparent} className="mx-auto h-12 w-auto object-contain" />
             </div>
 
-
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">Welcome back</h2>
             <p className="mt-3 text-base leading-relaxed text-slate-600">Sign in to continue to your GeoSmart Manager workspace.</p>
 
@@ -206,6 +210,7 @@ export default function Login() {
                 <label className="text-sm font-semibold text-slate-700" htmlFor="email">Email address</label>
                 <input
                   id="email"
+                  name="email"
                   type="email"
                   autoComplete="email"
                   placeholder="name@example.com"
@@ -226,6 +231,7 @@ export default function Login() {
                 <div className="relative">
                   <input
                     id="password"
+                    name="password"
                     className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base text-slate-900 outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
                     type={showPassword ? 'text' : 'password'}
                     autoComplete="current-password"

@@ -45,6 +45,7 @@ public class MessagingDtos {
             Role senderRole,
             String body,
             boolean mine,
-            Instant createdAt
+            Instant createdAt,
+            Instant updatedAt
     ) {}
 }

@@ -14,19 +14,19 @@
   --brand-mint: #D1FAE5;
   --brand-olive: #4D694E;
   --brand-cream: #FFF3D5;
-  --brand-cream-soft: rgba(255, 243, 213, 0.42);
-  --brand-olive-soft: rgba(77, 105, 78, 0.12);
-  --brand-sage: #F7FAF4;
-  --surface-0: #F7FAF4;
-  --surface-1: #FFFFFF;
-  --surface-2: #F5F7EF;
-  --surface-muted: #FFF8E8;
+  --brand-cream-soft: rgba(255, 255, 255, 0); /* Pure neutral white glow */
+  --brand-olive-soft: rgba(77, 105, 78, 0.08);
+  --brand-sage: #FFFFFF; /* True white background */
+  --surface-0: #FFFFFF; /* Truly white page background */
+  --surface-1: #FFFFFF; /* Truly white large content wrapper */
+  --surface-2: #F3F4F6; /* Clean slate-100 neutral for contrast */
+  --surface-muted: #F8F9FA; /* Off-white/slate gray instead of cream */
   --card: #FFFFFF;
-  --border: rgba(77, 105, 78, 0.16);
+  --border: rgba(77, 105, 78, 0.12);
   --ink-strong: #10201B;
-  --ink-soft: #53645E;
-  --ink-muted: #94A3B8;
-  --ring: rgba(77, 105, 78, 0.28);
+  --ink-soft: #475569; /* slate-600 */
+  --ink-muted: #64748B; /* slate-500 */
+  --ring: rgba(77, 105, 78, 0.2);
   --shadow-soft: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   --shadow-premium: 0 12px 24px -6px rgba(0, 0, 0, 0.04), 0 8px 16px -8px rgba(0, 0, 0, 0.03);
   --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.06);
@@ -75,7 +75,7 @@ body {
   letter-spacing: -0.015em;
   background:
     radial-gradient(circle at 8% 0%, var(--brand-cream-soft), transparent 34rem),
-    linear-gradient(180deg, var(--surface-0), #F7FAF4 100%);
+    linear-gradient(180deg, var(--surface-0), #FFFFFF 100%);
   min-height: 100vh;
   line-height: 1.6;
 }
@@ -180,7 +180,7 @@ button {
 
 .glass-panel {
   @apply border border-white/40 backdrop-blur-xl;
-  background: rgba(255, 248, 232, 0.62);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .theme-dark .glass-panel {
@@ -189,9 +189,9 @@ button {
 }
 
 .card {
-  @apply rounded-2xl border border-slate-200/60;
+  @apply rounded-xl border border-slate-200/60;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 232, 0.32));
+    linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(248, 250, 252, 0.5));
   box-shadow: var(--shadow-premium);
 }
 
@@ -201,10 +201,10 @@ button {
 }
 
 .card-premium {
-  @apply rounded-2xl border border-slate-200 relative overflow-hidden transition-all duration-300;
+  @apply rounded-xl border border-slate-200 relative overflow-hidden transition-all duration-300;
   background:
-    radial-gradient(circle at 0% 0%, rgba(255, 243, 213, 0.48), transparent 15rem),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 247, 239, 0.86));
+    radial-gradient(circle at 0% 0%, rgba(16, 185, 129, 0.04), transparent 15rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(248, 250, 252, 0.8));
   box-shadow: var(--shadow-premium);
 }
 
@@ -903,25 +903,22 @@ button {
 
 .admin-overview {
   --admin-olive: #4D694E;
-  --admin-cream: #FFF3D5;
-  --admin-panel-bg: rgba(12, 30, 25, 0.92);
-  --admin-panel-soft: rgba(77, 105, 78, 0.18);
-  --admin-panel-deep: rgba(6, 18, 15, 0.86);
-  --admin-text: #F4FFF9;
-  --admin-muted: rgba(203, 213, 225, 0.78);
+  --admin-cream: #063F35;
+  --admin-panel-bg: #FFFFFF;
+  --admin-panel-soft: #F8FAFC;
+  --admin-panel-deep: #FAFCFA;
+  --admin-text: #10201B;
+  --admin-muted: #53645E;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
   position: relative;
   overflow: hidden;
-  border-radius: 1.5rem;
-  border: 1px solid rgba(255, 243, 213, 0.1);
-  background:
-    radial-gradient(circle at 10% 0%, rgba(16, 185, 129, 0.14), transparent 30rem),
-    radial-gradient(circle at 92% 10%, rgba(77, 105, 78, 0.28), transparent 28rem),
-    linear-gradient(145deg, #071F1A 0%, #0D2F27 44%, #071A16 100%);
+  border-radius: 1rem;
+  border: 1px solid rgba(77, 105, 78, 0.12);
+  background: #FFFFFF;
   padding: 0.9rem;
-  box-shadow: 0 28px 70px -46px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
 }
 
 .theme-dark .admin-overview {
@@ -930,20 +927,21 @@ button {
   --admin-panel-deep: rgba(5, 15, 12, 0.9);
   --admin-text: #F4FFF9;
   --admin-muted: rgba(203, 213, 225, 0.8);
+  border-color: rgba(255, 243, 213, 0.1);
   background:
     radial-gradient(circle at 10% 0%, rgba(16, 185, 129, 0.16), transparent 30rem),
     radial-gradient(circle at 92% 10%, rgba(77, 105, 78, 0.26), transparent 28rem),
     linear-gradient(145deg, #06110f 0%, #091713 44%, #050d0b 100%);
+  box-shadow: 0 28px 70px -46px rgba(0, 0, 0, 0.9);
 }
 
 .admin-hero-panel,
 .admin-stat-card,
 .admin-panel,
 .admin-map-panel {
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background:
-    linear-gradient(145deg, rgba(18, 40, 34, 0.94), rgba(7, 19, 16, 0.92));
-  box-shadow: 0 20px 46px -34px rgba(0, 0, 0, 0.92), inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(77, 105, 78, 0.12);
+  background: #FFFFFF;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.03), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
 }
 
 .theme-dark .admin-hero-panel,
@@ -952,6 +950,7 @@ button {
 .theme-dark .admin-map-panel {
   border-color: rgba(167, 243, 208, 0.11);
   background: linear-gradient(145deg, rgba(15, 32, 27, 0.94), rgba(6, 16, 13, 0.96));
+  box-shadow: 0 20px 46px -34px rgba(0, 0, 0, 0.92), inset 0 1px 0 rgba(255, 255, 255, 0.055);
 }
 
 .admin-hero-panel {
@@ -959,7 +958,7 @@ button {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1.25rem;
   overflow: hidden;
-  border-radius: 1.15rem;
+  border-radius: 0.85rem;
   padding: 1rem;
   position: relative;
   min-height: 10.5rem;
@@ -971,9 +970,9 @@ button {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 10% 0%, rgba(16, 185, 129, 0.18), transparent 21rem),
-    radial-gradient(circle at 94% 18%, rgba(255, 243, 213, 0.08), transparent 15rem),
-    linear-gradient(90deg, rgba(77, 105, 78, 0.22), transparent 55%);
+    radial-gradient(circle at 10% 0%, rgba(16, 185, 129, 0.06), transparent 21rem),
+    radial-gradient(circle at 94% 18%, rgba(77, 105, 78, 0.03), transparent 15rem),
+    linear-gradient(90deg, rgba(77, 105, 78, 0.04), transparent 55%);
 }
 
 .theme-dark .admin-hero-panel::before {
@@ -1007,7 +1006,7 @@ button {
 
 .admin-kicker {
   display: inline-flex;
-  color: #a7f3d0;
+  color: #063F35;
   font-size: 0.68rem;
   font-weight: 900;
   letter-spacing: 0.18em;
@@ -1036,9 +1035,16 @@ button {
   align-content: center;
   border-radius: 999px;
   background:
+    radial-gradient(circle at center, #ffffff 55%, transparent 56%),
+    conic-gradient(#10B981 var(--readiness), rgba(77, 105, 78, 0.12) 0);
+  color: var(--admin-text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 8px 16px -4px rgba(16, 185, 129, 0.15);
+}
+
+.theme-dark .admin-readiness-ring {
+  background:
     radial-gradient(circle at center, rgba(8, 19, 15, 0.96) 55%, transparent 56%),
     conic-gradient(#34d399 var(--readiness), rgba(77, 105, 78, 0.32) 0);
-  color: var(--admin-text);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055), 0 18px 34px -28px rgba(52, 211, 153, 0.55);
 }
 
@@ -1064,19 +1070,25 @@ button {
   min-width: 8.5rem;
   flex-direction: column;
   justify-content: center;
-  border-radius: 0.95rem;
-  border: 1px solid rgba(255, 243, 213, 0.1);
-  background: rgba(77, 105, 78, 0.2);
+  border-radius: 0.7rem;
+  border: 1px solid rgba(16, 185, 129, 0.12);
+  background: rgba(16, 185, 129, 0.05);
   padding: 0.68rem 0.85rem;
 }
 
+.theme-dark .admin-hero-micro {
+  border-color: rgba(255, 243, 213, 0.1);
+  background: rgba(77, 105, 78, 0.2);
+}
+
 .admin-hero-micro-warm {
-  background: rgba(255, 243, 213, 0.08);
-  border-color: rgba(255, 243, 213, 0.16);
+  background: rgba(77, 105, 78, 0.04);
+  border-color: rgba(77, 105, 78, 0.08);
 }
 
 .theme-dark .admin-hero-micro-warm {
   background: rgba(255, 243, 213, 0.1);
+  border-color: rgba(255, 243, 213, 0.16);
 }
 
 .admin-hero-micro span {
@@ -1096,7 +1108,7 @@ button {
 .admin-stat-card {
   position: relative;
   overflow: hidden;
-  border-radius: 0.95rem;
+  border-radius: 0.7rem;
   padding: 0.85rem;
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
@@ -1109,12 +1121,25 @@ button {
   pointer-events: none;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 28%),
+    radial-gradient(circle at 10% 0%, rgba(77, 105, 78, 0.06), transparent 16rem);
+}
+
+.theme-dark .admin-stat-card::before,
+.theme-dark .admin-panel::before {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 28%),
     radial-gradient(circle at 10% 0%, rgba(77, 105, 78, 0.16), transparent 16rem);
 }
 
 .admin-stat-card:hover,
 .admin-action-card:hover {
   transform: translateY(-2px);
+  border-color: rgba(16, 185, 129, 0.28);
+  box-shadow: 0 12px 24px -10px rgba(16, 185, 129, 0.24), 0 8px 16px -12px rgba(0, 0, 0, 0.06);
+}
+
+.theme-dark .admin-stat-card:hover,
+.theme-dark .admin-action-card:hover {
   border-color: rgba(16, 185, 129, 0.28);
   box-shadow: 0 26px 54px -38px rgba(16, 185, 129, 0.36), 0 22px 46px -38px rgba(0, 0, 0, 0.96);
 }
@@ -1192,7 +1217,7 @@ button {
 .admin-panel {
   position: relative;
   overflow: hidden;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   padding: 0.9rem;
 }
 
@@ -1222,21 +1247,27 @@ button {
   min-width: 0;
   align-items: center;
   gap: 0.8rem;
-  border-radius: 0.85rem;
-  border: 1px solid rgba(255, 243, 213, 0.09);
-  background: rgba(6, 18, 15, 0.54);
+  border-radius: 0.65rem;
+  border: 1px solid rgba(77, 105, 78, 0.1);
+  background: #F8FAFC;
   padding: 0.75rem;
   text-align: left;
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
+.theme-dark .admin-action-card {
+  border-color: rgba(255, 243, 213, 0.09);
+  background: rgba(6, 18, 15, 0.54);
+}
+
 .admin-icon-box-soft {
-  background: rgba(255, 243, 213, 0.08);
-  color: #fff3d5;
+  background: rgba(16, 185, 129, 0.08);
+  color: #063F35;
 }
 
 .theme-dark .admin-icon-box-soft {
   background: rgba(255, 243, 213, 0.08);
+  color: #fff3d5;
 }
 
 .admin-action-copy {
@@ -1274,10 +1305,15 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border-radius: 0.85rem;
-  border: 1px solid rgba(255, 243, 213, 0.09);
-  background: rgba(6, 18, 15, 0.54);
+  border-radius: 0.65rem;
+  border: 1px solid rgba(77, 105, 78, 0.1);
+  background: #F8FAFC;
   padding: 0.75rem;
+}
+
+.theme-dark .admin-layer-card {
+  border-color: rgba(255, 243, 213, 0.09);
+  background: rgba(6, 18, 15, 0.54);
 }
 
 .admin-layer-card p {
@@ -1303,9 +1339,9 @@ button {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  border: 1px solid rgba(167, 243, 208, 0.12);
-  background: rgba(77, 105, 78, 0.2);
-  color: #d1fae5;
+  border: 1px solid rgba(16, 185, 129, 0.16);
+  background: rgba(16, 185, 129, 0.08);
+  color: #063F35;
   padding: 0.32rem 0.55rem;
   font-size: 0.64rem;
   font-weight: 900;
@@ -1314,7 +1350,19 @@ button {
   white-space: nowrap;
 }
 
+.theme-dark .admin-layer-status,
+.theme-dark .admin-soft-badge {
+  border-color: rgba(167, 243, 208, 0.12);
+  background: rgba(77, 105, 78, 0.2);
+  color: #d1fae5;
+}
+
 .admin-layer-status.is-ready {
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #059669;
+}
+
+.theme-dark .admin-layer-status.is-ready {
   border-color: rgba(52, 211, 153, 0.26);
   color: #a7f3d0;
 }
@@ -1346,10 +1394,15 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(255, 243, 213, 0.08);
-  background: rgba(6, 18, 15, 0.56);
+  border-radius: 0.6rem;
+  border: 1px solid rgba(77, 105, 78, 0.1);
+  background: #F8FAFC;
   padding: 0.56rem 0.68rem;
+}
+
+.theme-dark .admin-health-list div {
+  border-color: rgba(255, 243, 213, 0.08);
+  background: rgba(6, 18, 15, 0.56);
 }
 
 .admin-health-list span {
@@ -1417,7 +1470,7 @@ button {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   background: var(--admin-panel-soft);
   padding: 0.9rem;
   color: var(--admin-muted);
@@ -1429,12 +1482,12 @@ button {
   position: relative;
   overflow: hidden;
   min-height: 16rem;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
 }
 
 .admin-map-panel .leaflet-container {
   min-height: 16rem;
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   filter: saturate(0.9) contrast(1.02) brightness(0.9);
 }
 
@@ -3129,6 +3182,179 @@ button {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Chat Media Bubbles & Input Upgrades */
+.message-bubble-media {
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.message-bubble-media img {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.message-bubble-media img:hover {
+  opacity: 0.95;
+}
+.message-bubble-media video {
+  width: 100%;
+  max-height: 220px;
+}
+.message-bubble-audio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  min-width: 220px;
+  max-width: 100%;
+}
+.message-bubble-audio audio {
+  max-width: 100%;
+}
+.message-bubble-document {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  margin-top: 4px;
+}
+.theme-dark .message-bubble-document {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   SHARED DASHBOARD TYPOGRAPHY OVERRIDES (SETTINGS-PAGE MATCHED)
+   ========================================================================== */
+
+/* Enforce Manrope as body and Sora as headings inside the app shell */
+.app-shell {
+  font-family: var(--font-body) !important;
+  font-size: 0.875rem !important; /* 14px */
+  line-height: 1.625 !important;
+}
+
+/* Page Headers / Eyebrows / Subtitles */
+.app-shell section.rounded-\[2rem\] {
+  font-family: var(--font-body);
+}
+
+.app-shell section.rounded-\[2rem\] p.text-xs {
+  font-family: var(--font-display) !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.24em !important;
+}
+
+.app-shell section.rounded-\[2rem\] h1 {
+  font-family: var(--font-display) !important;
+  font-weight: 900 !important;
+  font-size: 1.875rem !important; /* 30px */
+  letter-spacing: -0.04em !important;
+}
+
+.app-shell section.rounded-\[2rem\] p.text-sm {
+  font-family: var(--font-body) !important;
+  font-size: 0.875rem !important; /* 14px */
+  line-height: 1.75 !important;
+  font-weight: 500 !important;
+}
+
+/* Headings Unification */
+.app-shell h1 {
+  font-family: var(--font-display) !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.04em !important;
+  color: var(--ink-strong) !important;
+}
+
+.app-shell h2,
+.app-shell h3,
+.app-shell .card h3 {
+  font-family: var(--font-display) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  color: var(--ink-strong) !important;
+}
+
+/* Eyebrows / Uppercase labels style matching SYSTEM PREFERENCES */
+.app-shell .eyebrow,
+.app-shell p.text-\[10px\].font-black.uppercase,
+.app-shell p.text-xs.uppercase.tracking-\[0\.2em\] {
+  font-family: var(--font-display) !important;
+  font-weight: 900 !important;
+  font-size: 0.75rem !important; /* 12px */
+  text-transform: uppercase !important;
+  letter-spacing: 0.24em !important;
+  color: var(--brand-emerald) !important;
+}
+
+.theme-dark .app-shell .eyebrow,
+.theme-dark .app-shell p.text-\[10px\].font-black.uppercase,
+.theme-dark .app-shell p.text-xs.uppercase.tracking-\[0\.2em\] {
+  color: var(--brand-accent) !important;
+}
+
+/* Card typography matching */
+.app-shell .card p,
+.app-shell .card span,
+.app-shell .card div {
+  font-size: 0.875rem !important; /* 14px text-sm equivalent */
+  line-height: 1.625 !important;
+}
+
+.app-shell .card span.font-bold {
+  font-weight: 700 !important;
+  color: var(--ink-strong) !important;
+}
+
+/* Form input, select, and textarea controls */
+.app-shell input,
+.app-shell select,
+.app-shell textarea {
+  font-family: var(--font-body) !important;
+  font-size: 0.875rem !important; /* 14px text-sm equivalent */
+  font-weight: 500 !important;
+}
+
+/* Labels */
+.app-shell label,
+.app-shell span.ml-1.text-\[0\.825rem\] {
+  font-family: var(--font-body) !important;
+  font-size: 0.825rem !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Tables typography */
+.app-shell table th {
+  font-family: var(--font-display) !important;
+  font-size: 0.75rem !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+}
+
+.app-shell table td {
+  font-family: var(--font-body) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+/* Buttons typography */
+.app-shell button,
+.app-shell .btn {
+  font-family: var(--font-body) !important;
+  font-size: 0.8125rem !important; /* 13px */
+  font-weight: 800 !important;
+  letter-spacing: 0.025em !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

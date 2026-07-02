@@ -97,11 +97,11 @@ export default function Permissions() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Security</p>
-        <h1 className="text-2xl font-semibold text-ink mt-2">Role Permissions Matrix</h1>
-        <p className="text-sm text-ink/60">This matrix reflects backend-enforced access rules for each module.</p>
-      </div>
+      <section className="rounded-[2rem] border border-[#124E44]/20 bg-[#123E36] p-6 text-white">
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-[#E8C46A]">Security</p>
+        <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-white">Role Permissions Matrix</h1>
+        <p className="mt-3 max-w-4xl text-sm leading-7 text-white/75">This matrix reflects backend-enforced access rules for each module.</p>
+      </section>
 
       <div className="grid md:grid-cols-3 gap-4">
         <Card className="p-4">

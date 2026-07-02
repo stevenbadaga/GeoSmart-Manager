@@ -272,14 +272,38 @@ export default function GeoJsonMap({
   const tile = BASEMAPS[basemap] || BASEMAPS.osm
 
   const baseOnEachFeature = (feature, leafletLayer) => {
-    const label = feature?.properties?.parcel ?? feature?.properties?.name
+    const label = feature?.properties?.parcel ?? feature?.properties?.name ?? feature?.properties?.upi
     if (label) {
       leafletLayer.bindTooltip(String(label), {
-        permanent: true,
+        permanent: false,
         direction: 'center',
         className: 'map-label'
       })
     }
+
+    leafletLayer.on({
+      mouseover: (e) => {
+        e.target.setStyle({
+          color: '#34d399',
+          weight: 3.5,
+          fillOpacity: 0.35
+        })
+      },
+      mouseout: (e) => {
+        e.target.setStyle({
+          color: '#10b981',
+          weight: 2,
+          fillOpacity: 0.15
+        })
+      },
+      click: (e) => {
+        e.target.setStyle({
+          color: '#047857',
+          weight: 4.5,
+          fillOpacity: 0.4
+        })
+      }
+    })
   }
 
   return (
@@ -294,7 +318,11 @@ export default function GeoJsonMap({
       >
         <TileLayer attribution={tile.attribution} url={tile.url} />
         {parsed && (
-          <GeoJSON data={parsed} style={{ color: '#1F6F5F', weight: 2, fillOpacity: 0.25 }} onEachFeature={baseOnEachFeature} />
+          <GeoJSON 
+            data={parsed} 
+            style={{ color: '#10b981', weight: 2, fillColor: '#10b981', fillOpacity: 0.15 }} 
+            onEachFeature={baseOnEachFeature} 
+          />
         )}
         {overlays.map((overlay) => {
           if (!overlay?.data) return null

@@ -173,11 +173,11 @@ export default function Compliance() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-ink/40">Regulatory Compliance</p>
-        <h1 className="text-2xl font-semibold text-ink mt-2">Compliance Validation</h1>
-        <p className="text-sm text-ink/60">Validate subdivision outputs against Rwanda land regulations and standards.</p>
-      </div>
+      <section className="rounded-[2rem] border border-[#124E44]/20 bg-[#123E36] p-6 text-white">
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-[#E8C46A]">Regulatory Compliance</p>
+        <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-white">Compliance Validation</h1>
+        <p className="mt-3 max-w-4xl text-sm leading-7 text-white/75">Validate subdivision outputs against Rwanda land regulations and standards.</p>
+      </section>
 
       <div className="grid md:grid-cols-4 gap-4">
         <Card className="p-4">

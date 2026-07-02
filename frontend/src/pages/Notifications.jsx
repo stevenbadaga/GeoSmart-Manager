@@ -55,11 +55,11 @@ export default function Notifications() {
   return (
     <div className="space-y-10 animate-rise">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Activity Hub</p>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight mt-2 font-display">Technical Signals</h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">Stay updated with planning progress, compliance alerts, and system activity.</p>
-        </div>
+        <section className="flex-1 rounded-[2rem] border border-[#124E44]/20 bg-[#123E36] p-6 text-white">
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-[#E8C46A]">Activity Hub</p>
+          <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-white">Technical Signals</h1>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-white/75">Stay updated with planning progress, compliance alerts, and system activity.</p>
+        </section>
         <div className="flex flex-wrap items-center gap-6">
            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200/60 shadow-sm">{notifications.length} total signals</span>
            {notifications.some(n => !n.isRead) && (

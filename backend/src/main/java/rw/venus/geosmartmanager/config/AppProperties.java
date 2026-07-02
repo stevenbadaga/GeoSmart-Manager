@@ -228,6 +228,7 @@ public class AppProperties {
 
     public static class Mail {
         private String fromAddress;
+        private boolean enabled = true;
 
         public String getFromAddress() {
             return fromAddress;
@@ -235,6 +236,14 @@ public class AppProperties {
 
         public void setFromAddress(String fromAddress) {
             this.fromAddress = fromAddress;
+        }
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
         }
     }
 }

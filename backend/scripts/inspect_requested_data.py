@@ -229,14 +229,14 @@ def top_counter(series: Any, limit: int = 10) -> dict[str, int]:
 
 
 def build_key_layer_summary() -> dict[str, Any]:
-    parcels_path = REQUESTED_DATA_DIR / "Kigali 05.22.2026" / "Kigali_Parcels.shp"
+    parcels_path = REQUESTED_DATA_DIR / "KIGALI CITY 11.06.2026" / "KIGALI_CITY_11.06.shp"
     masterplan_path = REQUESTED_DATA_DIR / "Kigali Masterplan" / "Kigali_Masterplan.shp"
     buildings_path = REQUESTED_DATA_DIR / "Building Footprint" / "Building_Footprints.shp"
     dem_path = REQUESTED_DATA_DIR / "DEM_30" / "DEM30.img"
 
     parcels = gpd.read_file(
         parcels_path,
-        columns=["OBJECTID_1", "upi", "status", "accuracy", "province", "district", "sector", "cell", "village"],
+        columns=["objectid", "upi", "status", "accuracy", "province", "district", "sector", "cell", "village"],
     )
     parcels["upi_norm"] = parcels["upi"].fillna("").astype(str).str.strip()
     populated_upi = parcels[parcels["upi_norm"] != ""]

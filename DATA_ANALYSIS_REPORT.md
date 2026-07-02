@@ -3,14 +3,14 @@
 Generated from `Requested Data`.
 
 ## Executive Summary
-- Vector layers inspected: `8`
+- Vector layers inspected: `9`
 - Raster layers inspected: `1`
 - PDF documents inspected: `1`
 - Load errors: `0`
 
 ## Key Findings
-- Kigali parcels loaded successfully with `101981` features.
-- Parcel UPI values are not unique: `2846` features share `1420` duplicate UPI values.
+- Kigali parcels loaded successfully with `560275` features.
+- Parcel UPI values are not unique: `3742` features share `1829` duplicate UPI values.
 - Kigali masterplan loaded successfully with `2310` features and `25` distinct `zone_code` values.
 - Masterplan zone codes present: `A1, C1, C3, I1, P1, P2, P3B, P3C, PA, PF1, PF2, PF3, PF5, R1, R1A, R1B, R2, R3, R4, T, U, W2, W3, W4, W5`
 - Expected zone codes missing from the current masterplan layer: `C4, A2, W1A, W1B, WB, B1, B2, B3, B4`
@@ -18,10 +18,10 @@ Generated from `Requested Data`.
 - DEM raster is readable in CRS/EPSG `21036` with resolution `[30.93, 30.93]`.
 
 ## Parcel Layer
-- Path: `Requested Data\Kigali 05.22.2026\Kigali_Parcels.shp`
-- Non-empty UPI count: `101981`
-- Top status values: `{'Actual': 100934, 'Provisional': 1047}`
-- Top accuracy values: `{'C': 101871, 'A': 110}`
+- Path: `Requested Data\KIGALI CITY 11.06.2026\KIGALI_CITY_11.06.shp`
+- Non-empty UPI count: `560275`
+- Top status values: `{'Actual': 555345, 'Provisional': 4930}`
+- Top accuracy values: `{'C': 559388, 'A': 887}`
 - Administrative fields present: `province, district, sector, cell, village`
 
 ## Masterplan Layer
@@ -94,6 +94,14 @@ Generated from `Requested Data`.
 - CRS/EPSG: `unknown`
 - Bounding box: `[497499.053, 4770536.947, 509641.211, 4793586.773]`
 - Fields: `OBJECTID_1, parcel_num, village, province, district, sector, cell, cell_code, upi, change_id, start_date, end_date, status, transactio, accuracy, area_in_we, x, y, village_co, globalid, st_area_sh, st_length_, Shape_Leng, Shape_Area`
+
+### KIGALI_CITY_11.06.shp
+- Path: `Requested Data\KIGALI CITY 11.06.2026\KIGALI_CITY_11.06.shp`
+- Feature count: `560275`
+- Geometry type: `Polygon`
+- CRS/EPSG: `unknown`
+- Bounding box: `[457996.318, 4770096.523, 530828.409, 4835579.743]`
+- Fields: `objectid, parcel_num, village, province, district, sector, cell, cell_code, upi, change_id, start_date, end_date, status, transactio, accuracy, area_in_we, x, y, village_co, globalid, st_area_sh, st_length_`
 
 ### Kigali_Masterplan.shp
 - Path: `Requested Data\Kigali Masterplan\Kigali_Masterplan.shp`

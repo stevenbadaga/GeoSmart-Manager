@@ -50,7 +50,8 @@ public class AuthService {
     }
 
     public AuthDtos.AuthResponse register(AuthDtos.RegisterRequest request) {
-        if (userRepository.findByEmailIgnoreCase(request.email()).isPresent()) {
+        String trimmedEmail = request.email() != null ? request.email().trim().toLowerCase() : "";
+        if (userRepository.findByEmailIgnoreCase(trimmedEmail).isPresent()) {
             throw new IllegalArgumentException("Email already registered");
         }
 
@@ -65,7 +66,7 @@ public class AuthService {
         Instant now = Instant.now();
         UserEntity user = UserEntity.builder()
                 .fullName(request.fullName())
-                .email(request.email().toLowerCase())
+                .email(trimmedEmail)
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(role)
                 .status(UserStatus.ACTIVE)
@@ -79,8 +80,9 @@ public class AuthService {
     }
 
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
+        String trimmedEmail = request.email() != null ? request.email().trim() : "";
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+                new UsernamePasswordAuthenticationToken(trimmedEmail, request.password()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserEntity user = (UserEntity) authentication.getPrincipal();
         user.setStatus(UserStatus.ACTIVE);
@@ -164,7 +166,8 @@ public class AuthService {
                 user.getOrganization(),
                 user.getSpecialization(),
                 user.getCertifications(),
-                user.getLastActiveAt()
+                user.getLastActiveAt(),
+                user.getAvatarUrl()
         ));
     }
 

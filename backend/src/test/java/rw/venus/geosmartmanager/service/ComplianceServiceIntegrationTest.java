@@ -156,7 +156,11 @@ class ComplianceServiceIntegrationTest {
                 ProjectStatus.IN_PROGRESS,
                 LocalDate.now(),
                 LocalDate.now().plusDays(14),
-                client.getId()
+                client.getId(),
+                null,
+                null,
+                null,
+                null
         ));
     }
 }

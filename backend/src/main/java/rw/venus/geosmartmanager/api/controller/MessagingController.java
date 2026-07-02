@@ -1,6 +1,8 @@
 package rw.venus.geosmartmanager.api.controller;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,6 +46,17 @@ public class MessagingController {
     public MessagingDtos.MessageResponse send(@PathVariable Long conversationId,
                                               @RequestBody MessagingDtos.SendMessageRequest request) {
         return messagingService.sendMessage(conversationId, request);
+    }
+
+    @PatchMapping("/{messageId}")
+    public MessagingDtos.MessageResponse update(@PathVariable Long messageId,
+                                                @RequestBody MessagingDtos.SendMessageRequest request) {
+        return messagingService.updateMessage(messageId, request);
+    }
+
+    @DeleteMapping("/{messageId}")
+    public void delete(@PathVariable Long messageId) {
+        messagingService.deleteMessage(messageId);
     }
 
     @PostMapping("/conversations/{conversationId}/read")
