@@ -9,6 +9,7 @@ public class AppDtos {
             String message,
             String type,
             Long relatedProjectId,
+            Long relatedConversationId,
             boolean isRead,
             Instant createdAt
     ) {}

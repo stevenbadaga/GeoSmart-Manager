@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Button from '../components/Button'
 import { api, API_URL, apiRequest } from '../api/http'
 import { useAuth } from '../auth/AuthContext'
@@ -39,6 +40,8 @@ const parseMessageBody = (bodyStr) => {
 
 export default function Messages() {
   const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+  const handledConvIdRef = useRef(null)
   const [contacts, setContacts] = useState([])
   const [conversations, setConversations] = useState([])
   const [messages, setMessages] = useState([])
@@ -567,6 +570,18 @@ export default function Messages() {
       setLoading(false)
     }
   }, [user?.id])
+
+  useEffect(() => {
+    const targetConvId = searchParams.get('conversationId')
+    if (targetConvId && conversations.length > 0 && handledConvIdRef.current !== targetConvId) {
+      const targetId = parseInt(targetConvId, 10)
+      const match = conversations.find(c => c.id === targetId)
+      if (match) {
+        setActiveConversation(match)
+        handledConvIdRef.current = targetConvId
+      }
+    }
+  }, [searchParams, conversations])
 
   useEffect(() => {
     if (!user) return () => {}

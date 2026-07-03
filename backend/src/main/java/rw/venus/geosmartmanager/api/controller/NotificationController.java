@@ -1,6 +1,5 @@
 package rw.venus.geosmartmanager.api.controller;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import rw.venus.geosmartmanager.api.dto.AppDtos;
@@ -22,7 +21,7 @@ public class NotificationController {
     public List<AppDtos.NotificationResponse> list(@AuthenticationPrincipal UserEntity user) {
         return notificationService.listForUser(user.getId()).stream()
                 .map(n -> new AppDtos.NotificationResponse(
-                        n.getId(), n.getTitle(), n.getMessage(), n.getType(), n.getRelatedProjectId(), n.isRead(), n.getCreatedAt()
+                        n.getId(), n.getTitle(), n.getMessage(), n.getType(), n.getRelatedProjectId(), n.getRelatedConversationId(), n.isRead(), n.getCreatedAt()
                 )).toList();
     }
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Card from '../components/Card'
 import Button from '../components/Button'
 import { api } from '../api/http'
@@ -6,6 +7,7 @@ import { useAuth } from '../auth/AuthContext'
 
 export default function Notifications() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -41,6 +43,53 @@ export default function Notifications() {
     } catch (err) {
       console.error('Failed to mark all as read', err)
     }
+  }
+
+  const getNotificationRoute = (n) => {
+    const title = (n.title || '').toLowerCase()
+    const message = (n.message || '').toLowerCase()
+
+    // 1. Messages / Conversation
+    if (n.relatedConversationId) {
+      return `/messages?conversationId=${n.relatedConversationId}`
+    }
+    if (title.includes('message') || message.includes('message') || title.includes('chat') || title.includes('contact')) {
+      return '/messages'
+    }
+
+    // 2. Report
+    if (title.includes('report') || message.includes('report') || title.includes('pdf')) {
+      if (n.relatedProjectId) {
+        return `/reports?project=${n.relatedProjectId}`
+      }
+      return '/reports'
+    }
+
+    // 3. Compliance / GIS
+    if (title.includes('compliance') || message.includes('compliance') || title.includes('rule') || title.includes('violation')) {
+      return '/compliance'
+    }
+    if (title.includes('gis') || message.includes('gis') || title.includes('subdivision') || title.includes('map') || title.includes('parcel')) {
+      return '/subdivision'
+    }
+
+    // 4. Project
+    if (n.relatedProjectId) {
+      return `/projects?project=${n.relatedProjectId}`
+    }
+    if (title.includes('project') || message.includes('project') || title.includes('submission') || title.includes('signal')) {
+      return '/projects'
+    }
+
+    // Default Fallback
+    return '/dashboard'
+  }
+
+  const handleCardClick = (n) => {
+    if (!n.isRead) {
+      markAsRead(n.id)
+    }
+    navigate(getNotificationRoute(n))
   }
 
   const getTypeStyles = (type) => {
@@ -90,8 +139,19 @@ export default function Notifications() {
             {notifications.map((n) => (
               <div 
                 key={n.id} 
-                className={`group relative rounded-2xl border p-7 transition-all hover:shadow-lg ${
-                  n.isRead ? 'bg-slate-50/40 border-slate-100 opacity-80' : 'bg-white border-emerald-100 shadow-premium'
+                role="button"
+                tabIndex={0}
+                onClick={() => handleCardClick(n)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleCardClick(n)
+                  }
+                }}
+                className={`group relative rounded-2xl border p-7 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20 select-none ${
+                  n.isRead 
+                    ? 'bg-slate-50/40 border-slate-100 hover:border-slate-200 hover:bg-slate-50/80 opacity-80' 
+                    : 'bg-white border-emerald-100 hover:border-emerald-300 hover:bg-emerald-50/5 shadow-premium hover:shadow-md'
                 }`}
               >
                 {!n.isRead && (
@@ -112,15 +172,25 @@ export default function Notifications() {
                        {new Date(n.createdAt).toLocaleString()}
                     </div>
                   </div>
-                  {!n.isRead && (
-                    <button 
-                      className="shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-50 text-[11px] font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-100 transition-all active:scale-95 border border-emerald-100/50 shadow-sm"
-                      onClick={() => markAsRead(n.id)}
-                    >
-                      Dismiss
-                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
-                    </button>
-                  )}
+                  <div className="shrink-0 flex items-center gap-3 self-end md:self-start">
+                    {!n.isRead && (
+                      <button 
+                        className="shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-50 text-[11px] font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-100 transition-all active:scale-95 border border-emerald-100/50 shadow-sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          markAsRead(n.id)
+                        }}
+                      >
+                        Dismiss
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
+                      </button>
+                    )}
+                    <div className="text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all">
+                      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
