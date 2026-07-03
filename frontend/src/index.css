@@ -2951,7 +2951,7 @@ button {
 
 .workflow-screen-stage {
   position: relative;
-  min-height: 45rem;
+  min-height: 46rem;
   overflow: hidden;
   border-radius: 2rem;
   background:
@@ -2977,12 +2977,12 @@ button {
 .workflow-screen-carousel {
   position: absolute;
   left: 50%;
-  top: 35%;
+  top: 42%;
   width: 0;
   height: 0;
   transform-style: preserve-3d;
-  transform: translate(-50%, -50%) rotateX(-18deg);
-  animation: workflowCarouselSpin 22s linear infinite;
+  transform: translate(-50%, -50%) rotateX(-12deg);
+  animation: workflowCarouselSpin 24s linear infinite;
   z-index: 14;
 }
 
@@ -2993,17 +2993,17 @@ button {
   transform-style: preserve-3d;
   transform:
     rotateY(var(--screen-angle))
-    translateZ(clamp(11rem, 13vw, 12.25rem));
+    translateZ(clamp(16.5rem, 20.5vw, 22.5rem));
 }
 
 .workflow-screen-monitor {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: clamp(10.8rem, 12vw, 11.8rem);
-  height: clamp(7.8rem, 8.8vw, 8.6rem);
+  width: clamp(15.5rem, 18vw, 19.5rem);
+  height: clamp(11.5rem, 13vw, 14rem);
   transform-style: preserve-3d;
-  transform: translate(-50%, -50%) rotateX(19deg) rotateZ(var(--screen-roll));
+  transform: translate(-50%, -50%) rotateX(13deg) rotateZ(var(--screen-roll));
 }
 
 .workflow-screen-face {
@@ -3013,15 +3013,15 @@ button {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: 1.35rem / 1.7rem;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 1.5rem / 1.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.26);
   background:
-    linear-gradient(180deg, rgba(7, 18, 15, 0.92), rgba(7, 17, 14, 0.98)),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 40%);
+    linear-gradient(180deg, rgba(8, 25, 20, 0.88), rgba(6, 18, 15, 0.95)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 40%);
   box-shadow:
-    0 30px 45px -28px rgba(0, 0, 0, 0.82),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-    inset 0 0 26px rgba(255, 255, 255, 0.03);
+    0 20px 40px -15px rgba(0, 0, 0, 0.75),
+    0 0 25px 2px rgba(16, 185, 129, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.15);
   backface-visibility: hidden;
 }
 
@@ -3048,8 +3048,8 @@ button {
   content: "";
   position: absolute;
   inset: 0.45rem 0.55rem 0.55rem;
-  border-radius: 1rem / 1.3rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.1rem / 1.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   pointer-events: none;
   opacity: 0.85;
 }
@@ -3077,7 +3077,7 @@ button {
   flex: 1 1 auto;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 0.7rem 0.85rem 0.9rem;
+  padding: 1rem;
   background: linear-gradient(180deg, rgba(7, 17, 14, 0.18), rgba(7, 17, 14, 0.98) 28%);
 }
 
@@ -3089,7 +3089,7 @@ button {
   background: rgba(255, 255, 255, 0.92);
   padding: 0.26rem 0.6rem;
   color: #065f46;
-  font-size: 0.58rem;
+  font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -3098,7 +3098,7 @@ button {
 .workflow-screen-body h3 {
   margin: 0.55rem 0 0;
   color: #ffffff;
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.04em;
@@ -3107,19 +3107,19 @@ button {
 .workflow-screen-body p {
   margin: 0.35rem 0 0;
   color: rgba(255, 255, 255, 0.82);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   line-height: 1.45;
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
 }
 
 .workflow-screen-figure-wrap {
   position: absolute;
   left: 50%;
-  bottom: 0.4rem;
-  width: min(18rem, 23vw);
+  bottom: 0px;
+  width: min(20rem, 26vw);
   transform: translateX(-50%);
   z-index: 10;
   pointer-events: none;
@@ -3154,23 +3154,38 @@ button {
 @keyframes workflowCarouselSpin {
   0%,
   100% {
-    transform: translate(-50%, -50%) rotateX(-18deg) rotateY(0deg);
+    transform: translate(-50%, -50%) rotateX(-12deg) rotateY(0deg);
   }
   50% {
-    transform: translate(-50%, -50%) rotateX(-18deg) rotateY(-180deg);
+    transform: translate(-50%, -50%) rotateX(-12deg) rotateY(-180deg);
   }
   to {
-    transform: translate(-50%, -50%) rotateX(-18deg) rotateY(-360deg);
+    transform: translate(-50%, -50%) rotateX(-12deg) rotateY(-360deg);
   }
 }
 
 @media (max-width: 1279px) {
   .workflow-screen-stage {
-    min-height: 40rem;
+    min-height: 38rem;
   }
 
   .workflow-screen-carousel {
-    top: 34%;
+    top: 42%;
+  }
+
+  .workflow-screen-monitor {
+    width: clamp(13rem, 15vw, 15.5rem);
+    height: clamp(9.5rem, 11vw, 11.5rem);
+  }
+
+  .workflow-screen-node {
+    transform:
+      rotateY(var(--screen-angle))
+      translateZ(clamp(13rem, 17vw, 16rem));
+  }
+
+  .workflow-screen-figure-wrap {
+    width: min(16rem, 22vw);
   }
 }
 
