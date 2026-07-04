@@ -4,9 +4,14 @@
 
 :root {
   color-scheme: light;
-  --font-body: 'Manrope', 'Inter', system-ui, sans-serif;
-  --font-display: 'Sora', 'Inter', system-ui, sans-serif;
+  --font-main: 'Montserrat', 'Inter', system-ui, sans-serif;
+  --font-body: 'Montserrat', 'Inter', system-ui, sans-serif;
+  --font-display: 'Montserrat', 'Inter', system-ui, sans-serif;
+  --font-heading: 'Montserrat', 'Inter', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
+  --font-weight-heading: 800;
+  --font-weight-label: 700;
+  --letter-spacing-label: 0.18em;
   --brand-deep: #063F35;
   --brand-forest: #063F35;
   --brand-emerald: #10B981;
@@ -2974,6 +2979,65 @@ button {
   pointer-events: none;
 }
 
+.workflow-screen-orbit-ring {
+  position: absolute;
+  left: 50%;
+  top: 32%;
+  width: clamp(34rem, 42vw, 46rem);
+  height: clamp(7rem, 8.5vw, 9.5rem);
+  transform: translate(-50%, -50%) rotateX(78deg);
+  border: 1.5px solid rgba(52, 211, 153, 0.12);
+  box-shadow: 
+    0 0 15px rgba(52, 211, 153, 0.04),
+    inset 0 0 15px rgba(52, 211, 153, 0.04);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 8;
+}
+
+.workflow-screen-stage-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, transparent 38%, rgba(2, 10, 8, 0.72) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.workflow-screen-stage-gis-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.85;
+}
+
+.workflow-screen-glow-backplate {
+  position: absolute;
+  left: 50%;
+  top: 32%;
+  transform: translate(-50%, -50%);
+  width: clamp(28rem, 36vw, 40rem);
+  height: clamp(28rem, 36vw, 40rem);
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.15) 0%, rgba(16, 185, 129, 0.03) 50%, transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 5;
+  animation: glowPulse 8s infinite alternate ease-in-out;
+}
+
+@keyframes glowPulse {
+  0% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
 .workflow-screen-carousel {
   position: absolute;
   left: 50%;
@@ -3115,14 +3179,19 @@ button {
 
 .workflow-screen-media {
   position: relative;
-  flex: 0 0 45%;
-  min-height: 45%;
+  flex: 0 0 62%;
+  min-height: 62%;
 }
 
 .workflow-screen-media img {
   height: 100%;
   width: 100%;
   object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.workflow-screen-node:hover .workflow-screen-media img {
+  transform: scale(1.08);
 }
 
 .workflow-screen-body {
@@ -3132,7 +3201,7 @@ button {
   flex: 1 1 auto;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 1rem;
+  padding: 0.55rem 0.8rem;
   background: linear-gradient(180deg, rgba(7, 17, 14, 0.18), rgba(7, 17, 14, 0.98) 28%);
 }
 
@@ -3142,21 +3211,25 @@ button {
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.92);
-  padding: 0.26rem 0.6rem;
+  padding: 0.22rem 0.5rem;
   color: #065f46;
-  font-size: 0.65rem;
+  font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .workflow-screen-body h3 {
-  margin: 0.55rem 0 0;
+  margin: 0.3rem 0 0;
   color: #ffffff;
-  font-size: 1.15rem;
+  font-size: clamp(0.95rem, 1.1vw, 1.1rem);
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .workflow-screen-body p {
@@ -3199,6 +3272,59 @@ button {
   border-radius: 999px;
   background: radial-gradient(circle, rgba(0, 0, 0, 0.42), transparent 72%);
   filter: blur(14px);
+}
+
+.holographic-finger-pulse {
+  position: absolute;
+  top: 42%;
+  left: 60%;
+  width: 2.2rem;
+  height: 2.2rem;
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.38) 0%, rgba(52, 211, 153, 0.05) 55%, transparent 100%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 11;
+  transform: translate(-50%, -50%);
+  animation: fingerPulse 2.8s infinite alternate ease-in-out;
+}
+
+.holographic-finger-pulse::before {
+  content: "";
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  width: 5rem;
+  height: 9rem;
+  transform: translateX(-50%);
+  background: linear-gradient(0deg, rgba(52, 211, 153, 0.1) 0%, rgba(52, 211, 153, 0.01) 82%, transparent 100%);
+  clip-path: polygon(30% 100%, 70% 100%, 100% 0, 0 0);
+  pointer-events: none;
+  animation: beamPulse 2.8s infinite alternate ease-in-out;
+  transform-origin: bottom center;
+}
+
+@keyframes fingerPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.85);
+    opacity: 0.45;
+    box-shadow: 0 0 15px 2px rgba(52, 211, 153, 0.15);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.25);
+    opacity: 0.9;
+    box-shadow: 0 0 28px 6px rgba(52, 211, 153, 0.3);
+  }
+}
+
+@keyframes beamPulse {
+  0% {
+    opacity: 0.25;
+    transform: translateX(-50%) scaleX(0.9) scaleY(0.9);
+  }
+  100% {
+    opacity: 0.65;
+    transform: translateX(-50%) scaleX(1.1) scaleY(1.05);
+  }
 }
 
 .workflow-orbit-paused,

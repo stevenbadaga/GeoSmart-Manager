@@ -23,8 +23,8 @@ function WorkflowOrbitScreen({ slide, className = '', ariaHidden = false }) {
         <img src={slide.img} alt={ariaHidden ? '' : slide.shortTitle} />
       </div>
       <div className="workflow-screen-body">
-        <span className="workflow-screen-tag">{slide.tag}</span>
-        <h3>{slide.shortTitle}</h3>
+        <span className="workflow-screen-tag whitespace-nowrap">{slide.tag}</span>
+        <h3 className="whitespace-nowrap truncate">{slide.shortTitle}</h3>
       </div>
     </article>
   )
@@ -188,9 +188,59 @@ export default function Home() {
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
             >
-              <div className="absolute left-8 top-8 z-20 rounded-full border border-white/[0.12] bg-white/[0.08] px-4 py-2 text-[0.72rem] font-bold uppercase tracking-[0.24em] text-emerald-50/90 backdrop-blur-sm">
-                Hover To Pause
+              {/* Stronger vignette overlay */}
+              <div className="workflow-screen-stage-vignette" />
+
+              {/* Ambient holographic background grid & contour SVG overlay */}
+              <svg className="workflow-screen-stage-gis-overlay" viewBox="0 0 1600 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Topographic curves */}
+                <path d="M-100,220 C320,180 500,420 900,340 C1220,280 1400,560 1800,480" stroke="rgba(52,211,153,0.06)" strokeWidth="1.2" fill="none" />
+                <path d="M-100,270 C330,230 480,450 880,390 C1200,330 1380,590 1780,530" stroke="rgba(52,211,153,0.06)" strokeWidth="1.2" fill="none" />
+                <path d="M-100,320 C340,280 460,480 860,440 C1180,380 1360,620 1760,580" stroke="rgba(52,211,153,0.04)" strokeWidth="1.2" strokeDasharray="5 7" fill="none" />
+                <path d="M-100,370 C350,330 440,510 840,490 C1160,430 1340,650 1740,630" stroke="rgba(52,211,153,0.03)" strokeWidth="1.2" fill="none" />
+                
+                {/* Faint GIS Land boundaries/parcels */}
+                <polygon points="180,180 320,150 360,260 210,300" stroke="rgba(52,211,153,0.05)" strokeWidth="1" fill="none" />
+                <polygon points="320,150 480,130 510,240 360,260" stroke="rgba(52,211,153,0.05)" strokeWidth="1" fill="none" />
+                <polygon points="210,300 360,260 330,390 170,360" stroke="rgba(52,211,153,0.05)" strokeWidth="1" fill="none" />
+                
+                {/* Right side parcels */}
+                <polygon points="1200,160 1350,130 1380,240 1230,270" stroke="rgba(52,211,153,0.05)" strokeWidth="1" fill="none" />
+                <polygon points="1350,130 1500,110 1530,220 1380,240" stroke="rgba(52,211,153,0.05)" strokeWidth="1" fill="none" />
+                
+                {/* Thin grid lines */}
+                <line x1="0" y1="150" x2="1600" y2="150" stroke="rgba(52,211,153,0.03)" strokeWidth="0.8" />
+                <line x1="0" y1="350" x2="1600" y2="350" stroke="rgba(52,211,153,0.03)" strokeWidth="0.8" />
+                <line x1="0" y1="550" x2="1600" y2="550" stroke="rgba(52,211,153,0.03)" strokeWidth="0.8" />
+                <line x1="400" y1="0" x2="400" y2="700" stroke="rgba(52,211,153,0.03)" strokeWidth="0.8" />
+                <line x1="800" y1="0" x2="800" y2="700" stroke="rgba(52,211,153,0.03)" strokeWidth="0.8" />
+                <line x1="1200" y1="0" x2="1200" y2="700" stroke="rgba(52,211,153,0.03)" strokeWidth="0.8" />
+
+                {/* Coordinate crosshair and marker nodes */}
+                <g stroke="rgba(52,211,153,0.18)" strokeWidth="1">
+                  <line x1="360" y1="240" x2="360" y2="280" />
+                  <line x1="340" y1="260" x2="380" y2="260" />
+                  <circle cx="360" cy="260" r="14" stroke="rgba(52,211,153,0.08)" fill="none" />
+                  <circle cx="360" cy="260" r="3" fill="#34d399" stroke="none" />
+                </g>
+                <g stroke="rgba(52,211,153,0.18)" strokeWidth="1">
+                  <line x1="1230" y1="250" x2="1230" y2="290" />
+                  <line x1="1210" y1="270" x2="1250" y2="270" />
+                  <circle cx="1230" cy="270" r="14" stroke="rgba(52,211,153,0.08)" fill="none" />
+                  <circle cx="1230" cy="270" r="3" fill="#34d399" stroke="none" />
+                </g>
+              </svg>
+
+              {/* Pulsing central projector backplate glow */}
+              <div className="workflow-screen-glow-backplate" />
+
+              <div className="absolute left-6 top-6 z-20 flex items-center rounded-xl border border-emerald-500/10 bg-emerald-950/20 px-3.5 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.24em] text-emerald-300/80 backdrop-blur-md select-none">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 mr-2 animate-pulse" />
+                Hologram (Hover to Pause)
               </div>
+
+              {/* Holographic elliptical orbit guide ring */}
+              <div className="workflow-screen-orbit-ring" />
 
               <div className="workflow-screen-carousel">
                 {workflowSlides.map((slide, index) => {
@@ -221,6 +271,8 @@ export default function Home() {
 
               <div className="workflow-screen-figure-wrap">
                 <div className="workflow-screen-figure-shadow" />
+                {/* Holographic light pulse at finger level */}
+                <div className="holographic-finger-pulse" />
                 <img
                   src={publicImages.cheerfulManImage}
                   alt="Cheerful planner working at a desk while planning screens rotate around him"
@@ -268,11 +320,11 @@ export default function Home() {
                         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,30,22,0.18)_0%,rgba(8,30,22,0.45)_48%,rgba(8,30,22,0.92)_100%)]" />
                         <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_60%)]" />
                         <div className="absolute inset-x-0 bottom-0 p-6">
-                          <div className="rounded-[1.4rem] border border-white/15 bg-slate-950/28 p-5 backdrop-blur-[6px] text-center">
-                            <span className="inline-flex rounded-full bg-white/92 px-3.5 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.22em] text-emerald-800 shadow-sm backdrop-blur-sm mb-2.5">
+                          <div className="rounded-[1.4rem] border border-white/15 bg-slate-950/28 p-4 backdrop-blur-[6px] text-center overflow-hidden">
+                            <span className="inline-flex rounded-full bg-white/92 px-3 py-1.5 text-[0.65rem] font-black uppercase tracking-[0.22em] text-emerald-800 shadow-sm backdrop-blur-sm mb-2 whitespace-nowrap">
                               {slide.tag}
                             </span>
-                            <h3 className="text-[1.35rem] font-black leading-tight text-white">{slide.shortTitle}</h3>
+                            <h3 className="text-[1.25rem] font-black leading-tight text-white whitespace-nowrap truncate">{slide.shortTitle}</h3>
                           </div>
                         </div>
                       </div>

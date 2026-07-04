@@ -56,7 +56,7 @@ export default function PublicNavbar() {
   }, [user])
 
   return (
-    <header className="public-navbar sticky top-0 z-50 w-full border-b border-slate-100 bg-white/95 backdrop-blur-md">
+    <header className="public-navbar sticky top-0 z-50 w-full border-b border-slate-100 dark:border-slate-800/40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="relative h-24 flex items-center">
           {/* Left: Logo */}
@@ -80,10 +80,10 @@ export default function PublicNavbar() {
                 <Link
                   key={item.label}
                   to={item.to}
-                  className={`relative text-[15px] font-bold tracking-[0.18em] uppercase transition-all duration-300 ${
+                  className={`relative text-[13px] font-black tracking-[0.18em] uppercase transition-all duration-300 ${
                     active
-                      ? 'text-emerald-800 after:absolute after:left-0 after:-bottom-2 after:h-0.5 after:w-full after:bg-emerald-700'
-                      : 'text-slate-600 hover:text-emerald-800'
+                      ? 'text-emerald-800 dark:text-emerald-400 after:absolute after:left-0 after:-bottom-2 after:h-0.5 after:w-full after:bg-emerald-700 dark:after:bg-emerald-400'
+                      : 'text-slate-600 dark:text-slate-350 hover:text-emerald-800 dark:hover:text-emerald-400'
                   }`}
                 >
                   {item.label}
@@ -100,7 +100,7 @@ export default function PublicNavbar() {
             <button
               type="button"
               onClick={() => user ? navigate('/notifications') : navigate('/login')}
-              className="relative inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 shadow-sm active:scale-95"
+              className="relative inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 shadow-sm active:scale-95 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-800 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-450"
               title={user ? 'Notifications' : 'Login to view notifications'}
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -115,7 +115,7 @@ export default function PublicNavbar() {
 
             <Link
               to="/contact"
-              className="hidden sm:inline-flex items-center justify-center rounded-xl border-2 border-emerald-700 px-6 py-3 text-sm font-bold text-emerald-800 transition-all hover:bg-emerald-700 hover:text-white active:scale-95"
+              className="hidden sm:inline-flex items-center justify-center rounded-xl border-2 border-emerald-700 px-6 py-3 text-sm font-bold text-emerald-800 transition-all hover:bg-emerald-700 hover:text-white active:scale-95 dark:border-emerald-600 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-slate-950"
             >
               Contact Us
             </Link>
@@ -123,14 +123,14 @@ export default function PublicNavbar() {
             {user ? (
               <Link
                 to="/dashboard"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-lg transition-all hover:bg-slate-800 active:scale-95"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-lg transition-all hover:bg-slate-800 active:scale-95 dark:border-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600"
               >
                 Dashboard
               </Link>
             ) : (
               <Link
                 to="/login"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-800 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 active:scale-95"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-800 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 active:scale-95 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-800 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-450"
               >
                 Login
               </Link>
@@ -139,7 +139,7 @@ export default function PublicNavbar() {
             {/* Mobile Menu Button */}
             <button
               type="button"
-              className="grid h-12 w-12 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-all lg:hidden hover:border-emerald-200 hover:text-emerald-800 active:scale-95"
+              className="grid h-12 w-12 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-all lg:hidden hover:border-emerald-200 hover:text-emerald-800 active:scale-95 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-800 dark:hover:text-emerald-450"
               onClick={() => setMobileOpen((open) => !open)}
               aria-label="Toggle navigation"
             >
@@ -153,7 +153,7 @@ export default function PublicNavbar() {
         {/* Mobile Menu Dropdown */}
         {mobileOpen && (
           <div className="lg:hidden pb-8 pt-2 animate-in slide-in-from-top-4 duration-300">
-            <div className="space-y-2 rounded-2xl border border-slate-100 bg-white p-4 shadow-2xl">
+            <div className="space-y-2 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xl">
               {navItems.map((item) => {
                 const active = item.to.includes('#')
                   ? isHashActive(location.pathname, location.hash, item.to)
@@ -163,38 +163,40 @@ export default function PublicNavbar() {
                     key={item.label}
                     to={item.to}
                     className={`block rounded-xl px-5 py-4 text-sm font-bold tracking-[0.12em] uppercase transition ${
-                      active ? 'bg-emerald-50 text-emerald-800' : 'text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
+                      active
+                        ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-400'
+                        : 'text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-850 hover:text-emerald-800 dark:hover:text-emerald-400'
                     }`}
                   >
                     {item.label}
                   </Link>
                 )
               })}
-              <div className="pt-6 mt-6 border-t border-slate-50 space-y-4">
+              <div className="pt-6 mt-6 border-t border-slate-50 dark:border-slate-800/60 space-y-4">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white py-4 text-sm font-bold text-slate-800 transition hover:bg-emerald-50 hover:text-emerald-800 shadow-sm"
+                  className="flex w-full items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-4 text-sm font-bold text-slate-800 dark:text-slate-200 transition hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-800 dark:hover:text-emerald-450 shadow-sm"
                   onClick={toggleTheme}
                 >
                   {isDark ? 'Light Theme' : 'Dark Theme'}
                 </button>
                 <Link
                   to="/contact"
-                  className="flex w-full items-center justify-center rounded-xl border-2 border-emerald-700 py-4 text-sm font-bold text-emerald-800 transition hover:bg-emerald-700 hover:text-white"
+                  className="flex w-full items-center justify-center rounded-xl border-2 border-emerald-700 px-6 py-4 text-sm font-bold text-emerald-800 dark:text-emerald-400 transition hover:bg-emerald-700 hover:text-white dark:border-emerald-600 dark:hover:bg-emerald-600 dark:hover:text-slate-950"
                 >
                   Contact Us
                 </Link>
                 {user ? (
                   <Link
                     to="/dashboard"
-                    className="flex w-full items-center justify-center rounded-xl bg-slate-900 py-4 text-sm font-bold text-white transition hover:bg-slate-800 shadow-lg"
+                    className="flex w-full items-center justify-center rounded-xl bg-slate-900 py-4 text-sm font-bold text-white transition hover:bg-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600 shadow-lg"
                   >
                     Dashboard
                   </Link>
                 ) : (
                   <Link
                     to="/login"
-                    className="flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white py-4 text-sm font-bold text-slate-800 transition hover:bg-emerald-50 hover:text-emerald-800 shadow-sm"
+                    className="flex w-full items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-4 text-sm font-bold text-slate-800 dark:text-slate-200 transition hover:bg-emerald-50 dark:hover:bg-emerald-950/30 hover:text-emerald-800 dark:hover:text-emerald-450 shadow-sm"
                   >
                     Login
                   </Link>

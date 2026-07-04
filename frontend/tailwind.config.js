@@ -7,8 +7,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],
-        display: ["Sora", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["Montserrat", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["Montserrat", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["IBM Plex Mono", "ui-monospace", "SFMono-Regular", "monospace"]
       },
       colors: {
