@@ -203,12 +203,16 @@ export default function Home() {
                       className="workflow-screen-node"
                       style={{
                         '--screen-angle': `${angle}deg`,
-                        '--screen-roll': `${roll}deg`
+                        '--screen-roll': `${roll}deg`,
+                        '--screen-delay': `${index * -1.2}s`,
+                        '--screen-lighting-delay': `${index * 4 - 24}s`
                       }}
                     >
-                      <div className="workflow-screen-monitor">
-                        <WorkflowOrbitScreen slide={slide} className="workflow-screen-face-front" />
-                        <WorkflowOrbitScreen slide={slide} className="workflow-screen-face-back" ariaHidden />
+                      <div className="workflow-screen-bobber">
+                        <div className="workflow-screen-monitor">
+                          <WorkflowOrbitScreen slide={slide} className="workflow-screen-face-front" />
+                          <WorkflowOrbitScreen slide={slide} className="workflow-screen-face-back" ariaHidden />
+                        </div>
                       </div>
                     </div>
                   )
