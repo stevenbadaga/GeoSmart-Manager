@@ -4,12 +4,12 @@ import PublicLayout from '../components/PublicLayout'
 import { publicImages } from '../assets/publicImages'
 
 const workflowSlides = [
-  { title: 'Search or select a parcel', desc: 'Find the land parcel using available parcel data or UPI-based search.', tag: 'Step 01', img: publicImages.authLandscapeImage },
-  { title: 'Review zoning and location context', desc: 'Check the parcel against available zoning, master plan, boundary, and location datasets.', tag: 'Step 02', img: publicImages.lakeLandscapeImage },
-  { title: 'Draw or upload proposed plots', desc: 'Create or upload proposed subdivision layouts for early-stage spatial review.', tag: 'Step 03', img: publicImages.dividedLandImage },
-  { title: 'Run planning support checks', desc: 'Review the proposal against available planning rules, GIS layers, and data constraints.', tag: 'Step 04', img: publicImages.sunriseLandscapeImage },
-  { title: 'Generate a preliminary report', desc: 'Produce a structured report summarizing checks, observations, limitations, and review outcomes.', tag: 'Step 05', img: publicImages.authLandscapeImage },
-  { title: 'Continue with official submission', desc: 'Use the results to prepare better documentation before submitting through official channels.', tag: 'Step 06', img: publicImages.lakeLandscapeImage }
+  { title: 'Search or select a parcel', shortTitle: 'Select Parcel', desc: 'Find the land parcel using available parcel data or UPI-based search.', tag: 'STEP 01', img: publicImages.authLandscapeImage },
+  { title: 'Review zoning and location context', shortTitle: 'Review Data', desc: 'Check the parcel against available zoning, master plan, boundary, and location datasets.', tag: 'STEP 02', img: publicImages.lakeLandscapeImage },
+  { title: 'Draw or upload proposed plots', shortTitle: 'Draw Plots', desc: 'Create or upload proposed subdivision layouts for early-stage spatial review.', tag: 'STEP 03', img: publicImages.dividedLandImage },
+  { title: 'Run planning support checks', shortTitle: 'Run Checks', desc: 'Review the proposal against available planning rules, GIS layers, and data constraints.', tag: 'STEP 04', img: publicImages.sunriseLandscapeImage },
+  { title: 'Generate a preliminary report', shortTitle: 'Generate Report', desc: 'Produce a structured report summarizing checks, observations, limitations, and review outcomes.', tag: 'STEP 05', img: publicImages.authLandscapeImage },
+  { title: 'Continue with official submission', shortTitle: 'Submit Review', desc: 'Use the results to prepare better documentation before submitting through official channels.', tag: 'STEP 06', img: publicImages.lakeLandscapeImage }
 ]
 
 function WorkflowOrbitScreen({ slide, className = '', ariaHidden = false }) {
@@ -17,15 +17,14 @@ function WorkflowOrbitScreen({ slide, className = '', ariaHidden = false }) {
     <article
       className={`workflow-screen-face ${className}`.trim()}
       aria-hidden={ariaHidden || undefined}
-      aria-label={ariaHidden ? undefined : slide.title}
+      aria-label={ariaHidden ? undefined : slide.shortTitle}
     >
       <div className="workflow-screen-media">
-        <img src={slide.img} alt={ariaHidden ? '' : slide.title} />
+        <img src={slide.img} alt={ariaHidden ? '' : slide.shortTitle} />
       </div>
       <div className="workflow-screen-body">
         <span className="workflow-screen-tag">{slide.tag}</span>
-        <h3>{slide.title}</h3>
-        <p>{slide.desc}</p>
+        <h3>{slide.shortTitle}</h3>
       </div>
     </article>
   )
@@ -259,18 +258,17 @@ export default function Home() {
                       <div className="group relative h-[360px] overflow-hidden rounded-[1.75rem] border border-emerald-100 bg-slate-900 shadow-lg">
                         <img
                           src={slide.img}
-                          alt={slide.title}
+                          alt={slide.shortTitle}
                           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,30,22,0.18)_0%,rgba(8,30,22,0.45)_48%,rgba(8,30,22,0.92)_100%)]" />
                         <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_60%)]" />
-                        <span className="absolute left-5 top-5 inline-flex rounded-full bg-white/92 px-4 py-1.5 text-[0.72rem] font-black uppercase tracking-[0.22em] text-emerald-800 shadow-sm backdrop-blur-sm">
-                          {slide.tag}
-                        </span>
                         <div className="absolute inset-x-0 bottom-0 p-6">
-                          <div className="rounded-[1.4rem] border border-white/15 bg-slate-950/28 p-5 backdrop-blur-[6px]">
-                            <h3 className="text-[1.5rem] font-black leading-tight text-white">{slide.title}</h3>
-                            <p className="mt-3 text-[0.98rem] leading-7 text-slate-100/92">{slide.desc}</p>
+                          <div className="rounded-[1.4rem] border border-white/15 bg-slate-950/28 p-5 backdrop-blur-[6px] text-center">
+                            <span className="inline-flex rounded-full bg-white/92 px-3.5 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.22em] text-emerald-800 shadow-sm backdrop-blur-sm mb-2.5">
+                              {slide.tag}
+                            </span>
+                            <h3 className="text-[1.35rem] font-black leading-tight text-white">{slide.shortTitle}</h3>
                           </div>
                         </div>
                       </div>

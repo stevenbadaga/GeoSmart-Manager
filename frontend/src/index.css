@@ -2977,7 +2977,7 @@ button {
 .workflow-screen-carousel {
   position: absolute;
   left: 50%;
-  top: 42%;
+  top: 38%;
   width: 0;
   height: 0;
   transform-style: preserve-3d;
@@ -3001,7 +3001,7 @@ button {
   left: 50%;
   top: 50%;
   width: clamp(15.5rem, 18vw, 19.5rem);
-  height: clamp(11.5rem, 13vw, 14rem);
+  height: clamp(9.5rem, 11vw, 11rem);
   transform-style: preserve-3d;
   transform: translate(-50%, -50%) rotateX(13deg) rotateZ(var(--screen-roll));
 }
@@ -3170,12 +3170,12 @@ button {
   }
 
   .workflow-screen-carousel {
-    top: 42%;
+    top: 38%;
   }
 
   .workflow-screen-monitor {
     width: clamp(13rem, 15vw, 15.5rem);
-    height: clamp(9.5rem, 11vw, 11.5rem);
+    height: clamp(8.2rem, 9.8vw, 9.4rem);
   }
 
   .workflow-screen-node {
