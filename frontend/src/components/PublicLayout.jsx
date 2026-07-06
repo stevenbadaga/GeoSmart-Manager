@@ -4,7 +4,7 @@ import PublicNavbar from './PublicNavbar'
 
 export default function PublicLayout({ children }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[var(--surface-0)] antialiased">
+    <div className="relative min-h-screen overflow-x-clip bg-[var(--surface-0)] antialiased">
       <div className="flex min-h-screen flex-col">
         <PublicNavbar />
 

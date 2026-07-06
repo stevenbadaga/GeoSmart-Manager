@@ -9,6 +9,8 @@ import newWhiteLogoTransparent from '../../new logo light transparent.png'
 import newBlackLogoTransparent from '../../new logo dark transparent.png'
 import geoSmartLogo from '../../Geo smart logo.png'
 import cheerfulManImage from '../../cheerful-man-trimmed.png'
+import authBgImage from '../../Divided land images/authentication-image.jpg'
+import landSurveyorTool from './land-surveyor-tool.png'
 
 export const publicImages = {
   authLandscapeImage,
@@ -21,5 +23,9 @@ export const publicImages = {
   newWhiteLogoTransparent,
   newBlackLogoTransparent,
   geoSmartLogo,
-  cheerfulManImage
+  cheerfulManImage,
+  authBgImage,
+  landSurveyorTool
 }
+
+export const AUTH_BACKGROUND_IMAGE_URL = import.meta.env.VITE_AUTH_BACKGROUND_IMAGE_URL || "https://i.pinimg.com/originals/e1/1d/97/e11d973b3c4cdd998d30e1abd5ea1db5.jpg"

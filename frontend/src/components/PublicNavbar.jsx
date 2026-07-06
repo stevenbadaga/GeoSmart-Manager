@@ -31,6 +31,21 @@ export default function PublicNavbar() {
   const { isDark, toggleTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setScrolled(true)
+      } else {
+        setScrolled(false)
+      }
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const useLightText = isDark
 
   const hashScopedActive = navItems.some(
     (item) => item.to.includes('#') && isHashActive(location.pathname, location.hash, item.to)
@@ -56,14 +71,14 @@ export default function PublicNavbar() {
   }, [user])
 
   return (
-    <header className="public-navbar sticky top-0 z-50 w-full border-b border-slate-100 dark:border-slate-800/40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
+    <header className={`public-navbar sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? 'navbar-scrolled' : ''}`}>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="relative h-24 flex items-center">
           {/* Left: Logo */}
           <div className="flex shrink-0 items-center">
             <BrandLogo
               to="/"
-              src={publicImages.newWhiteLogoTransparent}
+              src={useLightText ? publicImages.newBlackLogoTransparent : publicImages.newWhiteLogoTransparent}
               darkSrc={publicImages.newBlackLogoTransparent}
               className="h-14 w-auto object-contain"
               linkClassName="flex items-center"
@@ -82,8 +97,12 @@ export default function PublicNavbar() {
                   to={item.to}
                   className={`relative text-[13px] font-black tracking-[0.18em] uppercase transition-all duration-300 ${
                     active
-                      ? 'text-emerald-800 dark:text-emerald-400 after:absolute after:left-0 after:-bottom-2 after:h-0.5 after:w-full after:bg-emerald-700 dark:after:bg-emerald-400'
-                      : 'text-slate-600 dark:text-slate-350 hover:text-emerald-800 dark:hover:text-emerald-400'
+                      ? useLightText
+                        ? 'text-emerald-300 after:absolute after:left-0 after:-bottom-2 after:h-0.5 after:w-full after:bg-emerald-300'
+                        : 'text-emerald-800 after:absolute after:left-0 after:-bottom-2 after:h-0.5 after:w-full after:bg-emerald-700'
+                      : useLightText
+                      ? 'text-white/80 hover:text-emerald-300'
+                      : 'text-slate-600 hover:text-emerald-800'
                   }`}
                 >
                   {item.label}
@@ -100,7 +119,11 @@ export default function PublicNavbar() {
             <button
               type="button"
               onClick={() => user ? navigate('/notifications') : navigate('/login')}
-              className="relative inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 shadow-sm active:scale-95 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-800 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-450"
+              className={`relative inline-flex h-12 w-12 items-center justify-center rounded-xl transition-all active:scale-95 shadow-sm ${
+                useLightText
+                  ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20 hover:border-white/30'
+                  : 'border border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800'
+              }`}
               title={user ? 'Notifications' : 'Login to view notifications'}
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
@@ -115,7 +138,11 @@ export default function PublicNavbar() {
 
             <Link
               to="/contact"
-              className="hidden sm:inline-flex items-center justify-center rounded-xl border-2 border-emerald-700 px-6 py-3 text-sm font-bold text-emerald-800 transition-all hover:bg-emerald-700 hover:text-white active:scale-95 dark:border-emerald-600 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-slate-950"
+              className={`hidden sm:inline-flex items-center justify-center rounded-xl border-2 px-6 py-3 text-sm font-bold transition-all active:scale-95 ${
+                useLightText
+                  ? 'border-emerald-500 text-emerald-450 hover:bg-emerald-500 hover:text-[#071F1A]'
+                  : 'border-emerald-700 text-emerald-800 hover:bg-emerald-700 hover:text-white'
+              }`}
             >
               Contact Us
             </Link>
@@ -123,14 +150,22 @@ export default function PublicNavbar() {
             {user ? (
               <Link
                 to="/dashboard"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-900 px-6 py-3 text-sm font-bold text-white shadow-lg transition-all hover:bg-slate-800 active:scale-95 dark:border-slate-800 dark:bg-emerald-700 dark:hover:bg-emerald-600"
+                className={`inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-bold shadow-lg transition-all active:scale-95 ${
+                  useLightText
+                    ? 'border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-500'
+                    : 'border border-slate-200 bg-slate-900 text-white hover:bg-slate-800'
+                }`}
               >
                 Dashboard
               </Link>
             ) : (
               <Link
                 to="/login"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-800 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 active:scale-95 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-800 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-450"
+                className={`inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-bold transition-all active:scale-95 shadow-sm ${
+                  useLightText
+                    ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20 hover:border-white/30'
+                    : 'border border-slate-200 bg-white text-slate-800 hover:border-emerald-250 hover:bg-emerald-50 hover:text-emerald-800'
+                }`}
               >
                 Login
               </Link>
@@ -139,7 +174,11 @@ export default function PublicNavbar() {
             {/* Mobile Menu Button */}
             <button
               type="button"
-              className="grid h-12 w-12 place-items-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-all lg:hidden hover:border-emerald-200 hover:text-emerald-800 active:scale-95 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-800 dark:hover:text-emerald-450"
+              className={`grid h-12 w-12 place-items-center rounded-xl transition-all lg:hidden active:scale-95 ${
+                useLightText
+                  ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20 hover:border-white/30'
+                  : 'border border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-800'
+              }`}
               onClick={() => setMobileOpen((open) => !open)}
               aria-label="Toggle navigation"
             >

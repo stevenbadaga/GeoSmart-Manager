@@ -11,13 +11,13 @@ export default function Features() {
         {/* HERO & OVERLAPPING CARD WRAPPER */}
         <div className="relative bg-white pb-20">
           {/* PART A — HERO IMAGE (Image-only with soft overlay) */}
-          <section className="relative left-1/2 right-1/2 -mt-10 h-[360px] md:h-[440px] lg:h-[520px] w-screen -translate-x-1/2 overflow-hidden bg-slate-950">
+          <section className="relative left-1/2 right-1/2 -mt-[136px] h-[360px] md:h-[440px] lg:h-[520px] w-screen -translate-x-1/2 overflow-hidden bg-slate-950">
             <img
               src={publicImages.sunriseLandscapeImage}
               alt="GeoSmart land planning professional features banner"
-              className="absolute inset-0 h-full w-full object-cover brightness-[0.78]"
+              className="public-hero-image absolute inset-0 h-full w-full object-cover brightness-[0.78]"
             />
-            <div className="absolute inset-0 bg-slate-950/25" />
+            <div className="public-hero-overlay absolute inset-0" />
           </section>
 
           {/* PART B & C — OVERLAPPING FEATURES CARD */}

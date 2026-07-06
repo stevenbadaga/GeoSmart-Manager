@@ -74,27 +74,94 @@ export default function Home() {
   return (
     <PublicLayout>
       <div className="space-y-16">
-        <section className="public-home-hero relative left-1/2 right-1/2 -mt-10 w-screen -translate-x-1/2 isolate overflow-hidden bg-[#0c3028]">
-          <img
-            src={publicImages.sunriseLandscapeImage}
-            alt="Kigali planning landscape used across the GeoSmart home page hero"
-            className="public-home-hero-image absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="public-home-hero-overlay absolute inset-0 bg-[linear-gradient(90deg,rgba(247,245,238,0.96)_0%,rgba(247,245,238,0.92)_34%,rgba(247,245,238,0.68)_54%,rgba(8,30,22,0.2)_100%)]" />
-          <div className="public-home-hero-glow absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(232,196,106,0.2),transparent_34%)]" />
+        <section className="public-home-hero relative left-1/2 right-1/2 -mt-[136px] w-screen -translate-x-1/2 isolate overflow-hidden">
+          {/* Tech Grid Lines Overlay */}
+          <div className="public-home-hero-grid absolute inset-0 bg-[linear-gradient(rgba(52,211,153,0.015)_1.5px,transparent_1.5px),linear-gradient(90deg,rgba(52,211,153,0.015)_1.5px,transparent_1.5px)] bg-[size:48px_48px] pointer-events-none z-0" />
+          
+          {/* Glowing backplate spot */}
+          <div className="public-home-hero-glow-right absolute rounded-full bg-emerald-500/10 blur-[100px] pointer-events-none z-0" />
+          <div className="absolute left-[8%] top-[25%] w-[280px] h-[280px] rounded-full bg-teal-500/4 blur-[90px] pointer-events-none z-0" />
 
-          <div className="relative mx-auto min-h-[580px] w-full max-w-[1400px] px-6 py-10 sm:min-h-[620px] sm:px-6 sm:py-14 lg:min-h-[700px] lg:px-10 lg:py-16">
-            <div className="public-home-hero-copy max-w-4xl">
-              <p className="public-home-hero-kicker text-xs font-black uppercase tracking-[0.24em] text-[#124E44]/78">GeoSmart Manager</p>
-              <h1 className="public-home-hero-title mt-4 max-w-4xl text-5xl font-black tracking-[-0.06em] text-ink sm:text-6xl lg:text-7xl">
-                AI-Assisted Land Subdivision Planning and Zoning Compliance
+          <div className="relative mx-auto min-h-[640px] w-full max-w-[1400px] px-6 pt-[136px] pb-10 sm:min-h-[720px] sm:px-6 sm:pt-[152px] sm:pb-14 lg:min-h-[820px] lg:px-10 lg:pt-[176px] lg:pb-16 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12">
+            <div className="public-home-hero-copy max-w-3xl lg:max-w-[48%] relative z-10 lg:-translate-y-16 lg:-translate-x-6">
+              <h1 className="public-home-hero-title mt-4 max-w-2xl text-3xl font-black tracking-[-0.02em] text-[#FFF3D5] sm:text-4xl lg:text-[3.4rem] leading-[1.38] animate-hero-text">
+                AI-Assisted Land <br className="hidden md:inline" />
+                Subdivision Planning <br className="hidden md:inline" />
+                and Zoning <br className="hidden md:inline" />
+                Compliance
               </h1>
-              <p className="public-home-hero-text mt-5 max-w-2xl text-base leading-7 text-ink/68 sm:text-lg">
-                Run preliminary land subdivision checks using parcel data, zoning rules, administrative boundaries, building footprints, and planning constraints for Kigali.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
+              <div className="mt-10 flex flex-wrap gap-4 animate-hero-buttons">
                 <Link className="btn-primary" to="/subdivision">Start Subdivision Check</Link>
-                <Link className="btn-secondary bg-white/[0.88] backdrop-blur-sm" to="/features#how-it-works">View How It Works</Link>
+                <Link className="btn-secondary bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-sm" to="/features#how-it-works">View How It Works</Link>
+              </div>
+            </div>
+
+            {/* Right Side Holographic Visual (Surveyor Tool + Rotating Screens) */}
+            <div className="w-full lg:max-w-[36%] flex justify-center lg:justify-end min-h-[460px] relative items-center select-none overflow-visible lg:-translate-y-6 lg:-translate-x-3 xl:-translate-x-5">
+              {/* Perspective Wrapper */}
+              <div 
+                className="relative w-full max-w-[480px] h-[460px] flex items-center justify-center"
+                style={{ perspective: '2400px', perspectiveOrigin: '50% 28%' }}
+              >
+                {/* 1. Holographic projector glow backplate */}
+                <div className="absolute w-[240px] h-[240px] rounded-full bg-emerald-500/10 blur-[80px] pointer-events-none z-0" />
+
+                {/* 2. Holographic elliptical orbit guide ring */}
+                <div 
+                  className="absolute left-1/2 top-[10%] w-[380px] sm:w-[440px] h-[76px] sm:h-[88px] rounded-full border border-emerald-400/20 shadow-[0_0_15px_rgba(52,211,153,0.06),inset_0_0_15px_rgba(52,211,153,0.06)] pointer-events-none z-0"
+                  style={{ transform: 'translate(-50%, -50%) rotateX(78deg)' }} 
+                />
+
+                {/* 3. Rotating screens carousel wrapper for page-load animation */}
+                <div className="absolute inset-0 z-10 pointer-events-none animate-hero-screens">
+                  {/* Rotating screens carousel */}
+                  <div 
+                    className="workflow-screen-carousel absolute inset-0 pointer-events-none" 
+                    style={{ 
+                      top: '10%',
+                      '--screen-radius': 'clamp(16rem, 19vw, 21.5rem)'
+                    }}
+                  >
+                    {workflowSlides.map((slide, index) => {
+                      const angle = index * (360 / workflowSlides.length)
+                      const roll = [-3, -1, 1, 3, 1, -2][index % 6]
+
+                      return (
+                        <div
+                          key={`${slide.tag}-hero`}
+                          className="workflow-screen-node pointer-events-auto"
+                          style={{
+                            '--screen-angle': `${angle}deg`,
+                            '--screen-roll': `${roll}deg`,
+                            '--screen-delay': `${index * -1.2}s`,
+                            '--screen-lighting-delay': `${index * 4 - 24}s`
+                          }}
+                        >
+                          <div className="workflow-screen-bobber">
+                            <div className="workflow-screen-monitor select-none">
+                              <WorkflowOrbitScreen slide={slide} className="workflow-screen-face-front" />
+                              <WorkflowOrbitScreen slide={slide} className="workflow-screen-face-back" ariaHidden />
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Land Surveyor Tool (Sitting centered under the screens) */}
+                <div className="public-hero-surveyor-wrap absolute left-1/2 -translate-x-1/2 z-0 animate-hero-surveyor">
+                  <img
+                    src={publicImages.landSurveyorTool}
+                    alt="Land surveying planning tool"
+                    className="public-hero-surveyor-img w-auto object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.4)] hover:scale-[1.03] transition-all duration-500"
+                  />
+                  {/* Holographic projecting guide beam */}
+                  <div 
+                    className="public-hero-surveyor-beam absolute left-1/2 top-0 -translate-x-1/2 w-[80px] bg-gradient-to-t from-emerald-400/20 to-transparent blur-[10px] pointer-events-none z-0 rounded-t-full origin-bottom transform scale-x-75" 
+                    style={{ clipPath: 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)' }} 
+                  />
+                </div>
               </div>
             </div>
           </div>

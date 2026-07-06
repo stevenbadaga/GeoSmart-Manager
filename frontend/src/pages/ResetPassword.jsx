@@ -3,7 +3,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { api } from '../api/http'
 import { useTheme } from '../theme/ThemeContext'
 import BrandLogo from '../components/BrandLogo'
-import { publicImages } from '../assets/publicImages'
+import { publicImages, AUTH_BACKGROUND_IMAGE_URL } from '../assets/publicImages'
 
 function passwordResetErrorMessage(err, fallback) {
   if (err?.status === 403) {
@@ -27,6 +27,7 @@ export default function ResetPassword() {
   const [valid, setValid] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [bgUrl, setBgUrl] = useState(AUTH_BACKGROUND_IMAGE_URL)
 
   useEffect(() => {
     if (!token) {
@@ -72,19 +73,20 @@ export default function ResetPassword() {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden px-4 py-8 md:py-12">
       {/* Background Image and Premium Gradients */}
-      <div className="absolute inset-0 z-0 select-none">
+      <div className="absolute inset-0 z-0 select-none overflow-hidden">
         <img
-          src={publicImages.sunriseLandscapeImage}
-          alt="GeoSmart land planning"
-          className={`h-full w-full object-cover transition-opacity duration-700 scale-105 filter blur-[1px] ${
-            isDark ? 'opacity-25' : 'opacity-45'
+          src={bgUrl}
+          onError={() => setBgUrl(publicImages.authBgImage)}
+          alt="GeoSmart land planning background"
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+            isDark ? 'opacity-[0.35]' : 'opacity-[0.65]'
           }`}
         />
         <div
-          className={`absolute inset-0 transition-colors duration-700 ${
+          className={`absolute inset-0 transition-all duration-700 ${
             isDark
-              ? 'bg-gradient-to-br from-[#051411]/98 via-[#063F35]/85 to-slate-950/98'
-              : 'bg-gradient-to-br from-emerald-50/90 via-slate-100/85 to-[#d1fae5]/80'
+              ? 'bg-gradient-to-br from-[#051411]/65 via-[#063F35]/40 to-[#071F1A]/70'
+              : 'bg-gradient-to-br from-white/40 via-emerald-50/20 to-[#d1fae5]/35'
           }`}
         />
       </div>
